@@ -69,9 +69,3 @@ document.addEventListener("DOMContentLoaded", () => {
 
     ///////// END OF DOMContentLoaded Listener ////////////
 });
-
-
-/////// DEV
-function log(it, text="value: ") {
-  console.log(text, it );
-}
