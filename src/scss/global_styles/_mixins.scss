@@ -55,37 +55,68 @@ $element-shadow: 0.15em, 0.3em, rgba(0, 0, 0, .8);
   }
 }
 
-@mixin fluid-font-size($max-media, $min-media, $max-value, $min-value) {
-  $default-browser-size: 16;
-  $max-size-ratio: math.div($max-value, $default-browser-size);
-  $min-size-ratio: math.div($min-value, $default-browser-size);
-  $max-width-ratio: math.div($max-media, $default-browser-size);
-  $min-width-ratio: math.div($min-media, $default-browser-size);
+/*  */
+@function fluid-value(
+  $max-media,
+  $min-media,
+  $max-value,
+  $min-value,
+  $unit: px,
+  $base-size: 16
+) {
+  $min-size: if($unit == rem, math.div($min-value, $base-size), $min-value);
+  $max-size: if($unit == rem, math.div($max-value, $base-size), $max-value);
 
-  $ratio: math.div(($max-size-ratio - $min-size-ratio), ($max-width-ratio - $min-width-ratio));
-  $yAxisInterSection: -$min-width-ratio * $ratio + $min-size-ratio;
+  $min-width: math.div($min-media, $base-size);
+  $max-width: math.div($max-media, $base-size);
 
-  font-size: clamp(
-    #{$min-size-ratio * 1rem},
-    #{$ratio * 100vw + $yAxisInterSection * 1rem},
-    #{$max-size-ratio * 1rem}
+  $ratio: math.div(($max-size - $min-size), ($max-width - $min-width));
+  $intercept: -$min-width * $ratio + $min-size;
+
+  @return clamp(
+      #{$min-size}#{$unit},
+      calc(#{$ratio * 100}vw + #{$intercept}#{$unit}),
+      #{$max-size}#{$unit}
   );
 }
 
-
-////////////// FUNCTIONS ////////////////
-//!!! the arguments must be integers, default measure unit is "px" (1280, 640, 80, 32, px)
-
-@function calculate-dimension($max-width, $min-width, $max-value, $min-value, $measure:px) {
-  $width-range: $max-width - $min-width;
-  $value-diff: $max-value - $min-value;
-
-  // Normalize the viewport width
-  $normalized-width: min(max(100vw, #{$min-width}#{$measure}), #{$max-width}#{$measure});
-
-  // Расчет
-  @return calc(($value-diff * ($normalized-width - #{$min-width}#{$measure})) / $width-range + #{$min-value}#{$measure});
+/*
+Examples of usage:
+*** Fonts ***
+h1 {
+  @include fluid-size(font-size, 1280, 640, 24, 18);
 }
 
+h1 {
+  @include fluid-size(font-size, 1280, 640, 24, 18, em, 16);
+}
 
+*** Width ***
+.card {
+  @include fluid-size(width, 1440, 375, 420, 280, px);
+}
 
+*** Padding ***
+.section {
+  @include fluid-size(padding, 1280, 640, 80, 32);
+}
+*/
+
+@mixin fluid-size(
+  $property,
+  $max-media,
+  $min-media,
+  $max-value,
+  $min-value,
+  $unit: px,
+  $base-size: 16
+) {
+  #{$property}: fluid-value(
+          $max-media,
+          $min-media,
+          $max-value,
+          $min-value,
+          $unit,
+          $base-size
+  );
+}

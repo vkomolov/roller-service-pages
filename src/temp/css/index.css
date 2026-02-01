@@ -187,24 +187,32 @@ ul {
   font-family: "Open Sans";
   font-weight: 600;
   font-style: normal;
+  /*  font-display: swap;
+    size-adjust: 100%;*/
   src: url("/assets/fonts/OpenSans/OpenSans-SemiBold.woff2") format("woff2"), url("/assets/fonts/OpenSans/OpenSans-SemiBold.woff") format("woff"), url("/assets/fonts/OpenSans/OpenSans-SemiBold.ttf") format("truetype");
 }
 @font-face {
   font-family: "Ubuntu";
   font-weight: 700;
   font-style: normal;
+  /*  font-display: swap;
+    size-adjust: 100%;*/
   src: url("/assets/fonts/Ubuntu/Ubuntu-Bold.woff2") format("woff2"), url("/assets/fonts/Ubuntu/Ubuntu-Bold.woff") format("woff"), url("/assets/fonts/Ubuntu/Ubuntu-Bold.ttf") format("truetype");
 }
 @font-face {
   font-family: "Jost";
   font-weight: 400;
   font-style: normal;
+  /*  font-display: swap;
+    size-adjust: 100%;*/
   src: url("/assets/fonts/Jost/Jost-Regular.woff2") format("woff2"), url("/assets/fonts/Jost/Jost-Regular.woff") format("woff"), url("/assets/fonts/Jost/Jost-Regular.ttf") format("truetype");
 }
 @font-face {
   font-family: "Jost";
   font-weight: 700;
   font-style: normal;
+  /*  font-display: swap;
+    size-adjust: 100%;*/
   src: url("/assets/fonts/Jost/Jost-Bold.woff2") format("woff2"), url("/assets/fonts/Jost/Jost-Bold.woff") format("woff"), url("/assets/fonts/Jost/Jost-Bold.ttf") format("truetype");
 }
 /* retina display (2x) */
@@ -228,6 +236,28 @@ ul {
 /* mobile (medium): (max-width: 375px) */
 /* mobile (medium): (max-width: 375px) and (min-width: 320px) */
 /* mobile (small): (max-width: 320px) */
+/*  */
+/*
+Examples of usage:
+*** Fonts ***
+h1 {
+  @include fluid-size(font-size, 1280, 640, 24, 18);
+}
+
+h1 {
+  @include fluid-size(font-size, 1280, 640, 24, 18, em, 16);
+}
+
+*** Width ***
+.card {
+  @include fluid-size(width, 1440, 375, 420, 280, px);
+}
+
+*** Padding ***
+.section {
+  @include fluid-size(padding, 1280, 640, 80, 32);
+}
+*/
 @keyframes popup {
   0% {
     transform: scale(1);
@@ -310,13 +340,13 @@ ul {
 }
 
 :root {
-  --range_120-64_max-1280px: calc(56 * (min(max(100vw, 641px), 1280px) - 641px) / 639 + 64px);
-  --range_80-64_max-1280px: calc(16 * (min(max(100vw, 641px), 1280px) - 641px) / 639 + 64px);
-  --range_80-32_max-1280px: calc(48 * (min(max(100vw, 641px), 1280px) - 641px) / 639 + 32px);
-  --range_48-32_max-1280px: calc(16 * (min(max(100vw, 641px), 1280px) - 641px) / 639 + 32px);
-  --range_32-23_max-640px: calc(9 * (min(max(100vw, 320px), 640px) - 320px) / 320 + 23px);
-  --range_24-18_max-1280px: calc(6 * (min(max(100vw, 641px), 1280px) - 641px) / 639 + 18px);
-  --range_18-16_max-1280px: calc(2 * (min(max(100vw, 641px), 1280px) - 641px) / 639 + 16px);
+  --range_120-64_max-1280px: clamp(64px, 140.2190923318vw + 7.8247261346px, 120px);
+  --range_80-64_max-1280px: clamp(64px, 40.0625978091vw + 47.9499217527px, 80px);
+  --range_80-32_max-1280px: clamp(32px, 120.1877934272vw + -16.1502347418px, 80px);
+  --range_48-32_max-1280px: clamp(32px, 40.0625978091vw + 15.9499217527px, 48px);
+  --range_32-23_max-640px: clamp(23px, 45vw + 14px, 32px);
+  --range_24-18_max-1280px: clamp(18px, 15.0234741784vw + 11.9812206573px, 24px);
+  --range_18-16_max-1280px: clamp(16px, 5.0078247261vw + 13.9937402191px, 18px);
 }
 
 /*html, body {
@@ -1019,12 +1049,6 @@ img, svg, picture, video, object {
 .scrolledNav__contacts-block .burger_nav {
   /* mobile (medium): (max-width: 375px) */
 }
-/*.total-layer {
-  width: 100vw;
-  padding-right: 17px;
-  overflow: hidden;
-  box-sizing: content-box;
-}*/
 .total-wrapper {
   box-sizing: border-box;
   position: relative;
