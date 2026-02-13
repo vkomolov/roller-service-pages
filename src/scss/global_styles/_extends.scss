@@ -11,8 +11,8 @@
 
   /* tablet (landscape) max-width: 1280px */
   @include media.maxTabletLandscape {
-    padding-top: var(--range_80-64_max-1280px);
-    padding-bottom: var(--range_120-64_max-1280px);
+    padding-top: var(--range_80-64_1280-641);
+    padding-bottom: var(--range_120-64_1280-641);
   }
 
   /* mobile (portrait wide): (max-width: 640px) */
@@ -31,13 +31,13 @@
 
   /* tablet (landscape) max-width: 1280px */
   @include media.maxTabletLandscape {
-    padding-right: var(--range_80-32_max-1280px);
-    padding-left: var(--range_80-32_max-1280px);
+    padding-right: var(--range_80-32_1280-641);
+    padding-left: var(--range_80-32_1280-641);
   }
 
   /* mobile (portrait wide): (max-width: 640px) */
   @include media.maxMobilePortraitWide {
-    padding-right: var(--range_32-23_max-640px);
-    padding-left: var(--range_32-23_max-640px);
+    padding-right: var(--range_32-23_640-320);
+    padding-left: var(--range_32-23_640-320);
   }
 }

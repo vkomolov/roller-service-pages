@@ -15,16 +15,17 @@
 /////// VARS //////
 
 :root {
-  --range_120-64_max-1280px: #{mix.fluid-value(1280, 641, 120, 64, rem)};
-  --range_80-64_max-1280px: #{mix.fluid-value(1280, 641, 80, 64, rem)};
-  --range_80-32_max-1280px: #{mix.fluid-value(1280, 641, 80, 32, rem)};
-  --range_48-32_max-1280px: #{mix.fluid-value(1280, 641, 48, 32, rem)};
-  --range_32-23_max-640px: #{mix.fluid-value(640, 320, 32, 23, rem)};
-  --range_24-18_max-1280px: #{mix.fluid-value(1280, 641, 24, 18, rem)};
-  --range_18-16_max-1280px: #{mix.fluid-value(1280, 641, 18, 16, rem)};
+  /*** Desktop → Tablet ***/
+  --range_120-64_1280-641: #{mix.fluid-value(1280, 641, 120, 64, rem)};
+  --range_80-64_1280-641: #{mix.fluid-value(1280, 641, 80, 64, rem)};
+  --range_80-32_1280-641: #{mix.fluid-value(1280, 641, 80, 32, rem)};
+  --range_48-32_1280-641: #{mix.fluid-value(1280, 641, 48, 32, rem)};
+  --range_24-18_1280-641: #{mix.fluid-value(1280, 641, 24, 18, rem)};
+  --range_18-16_1280-641: #{mix.fluid-value(1280, 641, 18, 16, rem)};
 
-  // Typography scale (rem)
-  --range_18-15px_convert-rem_view_max-1280_min-640px: #{mix.fluid-value(1280, 640, 18, 15, rem)};
+  /*** Mobile (breakpoint 640px) ***/
+  --range_32-23_640-320: #{mix.fluid-value(640, 320, 32, 23, rem)};
+
 }
 
 /*html, body {
