@@ -7,12 +7,13 @@
 
 .total-wrapper {
   box-sizing: border-box;
-
   position: relative;
-  font-size: 1.125rem;  //18px
-  //font-size: 1rem;  //16px
-  max-width: root.$maxWidth; //1440px;
-  //min-width: $minWidth; //320px;
+
+  font-size: var(--range_18-15px_convert-rem_view_max-1280_min-640px);
+  //font-size: 1.125rem;  //18px
+
+  max-width: root.$maxViewWidth; //1440px;
+  //min-width: $minViewWidth; //320px;
   margin: 0 auto;
   background-color: root.$white;
   color: root.$color-04;
@@ -23,9 +24,9 @@
   }*/
 
   /* mobile (portrait wide): (max-width: 640px) */
-  @include root.maxMobilePortraitWide {
+/*  @include root.maxMobilePortraitWide {
     font-size: 0.938rem;  //15px
-  }
+  }*/
 }
 
 .section {
@@ -310,7 +311,7 @@
   transform-origin: 50% 100%;
 }
 
-/////////// section "hero" //////////
+/////////// SECTION hero //////////
 .section--hero {
   font-size: 1.8em;
   //background-origin: border-box;
@@ -842,7 +843,7 @@
   }
 }
 
-//////////  pair  ///////////
+////////// SECTION pair  ///////////
 
 .section__content-block--pair {
   position: relative;
@@ -936,7 +937,7 @@
   }
 }
 
-//////// section benefits /////////
+//////// SECTION benefits /////////
 
 .section__benefits {
 
@@ -974,7 +975,7 @@
   margin-bottom: 0.889em;
 }
 
-//////// section services ///////////
+//////// SECTION services ///////////
 .section--services {
   font-size: 1em; //parent font-size (18px at max 1280px)
   background-position: 70%;
