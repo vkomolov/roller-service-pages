@@ -170,6 +170,7 @@ ul{
   --range_24-18_1280-641:clamp(1.125rem, 0.9389671362vw + 0.7488262911rem, 1.5rem);
   --range_22-18_1280-641:clamp(1.125rem, 0.6259780908vw + 0.8742175274rem, 1.375rem);
   --range_18-16_1280-641:clamp(1rem, 0.3129890454vw + 0.8746087637rem, 1.125rem);
+  --range_18-14_1280-769:clamp(0.875rem, 0.782778865vw + 0.498776908rem, 1.125rem);
   --range_32-23_640-320:clamp(1.4375rem, 2.8125vw + 0.875rem, 2rem);
 }
 body{
@@ -528,7 +529,6 @@ img,object,picture,svg,video{
   display:flex;
   flex-flow:row wrap;
   justify-content:flex-end;
-  padding-top:.56rem;
   width:100%;
 }
 .header__nav.abs{
@@ -549,7 +549,7 @@ img,object,picture,svg,video{
   justify-content:flex-end;
   margin:0 auto;
   max-width:1280px;
-  padding:3rem 2.2rem .5rem;
+  padding:4rem 2.2rem .5rem;
   width:100%;
 }
 
@@ -560,6 +560,7 @@ img,object,picture,svg,video{
   align-items:center;
   display:flex;
   flex-flow:row wrap;
+  font-size:var(--range_18-14_1280-769);
   font-weight:700;
   gap:.5em .75em;
   justify-content:center;
@@ -1234,9 +1235,6 @@ img,object,picture,svg,video{
   .header__logo-heading{
     font-size:1.5rem;
   }
-  .header__nav.abs .header__nav-list{
-    font-size:.78rem;
-  }
   .button-request{
     font-size:1.185rem;
     width:270px;
@@ -1338,14 +1336,14 @@ img,object,picture,svg,video{
   }
   .header__nav.abs .header__nav-list{
     align-items:flex-end;
-    -moz-column-gap:.5rem;
-         column-gap:.5rem;
+    -moz-column-gap:.5em;
+         column-gap:.5em;
     display:flex;
     flex-flow:column wrap;
     justify-content:center;
     max-width:20rem;
-    padding-bottom:1rem;
-    padding-top:1rem;
+    padding-bottom:1em;
+    padding-top:1em;
   }
   .burger_nav.hidden{
     display:inline-block;
@@ -1396,12 +1394,11 @@ img,object,picture,svg,video{
     flex-direction:column;
   }
   .header__nav.abs .header__nav-list-wrapper{
-    font-size:1.1rem;
     justify-content:center;
   }
   .header__nav.abs .header__nav-list{
     align-items:center;
-    padding-top:3rem;
+    padding-top:3em;
   }
   .button-request{
     font-size:1rem;
@@ -1551,7 +1548,7 @@ img,object,picture,svg,video{
   }}
 @media (max-width:375px){
   .header__nav.abs .header__nav-list{
-    padding-top:5rem;
+    padding-top:5em;
   }
   .scrolledNav__contacts-block{
     align-items:center;

@@ -23,6 +23,7 @@
   --range_24-18_1280-641: #{mix.fluid-value(1280, 641, 24, 18, rem)};
   --range_22-18_1280-641: #{mix.fluid-value(1280, 641, 22, 18, rem)};
   --range_18-16_1280-641: #{mix.fluid-value(1280, 641, 18, 16, rem)};
+  --range_18-14_1280-769: #{mix.fluid-value(1280, 769, 18, 14, rem)};
 
   /*** Mobile (breakpoint 640px) ***/
   --range_32-23_640-320: #{mix.fluid-value(640, 320, 32, 23, rem)};

@@ -347,6 +347,7 @@ h1 {
   --range_24-18_1280-641: clamp(1.125rem, 0.9389671362vw + 0.7488262911rem, 1.5rem);
   --range_22-18_1280-641: clamp(1.125rem, 0.6259780908vw + 0.8742175274rem, 1.375rem);
   --range_18-16_1280-641: clamp(1rem, 0.3129890454vw + 0.8746087637rem, 1.125rem);
+  --range_18-14_1280-769: clamp(0.875rem, 0.782778865vw + 0.498776908rem, 1.125rem);
   /*** Mobile (breakpoint 640px) ***/
   --range_32-23_640-320: clamp(1.4375rem, 2.8125vw + 0.875rem, 2rem);
 }
@@ -653,7 +654,6 @@ img, svg, picture, video, object {
   gap: 0.625rem 1.125rem;
   padding-top: 0.625rem;
   padding-bottom: 0.625rem;
-  /* tablet (portrait): (max-width: 1024px) */
   /* mobile (portrait wide): (max-width: 640px) */
 }
 @media (max-width: 640px) {
@@ -827,7 +827,6 @@ img, svg, picture, video, object {
 
 .header__nav {
   width: 100%;
-  padding-top: 0.56rem;
   display: flex;
   flex-flow: row wrap;
   justify-content: flex-end;
@@ -860,7 +859,7 @@ img, svg, picture, video, object {
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 3rem 2.2rem 0.5rem;
+  padding: 4rem 2.2rem 0.5rem;
   display: flex;
   flex-flow: row wrap;
   justify-content: flex-end;
@@ -869,42 +868,35 @@ img, svg, picture, video, object {
 }
 @media (max-width: 640px) {
   .header__nav.abs .header__nav-list-wrapper {
-    font-size: 1.1rem;
     justify-content: center;
   }
 }
 .header__nav.abs .header__nav-list {
-  /* tablet (portrait): (max-width: 1024px) */
   /* mobile (landscape): (max-width: 768px)*/
   /* mobile (portrait wide): (max-width: 640px) */
   /* mobile (medium): (max-width: 375px) */
 }
-@media (max-width: 1024px) {
-  .header__nav.abs .header__nav-list {
-    font-size: 0.78rem;
-  }
-}
 @media (max-width: 768px) {
   .header__nav.abs .header__nav-list {
     max-width: 20rem;
-    padding-bottom: 1rem;
-    padding-top: 1rem;
+    padding-bottom: 1em;
+    padding-top: 1em;
     display: flex;
     flex-flow: column wrap;
     justify-content: center;
     align-items: flex-end;
-    column-gap: 0.5rem;
+    column-gap: 0.5em;
   }
 }
 @media (max-width: 640px) {
   .header__nav.abs .header__nav-list {
     align-items: center;
-    padding-top: 3rem;
+    padding-top: 3em;
   }
 }
 @media (max-width: 375px) {
   .header__nav.abs .header__nav-list {
-    padding-top: 5rem;
+    padding-top: 5em;
   }
 }
 
@@ -912,6 +904,7 @@ img, svg, picture, video, object {
   font-family: "Ubuntu", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: var(--range_18-14_1280-769);
   font-weight: 700;
   display: flex;
   flex-flow: row wrap;
