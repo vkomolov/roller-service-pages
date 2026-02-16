@@ -19,7 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const navLinkSelector = ".nav-link";
   const navHexagonSelector = ".hexagon-comb-block__cell-link";
 
-
   //checking and lighten several duplicate navigations for the .active links:
   activateNavLink(navLinkSelector, pageType, "active", linkAnchors[pageType] || "#");
   activateNavLink(navHexagonSelector, pageType, "active", linkAnchors[pageType] || "#");

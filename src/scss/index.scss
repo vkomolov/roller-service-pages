@@ -9,8 +9,9 @@
   box-sizing: border-box;
   position: relative;
 
-  font-size: var(--range_18-15px_convert-rem_view_max-1280_min-640px);
+  //font-size: var(--range_18-16_1280-641);
   //font-size: 1.125rem;  //18px
+  font-size: 1rem;
 
   max-width: root.$maxViewWidth; //1440px;
   //min-width: $minViewWidth; //320px;

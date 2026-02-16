@@ -22,31 +22,44 @@
 }
 
 .header {
-  font-size: 1em; //parent font-size
+  //font-size: 1em; //parent font-size
+  //font-size: var(--range_18-16_1280-641);
   position: relative;
 
   @extend %contentWrapper;  //it works ok...
   @include mix.flex-box(row, center, center, wrap);
 
-  gap: 0.5em 1em;
-  padding-top: 0.625em;
-  padding-bottom: 0.625em;
+  //gap: 0.5em 1em;
+  gap: 0.625rem 1.125rem;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
 
   /* tablet (portrait): (max-width: 1024px) */
   @include media.maxTabletPortrait {
-    font-size: 0.78em;
+    //font-size: 0.78em;
   }
 
   /* mobile (portrait wide): (max-width: 640px) */
   @include media.maxMobilePortraitWide {
     flex-direction: column;
-    font-size: 1em;
+    //font-size: 1em;
   }
 }
 
 .header__logo-heading {
-  font-size: 1.5em;
+  font-size: 1.75rem;
+  //font-size: var(--range_28-21_1280-641);
   color: rgba(220, 220, 220, .5);
+
+  /* tablet (portrait): (max-width: 1024px) */
+  @include media.maxTabletPortrait {
+    font-size: 1.5rem;
+  }
+
+  /* mobile (landscape): (max-width: 768px)*/
+  @include media.maxMobileLandscape {
+    font-size: 1.2rem;
+  }
 }
 
 .header__contacts-wrapper {
@@ -55,21 +68,27 @@
   flex-grow: 1;
 
   @include mix.flex-box(row, flex-end, center, wrap);
-  gap: 0.5em;
+  //gap: 0.5em;
 }
 
 .header__contacts-block {
   @include mix.flex-box(row, center, center, wrap);
-  gap: 0.5em 1em;
+  gap: 0.625rem 1.125rem;
+
+  /* mobile (landscape): (max-width: 768px) and (min-width: 641px) */
+  @include media.rangeMobileLandscape {
+    column-gap: 0.5rem;
+  }
 }
 
 .icon-link {
+  font-size: var(--range_22-18_1280-641);
   text-decoration: none;
   transform-origin: 100% 50%;
   transition: transform 0.15s ease-in-out, text-shadow 0.15s ease-in-out;
 
   @include mix.flex-box(row, center, center, nowrap);
-  gap: 0.3em;
+  gap: 4px;
 
   &:hover {
     transform: translateX(-0.3em);
@@ -78,12 +97,12 @@
   }
 
   &__phone-icon {
-    width: 1.2em;
+    width: 0.75em;
     fill: $color-01;
   }
 
   &__social-icon {
-    width: 1.375em;
+    width: 1.375rem;
   }
 
   &__text {
@@ -94,18 +113,20 @@
 
     &.icon-link__text--phone {
       color: $color_01;
+      //font-size: var(--range_22-18_1280-641);
+      font-weight: 700;
 
-      @include mix.init-font(1.375em, 700);
+      //@include mix.init-font(1.375rem, 700);
 
       /* mobile (landscape): (max-width: 768px)*/
-      @include media.maxMobileLandscape {
-        font-size: 1.2em;
-      }
+/*      @include media.maxMobileLandscape {
+        font-size: 1.2rem;
+      }*/
     }
 
     &.icon-link__text--social-icon {
       color: $white;
-      @include mix.init-font(1em, 700);
+      //@include mix.init-font(1em, 700);
 
       /* mobile (landscape): (max-width: 768px)*/
       @include media.maxMobileLandscape {
@@ -117,11 +138,12 @@
 
 .social-icons-wrapper {
   @include mix.flex-box(row, center, center, nowrap);
-  gap: 0.6em;
+  gap: 8px;
 }
 
 .social-icons-wrapper__social-icon {
-  width: 1.8em;
+  width: 2.75rem;
+  padding: 6px;
 
   @include mix.transition(transform);
 
@@ -159,7 +181,7 @@
 }
 
 #lang-list {
-  padding: 0.6em 0;
+  //padding: 0.6em 0;
 
   @include mix.flex-box(column, flex-start, center);
   gap: 0.6em;
@@ -168,12 +190,13 @@
 }
 
 .lang-switcher__lang-icon {
-  width: 1.8em;
-  height: 1.8em;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   background-color: #918578;
   color: $white;
   cursor: pointer;
+  margin: 6px;
   transition: transform 0.2s ease-in-out, background-color 0.2s ease;
 
   &:not(.active):hover {
@@ -194,7 +217,7 @@
 
 .header__nav {
   width: 100%;
-  padding-top: .56em;
+  padding-top: .56rem;
   @include mix.flex-box(row, flex-end, center, wrap);
 
   /* mobile (landscape): (max-width: 768px)*/
@@ -211,7 +234,7 @@
     left: 0;
     z-index: 40;
     background-color: rgba(255, 255, 255, .5);
-    backdrop-filter: blur(.2em);
+    backdrop-filter: blur(.2rem);
 
     /* mobile (landscape): (max-width: 768px)*/
     @include media.maxMobileLandscape {
@@ -222,13 +245,13 @@
       width: 100%;
       max-width: $maxContentWidth;
       margin: 0 auto;
-      padding: 3em 2.2em .5em;
+      padding: 3rem 2.2rem .5rem;
 
       @include mix.flex-box(row, flex-end, center, wrap);
 
       /* mobile (portrait wide): (max-width: 640px) */
       @include media.maxMobilePortraitWide {
-        font-size: 1.1em;
+        font-size: 1.1rem;
         justify-content: center;
       }
     }
@@ -237,28 +260,28 @@
 
       /* tablet (portrait): (max-width: 1024px) */
       @include media.maxTabletPortrait {
-        font-size: 0.78em;
+        font-size: 0.78rem;
       }
 
       /* mobile (landscape): (max-width: 768px)*/
       @include media.maxMobileLandscape {
-        max-width: 20em;
-        padding-bottom: 1em;
-        padding-top: 1em;
+        max-width: 20rem;
+        padding-bottom: 1rem;
+        padding-top: 1rem;
 
         @include mix.flex-box(column, center, flex-end);
-        column-gap: 0.5em;
+        column-gap: 0.5rem;
       }
 
       /* mobile (portrait wide): (max-width: 640px) */
       @include media.maxMobilePortraitWide {
         align-items: center;
-        padding-top: 3em;
+        padding-top: 3rem;
       }
 
       /* mobile (medium): (max-width: 375px) */
       @include media.maxMobileMedium {
-        padding-top: 5em;
+        padding-top: 5rem;
       }
     }
   }
@@ -296,8 +319,9 @@
 
 .burger_nav {
   position: relative;
-  width: 1.8em;
-  height: 1.8em;
+  width: 2rem;
+  height: 2rem;
+  margin: 6px;
   cursor: pointer;
   background-color: rgba(255, 255, 255, 1);
   border: 2px solid rgba(255, 133, 2, 1);

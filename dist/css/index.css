@@ -168,6 +168,7 @@ ul{
   --range_80-32_1280-641:clamp(2rem, 7.5117370892vw + -1.0093896714rem, 5rem);
   --range_48-32_1280-641:clamp(2rem, 2.5039123631vw + 0.9968701095rem, 3rem);
   --range_24-18_1280-641:clamp(1.125rem, 0.9389671362vw + 0.7488262911rem, 1.5rem);
+  --range_22-18_1280-641:clamp(1.125rem, 0.6259780908vw + 0.8742175274rem, 1.375rem);
   --range_18-16_1280-641:clamp(1rem, 0.3129890454vw + 0.8746087637rem, 1.125rem);
   --range_32-23_640-320:clamp(1.4375rem, 2.8125vw + 0.875rem, 2rem);
 }
@@ -378,22 +379,20 @@ img,object,picture,svg,video{
   align-items:center;
   display:flex;
   flex-flow:row wrap;
-  font-size:1em;
-  gap:.5em 1em;
+  gap:.625rem 1.125rem;
   justify-content:center;
-  padding-bottom:.625em;
-  padding-top:.625em;
+  padding-bottom:.625rem;
+  padding-top:.625rem;
   position:relative;
 }
 
 .header__logo-heading{
   color:hsla(0,0%,86%,.5);
-  font-size:1.5em;
+  font-size:1.75rem;
 }
 
 .header__contacts-wrapper{
   flex-grow:1;
-  gap:.5em;
   justify-content:flex-end;
   position:relative;
   z-index:55;
@@ -406,7 +405,7 @@ img,object,picture,svg,video{
 }
 
 .header__contacts-block{
-  gap:.5em 1em;
+  gap:.625rem 1.125rem;
   justify-content:center;
 }
 
@@ -414,7 +413,8 @@ img,object,picture,svg,video{
   align-items:center;
   display:flex;
   flex-flow:row nowrap;
-  gap:.3em;
+  font-size:var(--range_22-18_1280-641);
+  gap:4px;
   justify-content:center;
   text-decoration:none;
   transform-origin:100% 50%;
@@ -425,11 +425,11 @@ img,object,picture,svg,video{
   transform:translateX(-.3em);
 }
 .icon-link__phone-icon{
-  width:1.2em;
+  width:.75em;
   fill:#ff8502;
 }
 .icon-link__social-icon{
-  width:1.375em;
+  width:1.375rem;
 }
 .icon-link__text{
   font-family:Jost,sans-serif;
@@ -439,26 +439,24 @@ img,object,picture,svg,video{
 }
 .icon-link__text.icon-link__text--phone{
   color:#ff8502;
-  font-size:1.375em;
   font-weight:700;
 }
 .icon-link__text.icon-link__text--social-icon{
   color:#fff;
-  font-size:1em;
-  font-weight:700;
 }
 
 .social-icons-wrapper{
   align-items:center;
   display:flex;
   flex-flow:row nowrap;
-  gap:.6em;
+  gap:8px;
   justify-content:center;
 }
 
 .social-icons-wrapper__social-icon{
+  padding:6px;
   transition:transform .15s ease-in-out;
-  width:1.8em;
+  width:2.75rem;
 }
 .social-icons-wrapper__social-icon:hover{
   transform:scale(1.1);
@@ -496,7 +494,6 @@ img,object,picture,svg,video{
   flex-flow:column wrap;
   gap:.6em;
   justify-content:flex-start;
-  padding:.6em 0;
   transform:translateY(-100%);
   transition:transform .3s ease-in-out;
 }
@@ -509,10 +506,11 @@ img,object,picture,svg,video{
   cursor:pointer;
   display:flex;
   flex-flow:row nowrap;
-  height:1.8em;
+  height:2rem;
   justify-content:center;
+  margin:6px;
   transition:transform .2s ease-in-out,background-color .2s ease;
-  width:1.8em;
+  width:2rem;
 }
 .lang-switcher__lang-icon:not(.active):hover{
   background-color:#cc5200;
@@ -530,11 +528,11 @@ img,object,picture,svg,video{
   display:flex;
   flex-flow:row wrap;
   justify-content:flex-end;
-  padding-top:.56em;
+  padding-top:.56rem;
   width:100%;
 }
 .header__nav.abs{
-  backdrop-filter:blur(.2em);
+  backdrop-filter:blur(.2rem);
   background-color:hsla(0,0%,100%,.5);
   display:block;
   left:0;
@@ -551,7 +549,7 @@ img,object,picture,svg,video{
   justify-content:flex-end;
   margin:0 auto;
   max-width:1280px;
-  padding:3em 2.2em .5em;
+  padding:3rem 2.2rem .5rem;
   width:100%;
 }
 
@@ -589,10 +587,11 @@ img,object,picture,svg,video{
   border:2px solid #ff8502;
   border-radius:50%;
   cursor:pointer;
-  height:1.8em;
+  height:2rem;
+  margin:6px;
   position:relative;
   transition:background-color .2s ease-in-out;
-  width:1.8em;
+  width:2rem;
 }
 .burger_nav:hover{
   background-color:#ff8502;
@@ -676,7 +675,7 @@ img,object,picture,svg,video{
   background-color:#fff;
   box-sizing:border-box;
   color:#655c52;
-  font-size:var(--range_18-15px_convert-rem_view_max-1280_min-640px);
+  font-size:1rem;
   margin:0 auto;
   max-width:1440px;
   position:relative;
@@ -1232,8 +1231,11 @@ img,object,picture,svg,video{
   .header-layer{
     background:linear-gradient(90deg, #282017 35%, rgba(65,57,48,0) 75%);
   }
-  .header,.header__nav.abs .header__nav-list{
-    font-size:.78em;
+  .header__logo-heading{
+    font-size:1.5rem;
+  }
+  .header__nav.abs .header__nav-list{
+    font-size:.78rem;
   }
   .button-request{
     font-size:1.185rem;
@@ -1322,8 +1324,8 @@ img,object,picture,svg,video{
     top:5%;
     transform:none;
   }
-  .icon-link__text.icon-link__text--phone{
-    font-size:1.2em;
+  .header__logo-heading{
+    font-size:1.2rem;
   }
   .icon-link__text.icon-link__text--social-icon{
     font-size:.8em;
@@ -1336,14 +1338,14 @@ img,object,picture,svg,video{
   }
   .header__nav.abs .header__nav-list{
     align-items:flex-end;
-    -moz-column-gap:.5em;
-         column-gap:.5em;
+    -moz-column-gap:.5rem;
+         column-gap:.5rem;
     display:flex;
     flex-flow:column wrap;
     justify-content:center;
-    max-width:20em;
-    padding-bottom:1em;
-    padding-top:1em;
+    max-width:20rem;
+    padding-bottom:1rem;
+    padding-top:1rem;
   }
   .burger_nav.hidden{
     display:inline-block;
@@ -1362,6 +1364,11 @@ img,object,picture,svg,video{
   }
   .section__text-block--single{
     max-width:27em;
+  }}
+@media (max-width:768px) and (min-width:641px){
+  .header__contacts-block{
+    -moz-column-gap:.5rem;
+         column-gap:.5rem;
   }}
 @media (max-width:640px){
   .section{
@@ -1387,15 +1394,14 @@ img,object,picture,svg,video{
   }
   .header{
     flex-direction:column;
-    font-size:1em;
   }
   .header__nav.abs .header__nav-list-wrapper{
-    font-size:1.1em;
+    font-size:1.1rem;
     justify-content:center;
   }
   .header__nav.abs .header__nav-list{
     align-items:center;
-    padding-top:3em;
+    padding-top:3rem;
   }
   .button-request{
     font-size:1rem;
@@ -1545,7 +1551,7 @@ img,object,picture,svg,video{
   }}
 @media (max-width:375px){
   .header__nav.abs .header__nav-list{
-    padding-top:5em;
+    padding-top:5rem;
   }
   .scrolledNav__contacts-block{
     align-items:center;
