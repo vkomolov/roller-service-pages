@@ -30,7 +30,7 @@
 }
 
 .button-request {
-  font-family: "Open Sans", sans-serif;
+  font-family: "Open Sans", "Open Sans Fallback", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 1.25rem;
@@ -264,19 +264,19 @@
 }
 
 .content-block-item__heading {
-  font-size: 1em;
+  font-size: 1rem;
   text-align: center;
   margin-bottom: 2em;
   word-wrap: break-word;
 
   /* mobile (landscape): (max-width: 768px)*/
   @include root.maxMobileLandscape {
-    font-size: 16px;
+    font-size: 1rem;
   }
 }
 
 .content-block-item__text-block {
-  font-size: 16px;
+  font-size: 1rem;
 
   /* mobile (landscape): (max-width: 768px)*/
   @include root.maxMobileLandscape {
@@ -803,7 +803,7 @@
 }
 
 .section__img-wrapper--hero {
-  width: 6.5em;
+  width: 6.5rem;
 
   ////////// GSAP:
   transform: scale(0);
@@ -1150,7 +1150,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-family: "Jost", sans-serif;
+  font-family: "Roboto", "Roboto Fallback", system-ui, sans-serif;
   font-weight: 700;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

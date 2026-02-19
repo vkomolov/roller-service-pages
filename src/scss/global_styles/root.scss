@@ -36,7 +36,7 @@
 
 /////// STYLES ///////
 body {
-  font-family: "Open Sans", sans-serif;
+  font-family: "Open Sans", "Open Sans Fallback", Arial, sans-serif;
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -60,7 +60,7 @@ body:before {
 /*****************END TOP BORDER BODY************/
 
 h1, h2, h3, h4, h5 {
-  font-family: "Ubuntu", sans-serif;
+  font-family: "Roboto", "Roboto Fallback", system-ui, sans-serif;
   font-weight: 700;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -78,7 +78,7 @@ h2, h3, h4, h5 {
 img, svg, picture, video, object {
   width: 100%;
   max-width: 100%;
-  //height: auto;
+  height: auto;
   //object-fit: cover;
   //object-position: center;
   //vertical-align: top;

@@ -13,6 +13,19 @@
   }
 }
 
+@keyframes scaleXZero {
+  0% {
+    transform: scaleX(0.0);
+  }
+  50% {
+    transform: scaleX(1.15);
+
+  }
+  100% {
+    transform: scaleX(1.0);
+  }
+}
+
 @keyframes scaleUpZero {
   0% {
     transform: scale(0);

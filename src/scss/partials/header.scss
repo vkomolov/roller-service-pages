@@ -9,15 +9,9 @@
   width: 100%;
   background: linear-gradient(to right, rgba(40, 32, 23, 1) 25%, $rgba_opacity-0 80%);
 
-  /* tablet (portrait): (max-width: 1024px) */
-  @include media.maxTabletPortrait {
-    background: linear-gradient(to right, rgba(40, 32, 23, 1) 35%, $rgba_opacity-0 75%);
-  }
-
   /* mobile (portrait wide): (max-width: 640px) */
   @include media.maxMobilePortraitWide {
     background: linear-gradient(to right, rgba(40, 32, 23, 1) 60%, rgba(101, 92, 82, .7) 100%);
-    //background-color: rgba(40, 32, 23, .8);
   }
 }
 
@@ -42,16 +36,18 @@
 
 .header__logo-heading {
   font-size: 1.75rem;
-  //font-size: var(--range_28-21_1280-641);
   color: rgba(220, 220, 220, .5);
+  //color: $color-01;
+
+  @include mix.text-shadow(0.07em, 0.07em);
 
   /* tablet (portrait): (max-width: 1024px) */
   @include media.maxTabletPortrait {
     font-size: 1.5rem;
   }
 
-  /* mobile (landscape): (max-width: 768px)*/
-  @include media.maxMobileLandscape {
+  /* mobile (landscape): (max-width: 768px) and (min-width: 641px) */
+  @include media.rangeMobileLandscape {
     font-size: 1.2rem;
   }
 }
@@ -62,7 +58,6 @@
   flex-grow: 1;
 
   @include mix.flex-box(row, flex-end, center, wrap);
-  //gap: 0.5em;
 }
 
 .header__contacts-block {
@@ -76,7 +71,7 @@
 }
 
 .icon-link {
-  font-size: var(--range_22-18_1280-641);
+  font-size: var(--range_24-18_1280-641);
   text-decoration: none;
   transform-origin: 100% 50%;
   transition: transform 0.15s ease-in-out, text-shadow 0.15s ease-in-out;
@@ -85,9 +80,9 @@
   gap: 4px;
 
   &:hover {
-    transform: translateX(-0.3em);
+    transform: translateX(-0.3rem);
 
-    @include mix.text-shadow(0, 0.5em, rgba(255, 255, 255, 1));
+    @include mix.text-shadow(0, 0.5rem, rgba(255, 255, 255, 1));
   }
 
   &__phone-icon {
@@ -100,31 +95,22 @@
   }
 
   &__text {
-    font-family: "Jost", sans-serif;
+    font-family: "Roboto", "Roboto Fallback", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    line-height: 1;
+    //line-height: 1;
 
     &.icon-link__text--phone {
       color: $color_01;
-      //font-size: var(--range_22-18_1280-641);
       font-weight: 700;
-
-      //@include mix.init-font(1.375rem, 700);
-
-      /* mobile (landscape): (max-width: 768px)*/
-/*      @include media.maxMobileLandscape {
-        font-size: 1.2rem;
-      }*/
     }
 
     &.icon-link__text--social-icon {
       color: $white;
-      //@include mix.init-font(1em, 700);
 
       /* mobile (landscape): (max-width: 768px)*/
       @include media.maxMobileLandscape {
-        font-size: 0.8em;
+        font-size: 0.8rem;
       }
     }
   }
@@ -175,10 +161,8 @@
 }
 
 #lang-list {
-  //padding: 0.6em 0;
-
   @include mix.flex-box(column, flex-start, center);
-  gap: 0.6em;
+  gap: 0.6rem;
   transform: translateY(-100%);
   transition: transform 0.3s ease-in-out;
 }
@@ -254,29 +238,29 @@
       /* mobile (landscape): (max-width: 768px)*/
       @include media.maxMobileLandscape {
         max-width: 20rem;
-        padding-bottom: 1em;
-        padding-top: 1em;
+        padding-bottom: 1rem;
+        padding-top: 1rem;
 
         @include mix.flex-box(column, center, flex-end);
-        column-gap: 0.5em;
+        column-gap: 0.5rem;
       }
 
       /* mobile (portrait wide): (max-width: 640px) */
       @include media.maxMobilePortraitWide {
         align-items: center;
-        padding-top: 3em;
+        padding-top: 3rem;
       }
 
       /* mobile (medium): (max-width: 375px) */
       @include media.maxMobileMedium {
-        padding-top: 5em;
+        padding-top: 5rem;
       }
     }
   }
 }
 
 .header__nav-list {
-  font-family: "Ubuntu", sans-serif;
+  font-family: "Roboto", "Roboto Fallback", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
@@ -284,7 +268,7 @@
   font-weight: 700;
 
   @include mix.flex-box(row, center, center, wrap);
-  gap: 0.5em .75em;
+  gap: 0.5rem .75rem;
 }
 
 .nav-link {
@@ -292,18 +276,32 @@
   color: $color-01;
   cursor: default;
 
-  @include mix.text-shadow(0.05em, 0.05em);
+  @include mix.text-shadow(0.05rem, 0.05rem);
   @include mix.transition(transform);
 
   &:not(.active):hover {
     color: $color-01-darken;
-    @include mix.text-shadow(0.07em, 0.07em);
-    transform: translateY(-0.1em);
+    //@include mix.text-shadow(0.07rem, 0.07rem);
+    transform: translateY(-0.1rem);
     cursor: pointer;
   }
 
   &.active {
+    position: relative;
+    //color: $color-02;
     color: $color-01-darkest;
+
+    &:after {
+      position: absolute;
+      display: block;
+      content: "";
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      transform: scaleX(0);
+      border-bottom: 2px solid $color-01-darkest;
+      animation: scaleXZero 0.5s ease-in-out forwards;
+    }
   }
 }
 
@@ -369,8 +367,8 @@
   span, span:before, span:after {
     position: absolute;
     display: inline-block;
-    width: 1.1em;
-    height: 0.19em;
+    width: 1.1rem;
+    height: 0.19rem;
     background-color: $color-01;
     transition: background-color, top, transform 0.2s ease-in-out;
   }
@@ -402,57 +400,26 @@
   width: 100%;
   z-index: 50;
   background-color: rgba(255, 255, 255, .2);
-  backdrop-filter: blur(.2em);
+  backdrop-filter: blur(.2rem);
 }
 
 .scrolledNav__contacts-block {
   width: 100%;
   max-width: $maxContentWidth;
   margin: 0 auto;
-  padding: 0.4em 2em;
+  padding: 0.4rem 2rem;
 
   @include mix.flex-box(row, flex-end, center, wrap);
-  gap: 0.4em 1em;
+  gap: 0.4rem 1rem;
 
   /* mobile (portrait narrow): (max-width: 480px)*/
   @include media.maxMobilePortraitNarrow {
-    gap: 0.4em 0.7em;
+    gap: 0.4rem 0.7rem;
   }
 
   /* mobile (medium): (max-width: 375px) */
   @include media.maxMobileMedium {
     @include mix.flex-box(row, center, center, wrap);
-  }
-
-  .icon-link {
-    span {
-      /* mobile (medium): (max-width: 375px) */
-      @include media.maxMobileMedium {
-        //font-size: 1.12em;
-      }
-    }
-  }
-
-  .icon-link__phone-icon {
-    /* mobile (portrait narrow): (max-width: 480px)*/
-    @include media.maxMobilePortraitNarrow {
-      //width: 1.1em;
-    }
-  }
-
-  .social-icons-wrapper__social-icon {
-    /* mobile (portrait narrow): (max-width: 480px)*/
-    @include media.maxMobilePortraitNarrow {
-      //width: 1.5em;
-    }
-  }
-
-  .burger_nav {
-    /* mobile (medium): (max-width: 375px) */
-    @include media.maxMobileMedium {
-      //width: 1.5em;
-      //height: 1.5em;
-    }
   }
 }
 

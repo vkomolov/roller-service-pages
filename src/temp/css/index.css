@@ -177,43 +177,73 @@ ul {
   display: none;
 }
 
+/*** Open Sans 400 fallback ***/
+@font-face {
+  font-family: "Open Sans Fallback";
+  src: local("Arial");
+  font-weight: 400;
+  size-adjust: 103.2%;
+  ascent-override: 106.9%;
+  descent-override: 29.3%;
+  line-gap-override: 0%;
+}
+/*** Open Sans 600 fallback ***/
+@font-face {
+  font-family: "Open Sans Fallback";
+  src: local("Arial");
+  font-weight: 600;
+  size-adjust: 103.2%;
+  ascent-override: 106.9%;
+  descent-override: 29.3%;
+  line-gap-override: 0%;
+}
 @font-face {
   font-family: "Open Sans";
   font-weight: 400;
   font-style: normal;
-  src: url("/assets/fonts/OpenSans/OpenSans-Regular.woff2") format("woff2"), url("/assets/fonts/OpenSans/OpenSans-Regular.woff") format("woff"), url("/assets/fonts/OpenSans/OpenSans-Regular.ttf") format("truetype");
+  font-display: swap;
+  src: url("/assets/fonts/OpenSans/OpenSans-Regular.woff2") format("woff2"), url("/assets/fonts/OpenSans/OpenSans-Regular.woff") format("woff");
 }
 @font-face {
   font-family: "Open Sans";
   font-weight: 600;
   font-style: normal;
-  /*  font-display: swap;
-    size-adjust: 100%;*/
-  src: url("/assets/fonts/OpenSans/OpenSans-SemiBold.woff2") format("woff2"), url("/assets/fonts/OpenSans/OpenSans-SemiBold.woff") format("woff"), url("/assets/fonts/OpenSans/OpenSans-SemiBold.ttf") format("truetype");
+  font-display: swap;
+  src: url("/assets/fonts/OpenSans/OpenSans-SemiBold.woff2") format("woff2"), url("/assets/fonts/OpenSans/OpenSans-SemiBold.woff") format("woff");
 }
+/*** Roboto 400 fallback ***/
 @font-face {
-  font-family: "Ubuntu";
+  font-family: "Roboto Fallback";
+  src: local("Arial");
+  font-weight: 400;
+  size-adjust: 102.7%;
+  ascent-override: 93%;
+  descent-override: 23%;
+  line-gap-override: 0%;
+}
+/*** Roboto 700 fallback ***/
+@font-face {
+  font-family: "Roboto Fallback";
+  src: local("Arial Bold"), local("Arial-BoldMT");
   font-weight: 700;
-  font-style: normal;
-  /*  font-display: swap;
-    size-adjust: 100%;*/
-  src: url("/assets/fonts/Ubuntu/Ubuntu-Bold.woff2") format("woff2"), url("/assets/fonts/Ubuntu/Ubuntu-Bold.woff") format("woff"), url("/assets/fonts/Ubuntu/Ubuntu-Bold.ttf") format("truetype");
+  size-adjust: 96.5%;
+  ascent-override: 96%;
+  descent-override: 23%;
+  line-gap-override: 0%;
 }
 @font-face {
-  font-family: "Jost";
+  font-family: "Roboto";
   font-weight: 400;
   font-style: normal;
-  /*  font-display: swap;
-    size-adjust: 100%;*/
-  src: url("/assets/fonts/Jost/Jost-Regular.woff2") format("woff2"), url("/assets/fonts/Jost/Jost-Regular.woff") format("woff"), url("/assets/fonts/Jost/Jost-Regular.ttf") format("truetype");
+  font-display: swap;
+  src: url("/assets/fonts/Roboto/Roboto-Regular.woff2") format("woff2"), url("/assets/fonts/Roboto/Roboto-Regular.woff") format("woff");
 }
 @font-face {
-  font-family: "Jost";
+  font-family: "Roboto";
   font-weight: 700;
   font-style: normal;
-  /*  font-display: swap;
-    size-adjust: 100%;*/
-  src: url("/assets/fonts/Jost/Jost-Bold.woff2") format("woff2"), url("/assets/fonts/Jost/Jost-Bold.woff") format("woff"), url("/assets/fonts/Jost/Jost-Bold.ttf") format("truetype");
+  font-display: swap;
+  src: url("/assets/fonts/Roboto/Roboto-Bold.woff2") format("woff2"), url("/assets/fonts/Roboto/Roboto-Bold.woff") format("woff");
 }
 /* retina display (2x) */
 /* large desktop: (min-width: 1921px) */
@@ -266,6 +296,17 @@ h1 {
   }
   100% {
     transform: scale(1);
+  }
+}
+@keyframes scaleXZero {
+  0% {
+    transform: scaleX(0);
+  }
+  50% {
+    transform: scaleX(1.15);
+  }
+  100% {
+    transform: scaleX(1);
   }
 }
 @keyframes scaleUpZero {
@@ -356,7 +397,7 @@ h1 {
   scrollbar-gutter: stable; //keeping scrollbar space to eliminate content shifting on scrollbar remove...
 }*/
 body {
-  font-family: "Open Sans", sans-serif;
+  font-family: "Open Sans", "Open Sans Fallback", Arial, sans-serif;
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -379,7 +420,7 @@ body:before {
 
 /*****************END TOP BORDER BODY************/
 h1, h2, h3, h4, h5 {
-  font-family: "Ubuntu", sans-serif;
+  font-family: "Roboto", "Roboto Fallback", system-ui, sans-serif;
   font-weight: 700;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -397,6 +438,7 @@ h2, h3, h4, h5 {
 img, svg, picture, video, object {
   width: 100%;
   max-width: 100%;
+  height: auto;
 }
 
 .modal {
@@ -631,13 +673,7 @@ img, svg, picture, video, object {
 .header-layer {
   width: 100%;
   background: linear-gradient(to right, rgb(40, 32, 23) 25%, rgba(65, 57, 48, 0) 80%);
-  /* tablet (portrait): (max-width: 1024px) */
   /* mobile (portrait wide): (max-width: 640px) */
-}
-@media (max-width: 1024px) {
-  .header-layer {
-    background: linear-gradient(to right, rgb(40, 32, 23) 35%, rgba(65, 57, 48, 0) 75%);
-  }
 }
 @media (max-width: 640px) {
   .header-layer {
@@ -665,15 +701,16 @@ img, svg, picture, video, object {
 .header__logo-heading {
   font-size: 1.75rem;
   color: rgba(220, 220, 220, 0.5);
+  text-shadow: 0.07em 0.07em 0.07em rgba(0, 0, 0, 0.8);
   /* tablet (portrait): (max-width: 1024px) */
-  /* mobile (landscape): (max-width: 768px)*/
+  /* mobile (landscape): (max-width: 768px) and (min-width: 641px) */
 }
 @media (max-width: 1024px) {
   .header__logo-heading {
     font-size: 1.5rem;
   }
 }
-@media (max-width: 768px) {
+@media (max-width: 768px) and (min-width: 641px) {
   .header__logo-heading {
     font-size: 1.2rem;
   }
@@ -704,7 +741,7 @@ img, svg, picture, video, object {
 }
 
 .icon-link {
-  font-size: var(--range_22-18_1280-641);
+  font-size: var(--range_24-18_1280-641);
   text-decoration: none;
   transform-origin: 100% 50%;
   transition: transform 0.15s ease-in-out, text-shadow 0.15s ease-in-out;
@@ -715,8 +752,8 @@ img, svg, picture, video, object {
   gap: 4px;
 }
 .icon-link:hover {
-  transform: translateX(-0.3em);
-  text-shadow: 0 0 0.5em rgb(255, 255, 255);
+  transform: translateX(-0.3rem);
+  text-shadow: 0 0 0.5rem rgb(255, 255, 255);
 }
 .icon-link__phone-icon {
   width: 0.75em;
@@ -726,18 +763,13 @@ img, svg, picture, video, object {
   width: 1.375rem;
 }
 .icon-link__text {
-  font-family: "Jost", sans-serif;
+  font-family: "Roboto", "Roboto Fallback", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1;
 }
 .icon-link__text.icon-link__text--phone {
   color: rgb(255, 133, 2);
   font-weight: 700;
-  /* mobile (landscape): (max-width: 768px)*/
-  /*      @include media.maxMobileLandscape {
-          font-size: 1.2rem;
-        }*/
 }
 .icon-link__text.icon-link__text--social-icon {
   color: rgb(255, 255, 255);
@@ -745,7 +777,7 @@ img, svg, picture, video, object {
 }
 @media (max-width: 768px) {
   .icon-link__text.icon-link__text--social-icon {
-    font-size: 0.8em;
+    font-size: 0.8rem;
   }
 }
 
@@ -795,7 +827,7 @@ img, svg, picture, video, object {
   flex-flow: column wrap;
   justify-content: flex-start;
   align-items: center;
-  gap: 0.6em;
+  gap: 0.6rem;
   transform: translateY(-100%);
   transition: transform 0.3s ease-in-out;
 }
@@ -879,29 +911,29 @@ img, svg, picture, video, object {
 @media (max-width: 768px) {
   .header__nav.abs .header__nav-list {
     max-width: 20rem;
-    padding-bottom: 1em;
-    padding-top: 1em;
+    padding-bottom: 1rem;
+    padding-top: 1rem;
     display: flex;
     flex-flow: column wrap;
     justify-content: center;
     align-items: flex-end;
-    column-gap: 0.5em;
+    column-gap: 0.5rem;
   }
 }
 @media (max-width: 640px) {
   .header__nav.abs .header__nav-list {
     align-items: center;
-    padding-top: 3em;
+    padding-top: 3rem;
   }
 }
 @media (max-width: 375px) {
   .header__nav.abs .header__nav-list {
-    padding-top: 5em;
+    padding-top: 5rem;
   }
 }
 
 .header__nav-list {
-  font-family: "Ubuntu", sans-serif;
+  font-family: "Roboto", "Roboto Fallback", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: var(--range_18-14_1280-769);
@@ -910,24 +942,35 @@ img, svg, picture, video, object {
   flex-flow: row wrap;
   justify-content: center;
   align-items: center;
-  gap: 0.5em 0.75em;
+  gap: 0.5rem 0.75rem;
 }
 
 .nav-link {
   text-decoration: none;
   color: rgb(255, 133, 2);
   cursor: default;
-  text-shadow: 0.05em 0.05em 0.05em rgba(0, 0, 0, 0.8);
+  text-shadow: 0.05rem 0.05rem 0.05rem rgba(0, 0, 0, 0.8);
   transition: transform 0.15s ease-in-out;
 }
 .nav-link:not(.active):hover {
   color: rgb(204, 82, 0);
-  text-shadow: 0.07em 0.07em 0.07em rgba(0, 0, 0, 0.8);
-  transform: translateY(-0.1em);
+  transform: translateY(-0.1rem);
   cursor: pointer;
 }
 .nav-link.active {
+  position: relative;
   color: rgb(138, 55, 0);
+}
+.nav-link.active:after {
+  position: absolute;
+  display: block;
+  content: "";
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(0);
+  border-bottom: 2px solid rgb(138, 55, 0);
+  animation: scaleXZero 0.5s ease-in-out forwards;
 }
 
 .burger_nav {
@@ -983,8 +1026,8 @@ img, svg, picture, video, object {
 .burger_nav span, .burger_nav span:before, .burger_nav span:after {
   position: absolute;
   display: inline-block;
-  width: 1.1em;
-  height: 0.19em;
+  width: 1.1rem;
+  height: 0.19rem;
   background-color: rgb(255, 133, 2);
   transition: background-color, top, transform 0.2s ease-in-out;
 }
@@ -1011,25 +1054,25 @@ img, svg, picture, video, object {
   width: 100%;
   z-index: 50;
   background-color: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(0.2em);
+  backdrop-filter: blur(0.2rem);
 }
 
 .scrolledNav__contacts-block {
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0.4em 2em;
+  padding: 0.4rem 2rem;
   display: flex;
   flex-flow: row wrap;
   justify-content: flex-end;
   align-items: center;
-  gap: 0.4em 1em;
+  gap: 0.4rem 1rem;
   /* mobile (portrait narrow): (max-width: 480px)*/
   /* mobile (medium): (max-width: 375px) */
 }
 @media (max-width: 480px) {
   .scrolledNav__contacts-block {
-    gap: 0.4em 0.7em;
+    gap: 0.4rem 0.7rem;
   }
 }
 @media (max-width: 375px) {
@@ -1040,18 +1083,7 @@ img, svg, picture, video, object {
     align-items: center;
   }
 }
-.scrolledNav__contacts-block .icon-link span {
-  /* mobile (medium): (max-width: 375px) */
-}
-.scrolledNav__contacts-block .icon-link__phone-icon {
-  /* mobile (portrait narrow): (max-width: 480px)*/
-}
-.scrolledNav__contacts-block .social-icons-wrapper__social-icon {
-  /* mobile (portrait narrow): (max-width: 480px)*/
-}
-.scrolledNav__contacts-block .burger_nav {
-  /* mobile (medium): (max-width: 375px) */
-}
+
 .total-wrapper {
   box-sizing: border-box;
   position: relative;
@@ -1069,7 +1101,7 @@ img, svg, picture, video, object {
 }
 
 .button-request {
-  font-family: "Open Sans", sans-serif;
+  font-family: "Open Sans", "Open Sans Fallback", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 1.25rem;
@@ -1293,7 +1325,7 @@ img, svg, picture, video, object {
 }
 
 .content-block-item__heading {
-  font-size: 1em;
+  font-size: 1rem;
   text-align: center;
   margin-bottom: 2em;
   word-wrap: break-word;
@@ -1301,12 +1333,12 @@ img, svg, picture, video, object {
 }
 @media (max-width: 768px) {
   .content-block-item__heading {
-    font-size: 16px;
+    font-size: 1rem;
   }
 }
 
 .content-block-item__text-block {
-  font-size: 16px;
+  font-size: 1rem;
   /* mobile (landscape): (max-width: 768px)*/
 }
 @media (max-width: 768px) {
@@ -1678,7 +1710,7 @@ img, svg, picture, video, object {
 }
 
 .section__img-wrapper--hero {
-  width: 6.5em;
+  width: 6.5rem;
   transform: scale(0);
 }
 
@@ -1985,7 +2017,7 @@ img, svg, picture, video, object {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-family: "Jost", sans-serif;
+  font-family: "Roboto", "Roboto Fallback", system-ui, sans-serif;
   font-weight: 700;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

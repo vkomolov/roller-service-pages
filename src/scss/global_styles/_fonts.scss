@@ -1,55 +1,84 @@
 
+/*** Open Sans 400 fallback ***/
+@font-face {
+  font-family: "Open Sans Fallback";
+  src: local("Arial");
+  font-weight: 400;
+  size-adjust: 103.2%;
+  ascent-override: 106.9%;
+  descent-override: 29.3%;
+  line-gap-override: 0%;
+}
+
+/*** Open Sans 600 fallback ***/
+@font-face {
+  font-family: "Open Sans Fallback";
+  src: local("Arial");
+  font-weight: 600;
+  size-adjust: 103.2%;
+  ascent-override: 106.9%;
+  descent-override: 29.3%;
+  line-gap-override: 0%;
+}
+
+
 @font-face {
   font-family: "Open Sans";
   font-weight: 400;
   font-style: normal;
-  //font-display: swap;
+  font-display: swap;
   //size-adjust: 100%;
   src: url("/assets/fonts/OpenSans/OpenSans-Regular.woff2") format("woff2"),
-  url("/assets/fonts/OpenSans/OpenSans-Regular.woff") format("woff"),
-  url("/assets/fonts/OpenSans/OpenSans-Regular.ttf") format("truetype");
+  url("/assets/fonts/OpenSans/OpenSans-Regular.woff") format("woff")
 }
 
 @font-face {
   font-family: "Open Sans";
   font-weight: 600;
   font-style: normal;
-/*  font-display: swap;
-  size-adjust: 100%;*/
+  font-display: swap;
+  //size-adjust: 100%;
   src: url("/assets/fonts/OpenSans/OpenSans-SemiBold.woff2") format("woff2"),
-  url("/assets/fonts/OpenSans/OpenSans-SemiBold.woff") format("woff"),
-  url("/assets/fonts/OpenSans/OpenSans-SemiBold.ttf") format("truetype");
+  url("/assets/fonts/OpenSans/OpenSans-SemiBold.woff") format("woff")
 }
 
+/*** Roboto 400 fallback ***/
 @font-face {
-  font-family: "Ubuntu";
+  font-family: "Roboto Fallback";
+  src: local("Arial");
+  font-weight: 400;
+
+  size-adjust: 102.7%;
+  ascent-override: 93%;
+  descent-override: 23%;
+  line-gap-override: 0%;
+}
+
+/*** Roboto 700 fallback ***/
+@font-face {
+  font-family: "Roboto Fallback";
+  src: local("Arial Bold"), local("Arial-BoldMT");
   font-weight: 700;
-  font-style: normal;
-/*  font-display: swap;
-  size-adjust: 100%;*/
-  src: url("/assets/fonts/Ubuntu/Ubuntu-Bold.woff2") format("woff2"),
-  url("/assets/fonts/Ubuntu/Ubuntu-Bold.woff") format("woff"),
-  url("/assets/fonts/Ubuntu/Ubuntu-Bold.ttf") format("truetype");
+  size-adjust: 96.5%;
+  ascent-override: 96%;
+  descent-override: 23%;
+  line-gap-override: 0%;
 }
 
 @font-face {
-  font-family: "Jost";
+  font-family: "Roboto";
   font-weight: 400;
   font-style: normal;
-/*  font-display: swap;
-  size-adjust: 100%;*/
-  src: url("/assets/fonts/Jost/Jost-Regular.woff2") format("woff2"),
-  url("/assets/fonts/Jost/Jost-Regular.woff") format("woff"),
-  url("/assets/fonts/Jost/Jost-Regular.ttf") format("truetype");
+  font-display: swap;
+  src: url("/assets/fonts/Roboto/Roboto-Regular.woff2") format("woff2"),
+  url("/assets/fonts/Roboto/Roboto-Regular.woff") format("woff")
 }
 
 @font-face {
-  font-family: "Jost";
+  font-family: "Roboto";
   font-weight: 700;
   font-style: normal;
-/*  font-display: swap;
-  size-adjust: 100%;*/
-  src: url("/assets/fonts/Jost/Jost-Bold.woff2") format("woff2"),
-  url("/assets/fonts/Jost/Jost-Bold.woff") format("woff"),
-  url("/assets/fonts/Jost/Jost-Bold.ttf") format("truetype");
+  font-display: swap;
+  src: url("/assets/fonts/Roboto/Roboto-Bold.woff2") format("woff2"),
+  url("/assets/fonts/Roboto/Roboto-Bold.woff") format("woff")
 }
