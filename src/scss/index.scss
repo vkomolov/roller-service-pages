@@ -9,8 +9,6 @@
   box-sizing: border-box;
   position: relative;
 
-  //font-size: var(--range_18-16_1280-641);
-  //font-size: 1.125rem;  //18px
   font-size: 1rem;
 
   max-width: root.$maxViewWidth; //1440px;
@@ -21,9 +19,10 @@
 }
 
 .section {
+  position: relative;
   //FOR GSAP:
-  overflow: hidden; //for transformed, not absolute elements
-  font-size: 1em; //font-size inherits from total-wrapper
+  overflow: clip; //cheaper than hidden...
+  //font-size: 1rem;
   width: 100%;
 
   @extend %sectionWrapper;  //margin-top, margin-bottom calculations
@@ -99,40 +98,15 @@
 .section__heading-block {
   text-transform: uppercase;
 
-  .accent {
-    display: inline-block;
-    font-size: 1.611em;
-    line-height: 1;
-
-    //////// GSAP:
-    opacity: 0;
-
-    /* mobile (portrait narrow): (max-width: 480px)*/
-    @include root.maxMobilePortraitNarrow {
-      margin-bottom: 0.25em;
-    }
-  }
-
-  .rest-of-heading {
-    display: inline-block;
-
-    //////// GSAP:
-    opacity: 0;
-  }
-
   .sub-p {
     text-transform: initial;
-    font-size: 0.4em;
-    margin-top: 1.5em;
+    font-size: 0.4rem;
+    margin-top: 1.5rem;
 
     /* mobile (portrait wide): (max-width: 640px) */
     @include root.maxMobilePortraitWide {
       font-size: 14px;
     }
-  }
-
-  h1, h2, {
-    font-size: inherit;
   }
 
   hr {
@@ -145,8 +119,6 @@
 .section__content-block {
   width: 100%;
   display: flex;
-
-  //@include transition();  //transition all
 
   /* mobile (portrait wide): (max-width: 640px) */
   @include root.maxMobilePortraitWide {
@@ -193,10 +165,12 @@
 }
 
 .section__text-block {
+  p {
+    overflow-wrap: break-word;
+  }
 
   p + p {
     margin-top: 0.5em;
-    overflow-wrap: break-word;
   }
 }
 
@@ -224,6 +198,18 @@
 }
 
 .section__img-wrapper {
+//! .section__img-wrapper must be used in combination with an added class, which should have a width.
+//! As the added class has only width, the browser will have to know the height from the image for
+//! creating necessary space...
+//! This simplifies the work by allowing to specify only the width of the container and to get
+//! the height directly from the image using aspect ratio, calculated by browser...
+//! For lazy loading the image MUST have inline width and height, for browser to calculate aspect ratio
+//! beforehand, without preliminary loading of the image. Otherwise loading="lazy" will no work...
+  img {
+    width: 100%;
+    height: auto;
+    display: block; //removes the strange gap under the image
+  }
 }
 
 .section__bidding-block {
@@ -304,527 +290,100 @@
 
 /////////// SECTION hero //////////
 .section--hero {
-  font-size: 1.8em;
-  //background-origin: border-box;
-  //background-position: 85%;
-  //background-repeat: no-repeat;
-  background-size: cover;
+  min-height: var(--range_735-640_1280-641);
 
-  /* tablet (landscape) max-width: 1280px */
-  @include root.maxTabletLandscape {
-    font-size: calc(var(--range_24-18_1280-641) * 1.4);
-  }
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, rgba(40, 32, 23, .8) 35%, rgba(40, 32, 23, 0) 85%);
+    z-index: 1;
+    pointer-events: none;
 
-  /* mobile (portrait wide): (max-width: 640px) */
+    /*** mobile (portrait wide): (max-width: 640px) ***/
   @include root.maxMobilePortraitWide {
-    font-size: 1.6em;
+    background-image: linear-gradient(to right, rgba(40, 32, 23, .6), rgba(40, 32, 23, .5));
   }
-
-  /* mobile (medium): (max-width: 375px) */
-  @include root.maxMobileMedium {
-    font-size: 1.4em;
   }
+}
 
-  &[aria-labelledby="index"] {
-    background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .7) 35%, rgba(40, 32, 23, 0) 85%),
-      image-set(
-          url("/assets/img/heroSection/hero_professional_1440.webp") 1x,
-          url("/assets/img/heroSection/hero_professional_1440.jpg") 1x
-      );
-
-    /* tablet (portrait): (max-width: 1024px) */
-    @include root.maxTabletPortrait {
-      background-image:
-        linear-gradient(to right, rgba(40, 32, 23, .7) 35%, rgba(40, 32, 23, 0) 85%),
-        image-set(
-            url("/assets/img/heroSection/hero_professional_1024.webp") 1x,
-            url("/assets/img/heroSection/hero_professional_1024.jpg") 1x
-        );
-
-      //retina can be included
-      /*    @include root.mediaRetina2x {
-            background-image:
-              linear-gradient(to right, rgba(40, 32, 23, .7) 35%, rgba(40, 32, 23, 0) 85%),
-              image-set(
-                url("/assets/img/heroSection/hero_professional_1024@2x.webp") 2x,
-                url("/assets/img/heroSection/hero_professional_1024@2x.jpg") 2x
-            );
-          }*/
-    }
-
-    /* mobile (portrait wide): (max-width: 640px) */
-    @include root.maxMobilePortraitWide {
-      background-image:
-        linear-gradient(to right, rgba(40, 32, 23, .6), rgba(40, 32, 23, .5)),
-        image-set(
-            url("/assets/img/heroSection/hero_professional_640.webp") 1x,
-            url("/assets/img/heroSection/hero_professional_640.jpg") 1x
-        );
-
-      //retina can be included
-      /*    @include root.mediaRetina2x {
-            background-image:
-              linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .7)),
-              image-set(
-                url("/assets/img/heroSection/hero_professional_640@2x.webp") 2x,
-                url("/assets/img/heroSection/hero_professional_640@2x.jpg") 2x
-            );
-          }*/
-    }
-  }
-
-  &[aria-labelledby="gates"] {
-    background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .8) 35%, rgba(40, 32, 23, 0) 85%),
-      image-set(
-          url("/assets/img/heroSection/gates-automatic_1440.webp") 1x,
-          url("/assets/img/heroSection/gates-automatic_1440.jpg") 1x
-      );
-
-    /* tablet (portrait): (max-width: 1024px) */
-    @include root.maxTabletPortrait {
-      background-image:
-        linear-gradient(to right, rgba(40, 32, 23, .8) 35%, rgba(40, 32, 23, 0) 85%),
-        image-set(
-            url("/assets/img/heroSection/gates-automatic_1024.webp") 1x,
-            url("/assets/img/heroSection/gates-automatic_1024.jpg") 1x
-        );
-
-      //retina can be included
-      /*    @include root.mediaRetina2x {
-            background-image:
-              linear-gradient(to right, rgba(40, 32, 23, .7) 35%, rgba(40, 32, 23, 0) 85%),
-              image-set(
-                url("/assets/img/heroSection/gates-automatic_1024@2x.webp") 2x,
-                url("/assets/img/heroSection/gates-automatic_1024@2x.jpg") 2x
-            );
-          }*/
-    }
-
-    /* mobile (portrait wide): (max-width: 640px) */
-    @include root.maxMobilePortraitWide {
-      background-image:
-        linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .5)),
-        image-set(
-            url("/assets/img/heroSection/gates-automatic_640.webp") 1x,
-            url("/assets/img/heroSection/gates-automatic_640.jpg") 1x
-        );
-
-      //retina can be included
-      /*    @include root.mediaRetina2x {
-            background-image:
-              linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .7)),
-              image-set(
-                url("/assets/img/heroSection/gates-automatic_640@2x.webp") 2x,
-                url("/assets/img/heroSection/gates-automatic_640@2x.jpg") 2x
-            );
-          }*/
-    }
-  }
-
-  &[aria-labelledby="rollers"] {
-    background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .8) 35%, rgba(40, 32, 23, 0) 85%),
-      image-set(
-          url("/assets/img/heroSection/security_shutters_roll-up_1440.webp") 1x,
-          url("/assets/img/heroSection/security_shutters_roll-up_1440.jpg") 1x
-      );
-
-    /* tablet (portrait): (max-width: 1024px) */
-    @include root.maxTabletPortrait {
-      background-image:
-        linear-gradient(to right, rgba(40, 32, 23, .8) 35%, rgba(40, 32, 23, 0) 85%),
-        image-set(
-            url("/assets/img/heroSection/security_shutters_roll-up_1024.webp") 1x,
-            url("/assets/img/heroSection/security_shutters_roll-up_1024.jpg") 1x
-        );
-
-      //retina can be included
-      /*    @include root.mediaRetina2x {
-            background-image:
-              linear-gradient(to right, rgba(40, 32, 23, .7) 35%, rgba(40, 32, 23, 0) 85%),
-              image-set(
-                url("/assets/img/heroSection/security_shutters_roll-up_1024@2x.webp") 2x,
-                url("/assets/img/heroSection/security_shutters_roll-up_1024@2x.jpg") 2x
-            );
-          }*/
-    }
-
-    /* mobile (portrait wide): (max-width: 640px) */
-    @include root.maxMobilePortraitWide {
-      background-image:
-        linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .5)),
-        image-set(
-            url("/assets/img/heroSection/security_shutters_roll-up_640.webp") 1x,
-            url("/assets/img/heroSection/security_shutters_roll-up_640.jpg") 1x
-        );
-
-      //retina can be included
-      /*    @include root.mediaRetina2x {
-            background-image:
-              linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .7)),
-              image-set(
-                url("/assets/img/heroSection/security_shutters_roll-up_640@2x.webp") 2x,
-                url("/assets/img/heroSection/security_shutters_roll-up_640@2x.jpg") 2x
-            );
-          }*/
-    }
-  }
-
-  &[aria-labelledby="automation"] {
-    background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .8) 35%, rgba(40, 32, 23, 0) 85%),
-      image-set(
-          url("/assets/img/heroSection/garage_gate_automation_1440.webp") 1x,
-          url("/assets/img/heroSection/garage_gate_automation_1440.jpg") 1x
-      );
-
-    //retina can be included
-    /*    @include root.mediaRetina2x {
-          background-image:
-            linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .7)),
-            image-set(
-              url("/assets/img/heroSection/garage_gate_automation_1440@2x.webp") 2x,
-              url("/assets/img/heroSection/garage_gate_automation_1440@2x.jpg") 2x
-          );
-        }*/
-
-    /* tablet (portrait): (max-width: 1024px) */
-    @include root.maxTabletPortrait {
-      background-image:
-        linear-gradient(to right, rgba(40, 32, 23, .8) 35%, rgba(40, 32, 23, 0) 85%),
-        image-set(
-            url("/assets/img/heroSection/garage_gate_automation_1024.webp") 1x,
-            url("/assets/img/heroSection/garage_gate_automation_1024.jpg") 1x
-        );
-
-      //retina can be included
-      /*    @include root.mediaRetina2x {
-            background-image:
-              linear-gradient(to right, rgba(40, 32, 23, .7) 35%, rgba(40, 32, 23, 0) 85%),
-              image-set(
-                url("/assets/img/heroSection/garage_gate_automation_1024@2x.webp") 2x,
-                url("/assets/img/heroSection/garage_gate_automation_1024@2x.jpg") 2x
-            );
-          }*/
-    }
-
-    /* mobile (portrait wide): (max-width: 640px) */
-    @include root.maxMobilePortraitWide {
-      background-image:
-        linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .5)),
-        image-set(
-            url("/assets/img/heroSection/garage_gate_automation_640.webp") 1x,
-            url("/assets/img/heroSection/garage_gate_automation_640.jpg") 1x
-        );
-
-      //retina can be included
-      /*    @include root.mediaRetina2x {
-            background-image:
-              linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .7)),
-              image-set(
-                url("/assets/img/heroSection/garage_gate_automation_640@2x.webp") 2x,
-                url("/assets/img/heroSection/garage_gate_automation_640@2x.jpg") 2x
-            );
-          }*/
-    }
-  }
-
-  &[aria-labelledby="barriers"] {
-    background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .8) 35%, rgba(40, 32, 23, 0) 85%),
-      image-set(
-          url("/assets/img/heroSection/barrier_automatic_1440.webp") 1x,
-          url("/assets/img/heroSection/barrier_automatic_1440.jpg") 1x
-      );
-
-    //retina can be included
-    /*    @include root.mediaRetina2x {
-          background-image:
-            linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .7)),
-            image-set(
-              url("/assets/img/heroSection/barrier_automatic_1440@2x.webp") 2x,
-              url("/assets/img/heroSection/barrier_automatic_1440@2x.jpg") 2x
-          );
-        }*/
-
-    /* tablet (portrait): (max-width: 1024px) */
-    @include root.maxTabletPortrait {
-      background-image:
-        linear-gradient(to right, rgba(40, 32, 23, .8) 35%, rgba(40, 32, 23, 0) 85%),
-        image-set(
-            url("/assets/img/heroSection/barrier_automatic_1024.webp") 1x,
-            url("/assets/img/heroSection/barrier_automatic_1024.jpg") 1x
-        );
-
-      //retina can be included
-      /*    @include root.mediaRetina2x {
-            background-image:
-              linear-gradient(to right, rgba(40, 32, 23, .7) 35%, rgba(40, 32, 23, 0) 85%),
-              image-set(
-                url("/assets/img/heroSection/barrier_automatic_1024@2x.webp") 2x,
-                url("/assets/img/heroSection/barrier_automatic_1024@2x.jpg") 2x
-            );
-          }*/
-    }
-
-    /* mobile (portrait wide): (max-width: 640px) */
-    @include root.maxMobilePortraitWide {
-      background-image:
-        linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .5)),
-        image-set(
-            url("/assets/img/heroSection/barrier_automatic_640.webp") 1x,
-            url("/assets/img/heroSection/barrier_automatic_640.jpg") 1x
-        );
-
-      //retina can be included
-      /*    @include root.mediaRetina2x {
-            background-image:
-              linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .7)),
-              image-set(
-                url("/assets/img/heroSection/barrier_automatic_640@2x.webp") 2x,
-                url("/assets/img/heroSection/barrier_automatic_640@2x.jpg") 2x
-            );
-          }*/
-    }
-  }
-
-  &[aria-labelledby="awnings"] {
-    background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .8) 35%, rgba(40, 32, 23, 0) 85%),
-      image-set(
-          url("/assets/img/heroSection/awnings_automatic_1440.webp") 1x,
-          url("/assets/img/heroSection/awnings_automatic_1440.jpg") 1x
-      );
-
-    //retina can be included
-    /*    @include root.mediaRetina2x {
-          background-image:
-            linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .7)),
-            image-set(
-              url("/assets/img/heroSection/awnings_automatic_1440@2x.webp") 2x,
-              url("/assets/img/heroSection/awnings_automatic_1440@2x.jpg") 2x
-          );
-        }*/
-
-    /* tablet (portrait): (max-width: 1024px) */
-    @include root.maxTabletPortrait {
-      background-image:
-        linear-gradient(to right, rgba(40, 32, 23, .8) 35%, rgba(40, 32, 23, 0) 85%),
-        image-set(
-            url("/assets/img/heroSection/awnings_automatic_1024.webp") 1x,
-            url("/assets/img/heroSection/awnings_automatic_1024.jpg") 1x
-        );
-
-      //retina can be included
-      /*    @include root.mediaRetina2x {
-            background-image:
-              linear-gradient(to right, rgba(40, 32, 23, .7) 35%, rgba(40, 32, 23, 0) 85%),
-              image-set(
-                url("/assets/img/heroSection/awnings_automatic_1024@2x.webp") 2x,
-                url("/assets/img/heroSection/awnings_automatic_1024@2x.jpg") 2x
-            );
-          }*/
-    }
-
-    /* mobile (portrait wide): (max-width: 640px) */
-    @include root.maxMobilePortraitWide {
-      background-image:
-        linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .5)),
-        image-set(
-            url("/assets/img/heroSection/awnings_automatic_640.webp") 1x,
-            url("/assets/img/heroSection/awnings_automatic_640.jpg") 1x
-        );
-
-      //retina can be included
-      /*    @include root.mediaRetina2x {
-            background-image:
-              linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .7)),
-              image-set(
-                url("/assets/img/heroSection/awnings_automatic_640@2x.webp") 2x,
-                url("/assets/img/heroSection/awnings_automatic_640@2x.jpg") 2x
-            );
-          }*/
-    }
-  }
-
-  &[aria-labelledby="windows"] {
-    background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .8) 35%, rgba(40, 32, 23, 0) 85%),
-      image-set(
-          url("/assets/img/heroSection/window_settings_1440.webp") 1x,
-          url("/assets/img/heroSection/window_settings_1440.jpg") 1x
-      );
-
-    //retina can be included
-    /*    @include root.mediaRetina2x {
-          background-image:
-            linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .7)),
-            image-set(
-              url("/assets/img/heroSection/window_settings_1440@2x.webp") 2x,
-              url("/assets/img/heroSection/window_settings_1440@2x.jpg") 2x
-          );
-        }*/
-
-    /* tablet (portrait): (max-width: 1024px) */
-    @include root.maxTabletPortrait {
-      background-image:
-        linear-gradient(to right, rgba(40, 32, 23, .8) 35%, rgba(40, 32, 23, 0) 85%),
-        image-set(
-            url("/assets/img/heroSection/window_settings_1024.webp") 1x,
-            url("/assets/img/heroSection/window_settings_1024.jpg") 1x
-        );
-
-      //retina can be included
-      /*    @include root.mediaRetina2x {
-            background-image:
-              linear-gradient(to right, rgba(40, 32, 23, .7) 35%, rgba(40, 32, 23, 0) 85%),
-              image-set(
-                url("/assets/img/heroSection/window_settings_1024@2x.webp") 2x,
-                url("/assets/img/heroSection/window_settings_1024@2x.jpg") 2x
-            );
-          }*/
-    }
-
-    /* mobile (portrait wide): (max-width: 640px) */
-    @include root.maxMobilePortraitWide {
-      background-image:
-        linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .5)),
-        image-set(
-            url("/assets/img/heroSection/window_settings_640.webp") 1x,
-            url("/assets/img/heroSection/window_settings_640.jpg") 1x
-        );
-
-      //retina can be included
-      /*    @include root.mediaRetina2x {
-            background-image:
-              linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .7)),
-              image-set(
-                url("/assets/img/heroSection/window_settings_640@2x.webp") 2x,
-                url("/assets/img/heroSection/window_settings_640@2x.jpg") 2x
-            );
-          }*/
-    }
-  }
-
-  &[aria-labelledby="security"] {
-    background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .8) 35%, rgba(40, 32, 23, 0) 85%),
-      image-set(
-          url("/assets/img/heroSection/surveillance_1440.webp") 1x,
-          url("/assets/img/heroSection/surveillance_1440.jpg") 1x
-      );
-
-    //retina can be included
-    /*    @include root.mediaRetina2x {
-          background-image:
-            linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .7)),
-            image-set(
-              url("/assets/img/heroSection/surveillance_1440@2x.webp") 2x,
-              url("/assets/img/heroSection/surveillance_1440@2x.jpg") 2x
-          );
-        }*/
-
-    /* tablet (portrait): (max-width: 1024px) */
-    @include root.maxTabletPortrait {
-      background-image:
-        linear-gradient(to right, rgba(40, 32, 23, .8) 35%, rgba(40, 32, 23, 0) 85%),
-        image-set(
-            url("/assets/img/heroSection/surveillance_1024.webp") 1x,
-            url("/assets/img/heroSection/surveillance_1024.jpg") 1x
-        );
-
-      //retina can be included
-      /*    @include root.mediaRetina2x {
-            background-image:
-              linear-gradient(to right, rgba(40, 32, 23, .7) 35%, rgba(40, 32, 23, 0) 85%),
-              image-set(
-                url("/assets/img/heroSection/surveillance_1024@2x.webp") 2x,
-                url("/assets/img/heroSection/surveillance_1024@2x.jpg") 2x
-            );
-          }*/
-    }
-
-    /* mobile (portrait wide): (max-width: 640px) */
-    @include root.maxMobilePortraitWide {
-      background-image:
-        linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .5)),
-        image-set(
-            url("/assets/img/heroSection/surveillance_640.webp") 1x,
-            url("/assets/img/heroSection/surveillance_640.jpg") 1x
-        );
-
-      //retina can be included
-      /*    @include root.mediaRetina2x {
-            background-image:
-              linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .7)),
-              image-set(
-                url("/assets/img/heroSection/surveillance_640@2x.webp") 2x,
-                url("/assets/img/heroSection/surveillance_640@2x.jpg") 2x
-            );
-          }*/
-    }
-  }
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .section__content-layer--hero {
+  position: relative;
   color: root.$white;
+  z-index: 2;
 }
 
 .section__heading-block--hero {
-  //font-size: 1em;
-  max-width: 18.6em;
-  margin-bottom: 1em;
-  text-shadow: 0.05em 0.1em 0.1em rgba(0, 0, 0, 0.8);
+  font-size: var(--range_48-36_1280-320);
+  max-width: 11em;
+  margin-bottom: .5em;
+  text-shadow: 0.08em 0.08em 0.1em rgba(0, 0, 0, 0.8);
 
   /* mobile (portrait wide): (max-width: 640px) */
   @include root.maxMobilePortraitWide {
     text-align: center;
   }
+
+  .accent {
+    display: inline-block;
+    font-size: 1em;
+    line-height: 1;
+
+    //////// GSAP:
+    opacity: 0;
+
+    /* mobile (portrait narrow): (max-width: 480px)*/
+    @include root.maxMobilePortraitNarrow {
+      margin-bottom: 0.25em;
+    }
+  }
+
+  .rest-of-heading {
+    display: inline-block;
+    font-size: 0.6em;
+
+    //////// GSAP:
+    opacity: 0;
+  }
+}
+
+.section__content-block--hero {
+  font-size: var(--range_24-18_1280-641);
 }
 
 .section__text-block--hero {
-  font-size: 24px;
   max-width: 20em;
 
   ////////// GSAP:
   opacity: 0;
-
-  /* tablet (landscape) max-width: 1280px */
-  @include root.maxTabletLandscape {
-    font-size: var(--range_24-18_1280-641);
-  }
-
-  /* mobile (portrait wide): (max-width: 640px) */
-  @include root.maxMobilePortraitWide {
-    font-size: 18px;
-  }
 }
 
 .section__img-wrapper--hero {
-  width: 6.5rem;
+  width: 7em;
 
   ////////// GSAP:
   transform: scale(0);
 }
 
 .section__bidding-block--hero {
-  font-size: 24px;
-  //max-width: 14.1em;
+  font-size: var(--range_24-18_1280-641);
+  margin-top: 1.4em;
 
   ///////// GSAP:
   opacity: 0;
 
-  /* tablet (landscape) max-width: 1280px */
-  @include root.maxTabletLandscape {
-    font-size: var(--range_24-18_1280-641);
-  }
-
   /* mobile (portrait wide): (max-width: 640px) */
   @include root.maxMobilePortraitWide {
-    font-size: 18px;
-    margin-top: 1.4em;
+    //margin-top: 1.4em;
     align-items: center;
     text-align: center;
   }

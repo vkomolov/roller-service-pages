@@ -1,11 +1,15 @@
 <!doctype html>
 
 @@if (data && data["index"] && data["index"].main) {
+
 <html lang="@@data.index.main.lang">
+
 @@include("templates/head.html", {"page": "index"})
+
 <body data-type="index">
 <div class="total-wrapper">
   @@include("templates/header.html", {"page": "index"})
+
   <div id="scrolledNav">
     <div class="scrolledNav__contacts-block">
       <a href="tel:380991019368"
@@ -114,7 +118,26 @@
       </ul>
     </div>
   </nav>
+
   <section class="section section--hero" aria-labelledby="index">
+    <!--
+      LCP hero image:
+      - `src` removed to prevent speculative double fetch with srcset.
+      - `decoding="async"` removed to avoid delaying LCP paint.
+      - `width` and `height` removed because the image is absolutely positioned
+      and does not participate in layout (no CLS impact).
+-->
+    <img
+         srcset="
+      /assets/img/heroSection/hero_professional_640.webp 640w,
+      /assets/img/heroSection/hero_professional_1024.webp 1024w,
+      /assets/img/heroSection/hero_professional_1440.webp 1440w
+    "
+         sizes="100vw"
+         fetchpriority="high"
+         alt="roller-shutter-services"
+         class="hero-bg"
+    >
     <div class="section__content-layer section__content-layer--hero">
       <div class="section__heading-block section__heading-block--hero">
         <h1 id="index">
@@ -122,14 +145,13 @@
           <span class="rest-of-heading">@@data.index.main.hero_rest-of-heading</span>
         </h1>
       </div>
-      <div class="section__content-block section__content-block--row-left flex-gap-02-02">
+      <div class="section__content-block section__content-block--hero section__content-block--row-left flex-gap-02-02">
         <div class="section__text-block section__text-block--hero">
           <p>@@data.index.main.hero_text-block-p</p>
         </div>
         <div class="section__img-wrapper section__img-wrapper--hero">
           <img src="/assets/img/heroSection/24_7.webp"
                alt="working hours 24 / 7"
-               loading="lazy"
           >
         </div>
       </div>

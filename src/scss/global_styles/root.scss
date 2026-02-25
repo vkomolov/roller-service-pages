@@ -17,6 +17,7 @@
 :root {
   /*** Desktop → Tablet ***/
   --range_120-64_1280-641: #{mix.fluid-value(1280, 641, 120, 64, rem)};
+  --range_735-640_1280-641: #{mix.fluid-value(1280, 641, 735, 565, rem)};
   --range_80-64_1280-641: #{mix.fluid-value(1280, 641, 80, 64, rem)};
   --range_80-32_1280-641: #{mix.fluid-value(1280, 641, 80, 32, rem)};
   --range_48-32_1280-641: #{mix.fluid-value(1280, 641, 48, 32, rem)};
@@ -24,6 +25,8 @@
   --range_22-18_1280-641: #{mix.fluid-value(1280, 641, 22, 18, rem)};
   --range_18-16_1280-641: #{mix.fluid-value(1280, 641, 18, 16, rem)};
   --range_18-14_1280-769: #{mix.fluid-value(1280, 769, 18, 14, rem)};
+
+  --range_48-36_1280-320: #{mix.fluid-value(1280, 320, 48, 36, rem)};
 
   /*** Mobile (breakpoint 640px) ***/
   --range_32-23_640-320: #{mix.fluid-value(640, 320, 32, 23, rem)};
