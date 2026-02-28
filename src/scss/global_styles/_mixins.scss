@@ -55,59 +55,71 @@ $element-shadow: 0.15em, 0.3em, rgba(0, 0, 0, .8);
   }
 }
 
- /// !FLUID VALUE MIXIN
- ///
- /// Generates a fluid (responsive) value using CSS clamp() with linear interpolation.
- /// Automatically converts pixel-based inputs to relative units (rem/em/%) when needed,
- /// while keeping absolute units (px) unchanged.
- ///
- /// FORMULA: clamp(min, slope * 100vw + intercept, max)
- /// Where:
- ///   - slope = (max-size - min-size) / (max-width - min-width)
- ///   - intercept = -min-width * slope + min-size
- ///
- /// USE CASES:
- /// - Typography: font-size, line-height
- /// - Spacing: padding, margin, gap
- /// - Visual: border-width, box-shadow blur/spread
- /// - Positioning: top, left, transform values
- ///
- /// @param {Number} $max-media - Maximum viewport width (px)
- /// @param {Number} $min-media - Minimum viewport width (px)
- /// @param {Number} $max-value - Maximum value at $max-media (px)
- /// @param {Number} $min-value - Minimum value at $min-media (px)
- /// @param {String} $unit - Output unit: rem | em | px | % (default: rem)
- /// @param {Number} $base-size - Base font size for conversion (default: 16)
- /// @return {String} CSS clamp() expression
- ///
- /// EXAMPLES:
- ///
- /// 1. REM (default) - Use for font-size, spacing, margins
- ///    .heading {
- ///      font-size: #{fluid-value(1280, 640, 48, 32)};        // 3rem → 2rem
- ///      margin-bottom: #{fluid-value(1280, 640, 64, 32)};   // 4rem → 2rem
- ///    }
- ///
- /// 2. EM - Use for component-scaled values (relative to parent font-size)
- ///    .card {
- ///      font-size: 1.25rem;
- ///      padding: #{fluid-value(1280, 640, 32, 16, em)};       // 2em → 1em (relative to card)
- ///      border-radius: #{fluid-value(1280, 640, 16, 8, em)};  // 1em → 0.5em
- ///    }
- ///
- /// 3. PX - Use for borders, shadows, hairlines, precise pixel control
- ///    .button {
- ///      border: #{fluid-value(1280, 640, 3, 1, px)} solid #000;     // 3px → 1px
- ///      box-shadow: 0 #{fluid-value(1280, 640, 8, 4, px)}
- ///                    #{fluid-value(1280, 640, 16, 8, px)} rgba(0,0,0,0.2);
- ///    }
- ///
- /// 4. PERCENT - Use for fluid widths, line-height, aspect ratios
- ///    .container {
- ///      width: #{fluid-value(1280, 640, 100, 90, %)};        // 100% → 90%
- ///     line-height: #{fluid-value(1280, 640, 180, 160, %)}; // 180% → 160%
- ///    }
- ///
+/// !FLUID VALUE MIXIN
+///
+/// Generates a fluid (responsive) value using CSS clamp() with linear interpolation.
+/// Automatically converts pixel-based inputs to relative units (rem/em/%) when needed,
+/// while keeping absolute units (px) unchanged.
+///
+/// FORMULA: clamp(min, slope * 100vw + intercept, max)
+/// Where:
+///   - slope = (max-size - min-size) / (max-width - min-width)
+///   - intercept = -min-width * slope + min-size
+///
+/// USE CASES:
+/// - Typography: font-size, line-height
+/// - Spacing: padding, margin, gap
+/// - Visual: border-width, box-shadow blur/spread
+/// - Positioning: top, left, transform values
+///
+/// DIRECTION SUPPORT:
+/// The function automatically handles both directions of value change:
+/// - Decreasing: value gets smaller as viewport shrinks (classic responsive behavior)
+/// - Increasing: value gets larger as viewport shrinks (compact-first scaling)
+///
+/// @param {Number} $max-media - Maximum viewport width (px)
+/// @param {Number} $min-media - Minimum viewport width (px)
+/// @param {Number} $max-value - Value at $max-media viewport width (px)
+/// @param {Number} $min-value - Value at $min-media viewport width (px)
+/// @param {String} $unit - Output unit: rem | em | px | % (default: rem)
+/// @param {Number} $base-size - Base font size for conversion (default: 16)
+/// @return {String} CSS clamp() expression
+///
+/// EXAMPLES:
+///
+/// 1. DECREASING VALUES (classic) — Value shrinks as viewport shrinks
+///    // At 1280px: 48px, at 320px: 16px
+///    .heading {
+///      font-size: #{fluid-value(1280, 320, 48, 16)};        // 3rem → 1rem
+///      margin-bottom: #{fluid-value(1280, 320, 64, 32)};    // 4rem → 2rem
+///    }
+///
+/// 2. INCREASING VALUES (inverse) — Value grows as viewport shrinks
+///    // At 640px: 720px value, at 320px: 800px value
+///    .compact-scale {
+///      padding: #{fluid-value(640, 320, 720, 800)};         // 45rem → 50rem
+///      gap: #{fluid-value(768, 375, 24, 40)};               // 1.5rem → 2.5rem
+///    }
+///
+/// 3. EM — Component-scaled values (relative to parent font-size)
+///    .card {
+///      font-size: 1.25rem;
+///      padding: #{fluid-value(1280, 640, 32, 16, em)};      // 2em → 1em
+///      border-radius: #{fluid-value(1280, 640, 16, 8, em)}; // 1em → 0.5em
+///    }
+///
+/// 4. PX — Borders, shadows, hairlines, precise pixel control
+///    .button {
+///      border: #{fluid-value(1280, 640, 3, 1, px)} solid #000;     // 3px → 1px
+///      box-shadow: 0 #{fluid-value(1280, 640, 8, 4, px)}
+///                    #{fluid-value(1280, 640, 16, 8, px)} rgba(0,0,0,0.2);
+///    }
+///
+/// 5. PERCENT — Fluid widths, line-height, aspect ratios
+///    .container {
+///      width: #{fluid-value(1280, 640, 100, 90, %)};        // 100% → 90%
+///      line-height: #{fluid-value(1280, 640, 180, 160, %)};  // 180% → 160%
+///    }
 
 @function fluid-value(
   $max-media,
@@ -135,20 +147,27 @@ $element-shadow: 0.15em, 0.3em, rgba(0, 0, 0, .8);
 
   // Calculate slope (m): rate of change per viewport unit
   // Formula: rise / run = (size difference) / (viewport range)
+  // Can be positive (decreasing values) or negative (increasing values)
   $ratio: math.div(($max-size - $min-size), ($max-width - $min-width));
 
   // Calculate y-intercept (b): adjustment to align with min-width point
   // Derived from point-slope: y - y1 = m(x - x1) → b = y1 - m*x1
   $intercept: -$min-width * $ratio + $min-size;
 
+  // Determine actual min/max for clamp() regardless of value direction
+  // clamp() requires: smallest_value < preferred < largest_value
+  // This ensures correct behavior for both decreasing and increasing value curves
+  $clamp-min: math.min($min-size, $max-size);
+  $clamp-max: math.max($min-size, $max-size);
+
   // Return CSS clamp() with:
-  // - Minimum value (at or below $min-media viewport)
+  // - Minimum value (smallest of the two boundary values)
   // - Preferred value (linear interpolation based on vw)
-  // - Maximum value (at or above $max-media viewport)
+  // - Maximum value (largest of the two boundary values)
   @return clamp(
-      #{$min-size}#{$unit},
+      #{$clamp-min}#{$unit},
       #{$ratio * 100}vw + #{$intercept}#{$unit},
-      #{$max-size}#{$unit}
+      #{$clamp-max}#{$unit}
   );
 }
 

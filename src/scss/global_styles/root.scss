@@ -17,7 +17,7 @@
 :root {
   /*** Desktop → Tablet ***/
   --range_120-64_1280-641: #{mix.fluid-value(1280, 641, 120, 64, rem)};
-  --range_735-640_1280-641: #{mix.fluid-value(1280, 641, 735, 565, rem)};
+  --range_740-570_1280-641: #{mix.fluid-value(1280, 641, 740, 570, rem)};
   --range_80-64_1280-641: #{mix.fluid-value(1280, 641, 80, 64, rem)};
   --range_80-32_1280-641: #{mix.fluid-value(1280, 641, 80, 32, rem)};
   --range_48-32_1280-641: #{mix.fluid-value(1280, 641, 48, 32, rem)};
@@ -30,6 +30,7 @@
 
   /*** Mobile (breakpoint 640px) ***/
   --range_32-23_640-320: #{mix.fluid-value(640, 320, 32, 23, rem)};
+  --range_740-800_640-320: #{mix.fluid-value(640, 320, 720, 800, rem)};
 
 }
 
@@ -76,13 +77,4 @@ h1 {
 
 h2, h3, h4, h5 {
   line-height: 1.2;
-}
-
-img, svg, picture, video, object {
-  width: 100%;
-  max-width: 100%;
-  height: auto;
-  //object-fit: cover;
-  //object-position: center;
-  //vertical-align: top;
 }
