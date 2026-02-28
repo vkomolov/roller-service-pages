@@ -120,25 +120,57 @@
 	</nav>
 
 	<section class="section section--hero" aria-labelledby="index">
-		<!--
-			LCP hero image:
-			- `src` removed to prevent speculative double fetch with srcset.
-			- `decoding="async"` removed to avoid delaying LCP paint.
-			- `width` and `height` removed because the image is absolutely positioned
-			and does not participate in layout (no CLS impact).
--->
-		<img
-				src="/assets/img/heroSection/hero_professional_1024.webp"
-				srcset="
-      /assets/img/heroSection/hero_professional_640.webp 640w,
-      /assets/img/heroSection/hero_professional_1024.webp 1024w,
-      /assets/img/heroSection/hero_professional_1440.webp 1440w
+		<!--Using <picture> for various image compositions with different aspect-ratio-->
+		<picture class="hero-bg" >
+			<!-- mobile (small): (max-width: 320px) (vertical composition)-->
+			<source
+					media="(max-width: 320px)"
+					srcset="
+      /assets/img/heroSection/hero_professional_320x800.webp 1x,
+      /assets/img/heroSection/hero_professional_320x800@2x.webp 2x
     "
-				sizes="100vw"
-				fetchpriority="high"
-				alt="roller shutter services"
-				class="hero-bg"
-		>
+			>
+
+			<!-- mobile (portrait wide): (max-width: 640px) (vertical composition)-->
+			<source
+					media="(max-width: 640px)"
+					srcset="
+      /assets/img/heroSection/hero_professional_640x720.webp 1x,
+      /assets/img/heroSection/hero_professional_640x720@2x.webp 2x
+    "
+			>
+
+			<!-- tablet (portrait): (max-width: 1024px) (horizontal composition)-->
+			<source
+					media="(max-width: 1024px)"
+					srcset="
+      /assets/img/heroSection/hero_professional_1024x670.webp 1x,
+      /assets/img/heroSection/hero_professional_1024x670@2x.webp 2x
+    "
+			>
+
+			<!-- tablet (portrait): (min-width: 1025px) and wider (horizontal composition)-->
+			<source
+					srcset="
+      /assets/img/heroSection/hero_professional_1440x740.webp 1x,
+      /assets/img/heroSection/hero_professional_1440x740@2x.webp 2x
+    "
+			>
+			<!-- fallback with img -->
+			<img
+					src="/assets/img/heroSection/hero_professional_1440x740.webp"
+					srcset="
+      /assets/img/heroSection/hero_professional_1440x740.webp 1x,
+      /assets/img/heroSection/hero_professional_1440x740@2x.webp 2x
+    "
+					width="1440"
+					height="740"
+					alt="Roller Shutter Services"
+					fetchpriority="high"
+			>
+
+		</picture>
+
 		<div class="section__content-layer section__content-layer--hero">
 			<div class="section__heading-block section__heading-block--hero">
 				<h1 id="index">

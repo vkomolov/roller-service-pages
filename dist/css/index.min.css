@@ -959,13 +959,17 @@ h2,h3,h4,h5{
 }
 
 .hero-bg{
-  height:100%;
+  display:block;
   inset:0;
+  position:absolute;
+  z-index:0;
+}
+.hero-bg img{
+  display:block;
+  height:100%;
   -o-object-fit:cover;
      object-fit:cover;
-  position:absolute;
   width:100%;
-  z-index:0;
 }
 
 .section__content-layer--hero{
