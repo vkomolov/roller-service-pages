@@ -16,21 +16,28 @@
 
 :root {
   /*** Desktop → Tablet ***/
+  /*** it is allowed to use also like: mix.fluid-value(1280px, 641px, 120px, 64px, rem) ***/
   --range_120-64_1280-641: #{mix.fluid-value(1280, 641, 120, 64, rem)};
-  --range_740-570_1280-641: #{mix.fluid-value(1280, 641, 740, 570, rem)};
+  --range_630-480_1280-641: #{mix.fluid-value(1280, 641, 630, 480, rem)};
   --range_80-64_1280-641: #{mix.fluid-value(1280, 641, 80, 64, rem)};
   --range_80-32_1280-641: #{mix.fluid-value(1280, 641, 80, 32, rem)};
   --range_48-32_1280-641: #{mix.fluid-value(1280, 641, 48, 32, rem)};
+  --range_20-18_1280-641: #{mix.fluid-value(1280, 641, 20, 18, rem)};
+  --range_20-16_1280-641: #{mix.fluid-value(1280, 641, 20, 16, rem)};
   --range_24-18_1280-641: #{mix.fluid-value(1280, 641, 24, 18, rem)};
   --range_22-18_1280-641: #{mix.fluid-value(1280, 641, 22, 18, rem)};
   --range_18-16_1280-641: #{mix.fluid-value(1280, 641, 18, 16, rem)};
-  --range_18-14_1280-769: #{mix.fluid-value(1280, 769, 18, 14, rem)};
+  --range_18-15_1280-641: #{mix.fluid-value(1280, 641, 18, 15, rem)};
 
+  --range_400-330_1280-1025: #{mix.fluid-value(1280, 1025, 400, 330, rem)};
+  --range_18-14_1280-769: #{mix.fluid-value(1280, 769, 18, 14, rem)};
+  --range_38-23_1280-320: #{mix.fluid-value(1280, 320, 38, 23, rem)};
   --range_48-36_1280-320: #{mix.fluid-value(1280, 320, 48, 36, rem)};
+
 
   /*** Mobile (breakpoint 640px) ***/
   --range_32-23_640-320: #{mix.fluid-value(640, 320, 32, 23, rem)};
-  --range_740-800_640-320: #{mix.fluid-value(640, 320, 720, 800, rem)};
+  --range_670-780_640-320: #{mix.fluid-value(640, 320, 670, 780, rem)};
 
 }
 
@@ -72,7 +79,7 @@ h1, h2, h3, h4, h5 {
 }
 
 h1 {
-  line-height: 1.25;
+  line-height: 1.15;
 }
 
 h2, h3, h4, h5 {

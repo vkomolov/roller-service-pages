@@ -121,38 +121,27 @@
 		</nav>
 		<section class="section section--hero" aria-labelledby="windows">
 			<!--Using <picture> for various image compositions with different aspect-ratio-->
+			<!--retina is omitted for the hero background-->
 			<picture class="hero-bg">
 				<!-- mobile (small): (max-width: 320px) (vertical composition)-->
-				<source media="(max-width: 320px)" srcset="
-      /assets/img/heroSection/window_settings_320x800.webp 1x,
-      /assets/img/heroSection/window_settings_320x800@2x.webp 2x
-    ">
+				<source media="(max-width: 320px)" srcset="/assets/img/heroSection/window_settings_320x780.webp">
 				<!-- mobile (portrait wide): (max-width: 640px) (vertical composition)-->
-				<source media="(max-width: 640px)" srcset="
-      /assets/img/heroSection/window_settings_640x720.webp 1x,
-      /assets/img/heroSection/window_settings_640x720@2x.webp 2x
-    ">
+				<source media="(max-width: 640px)" srcset="/assets/img/heroSection/window_settings_640x670.webp">
 				<!-- tablet (portrait): (max-width: 1024px) (horizontal composition)-->
-				<source media="(max-width: 1024px)" srcset="
-      /assets/img/heroSection/window_settings_1024x670.webp 1x,
-      /assets/img/heroSection/window_settings_1024x670@2x.webp 2x
-    ">
+				<source media="(max-width: 1024px)" srcset="/assets/img/heroSection/window_settings_1024x570.webp">
 				<!-- tablet (portrait): (min-width: 1025px) and wider (horizontal composition)-->
-				<source srcset="
-      /assets/img/heroSection/window_settings_1440x740.webp 1x,
-      /assets/img/heroSection/window_settings_1440x740@2x.webp 2x
-    ">
+				<source srcset="/assets/img/heroSection/window_settings_1440x630.webp">
 				<!-- fallback with img -->
-				<img src="/assets/img/heroSection/window_settings_1440x740.webp" srcset=" /assets/img/heroSection/window_settings_1440x740.webp 1x, /assets/img/heroSection/window_settings_1440x740@2x.webp 2x " width="1440" height="740" alt="Window Settings and Repair" fetchpriority="high">
+				<img src="/assets/img/heroSection/window_settings_1440x630.webp" width="1440" height="630" alt="Window Settings and Repair" fetchpriority="high">
 			</picture>
 			<div class="section__content-layer section__content-layer--hero">
 				<div class="section__heading-block section__heading-block--hero">
 					<h1 id="windows">
-						<span class="accent">Бронювання плівкою та ремонт</span>
-						<span class="rest-of-heading"> пластикових вікон</span>
+						<span class="accent">Бронювання плівкою</span>
+						<span class="rest-of-heading">та ремонт пластикових вікон</span>
 					</h1>
 				</div>
-				<div class="section__content-block section__content-block--hero section__content-block--row-left flex-gap-02-02">
+				<div class="section__content-block section__content-block--hero section__content-block--row-left">
 					<div class="section__text-block section__text-block--hero">
 						<p>Ми професійно виконуємо послуги з ремонту, налаштування та бронювання пластикових вікон для підвищення їх удароміцності, тепло та шумоізоляційних властивостей.</p>
 					</div>
@@ -170,7 +159,7 @@
 			<div class="section__content-layer">
 				<div class="section__content-block section__content-block--row-between section__content-block--pair">
 					<div class="section__img-wrapper section__img-wrapper--pair" data-anime="fade-in-left">
-						<img src="/assets/img/aboutSection/roller_shutter_maintenance.webp" loading="lazy" alt="roller shutters maintenance">
+						<img src="/assets/img/aboutSection/roller_shutter_maintenance.webp" srcset=" /assets/img/aboutSection/roller_shutter_maintenance.webp 1x, /assets/img/aboutSection/roller_shutter_maintenance@2x.webp 2x" width="416" height="596" loading="lazy" decoding="async" alt="roller shutters maintenance">
 					</div>
 					<div class="section__text-block section__text-block--pair" data-anime="fade-in-right">
 						<div class="section__heading-block section__heading-block--separation">

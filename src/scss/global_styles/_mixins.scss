@@ -1,4 +1,5 @@
 @use "sass:math";
+@use "sass:meta";
 
 $element-shadow: 0.15em, 0.3em, rgba(0, 0, 0, .8);
 
@@ -58,6 +59,7 @@ $element-shadow: 0.15em, 0.3em, rgba(0, 0, 0, .8);
 /// !FLUID VALUE MIXIN
 ///
 /// Generates a fluid (responsive) value using CSS clamp() with linear interpolation.
+/// Supports both explicit unit syntax (80px) and number-only syntax (80) for inputs.
 /// Automatically converts pixel-based inputs to relative units (rem/em/%) when needed,
 /// while keeping absolute units (px) unchanged.
 ///
@@ -69,7 +71,7 @@ $element-shadow: 0.15em, 0.3em, rgba(0, 0, 0, .8);
 /// USE CASES:
 /// - Typography: font-size, line-height
 /// - Spacing: padding, margin, gap
-/// - Visual: border-width, box-shadow blur/spread
+/// - Visual: border-width, box-shadow blur/spread, width, height etc...
 /// - Positioning: top, left, transform values
 ///
 /// DIRECTION SUPPORT:
@@ -77,49 +79,71 @@ $element-shadow: 0.15em, 0.3em, rgba(0, 0, 0, .8);
 /// - Decreasing: value gets smaller as viewport shrinks (classic responsive behavior)
 /// - Increasing: value gets larger as viewport shrinks (compact-first scaling)
 ///
-/// @param {Number} $max-media - Maximum viewport width (px)
-/// @param {Number} $min-media - Minimum viewport width (px)
-/// @param {Number} $max-value - Value at $max-media viewport width (px)
-/// @param {Number} $min-value - Value at $min-media viewport width (px)
+/// INPUT FLEXIBILITY:
+/// Accepts both explicit unit syntax and number-only syntax:
+/// - fluid-value(1280px, 641px, 80px, 64px, rem)  // explicit
+/// - fluid-value(1280, 641, 80, 64, rem)          // numbers = px implied
+///
+/// @param {Number} $max-media - Maximum viewport width (px, with or without unit)
+/// @param {Number} $min-media - Minimum viewport width (px, with or without unit)
+/// @param {Number} $max-value - Value at $max-media viewport width (px, with or without unit)
+/// @param {Number} $min-value - Value at $min-media viewport width (px, with or without unit)
 /// @param {String} $unit - Output unit: rem | em | px | % (default: rem)
 /// @param {Number} $base-size - Base font size for conversion (default: 16)
 /// @return {String} CSS clamp() expression
 ///
 /// EXAMPLES:
 ///
-/// 1. DECREASING VALUES (classic) — Value shrinks as viewport shrinks
-///    // At 1280px: 48px, at 320px: 16px
+/// 1. EXPLICIT UNITS — Clear, self-documenting syntax
+///    // At 1280px viewport: 80px value, at 641px: 64px value, output in rem
 ///    .heading {
-///      font-size: #{fluid-value(1280, 320, 48, 16)};        // 3rem → 1rem
-///      margin-bottom: #{fluid-value(1280, 320, 64, 32)};    // 4rem → 2rem
+///      font-size: #{fluid-value(1280px, 641px, 80px, 64px)};        // 5rem → 4rem
+///      margin-bottom: #{fluid-value(1280px, 641px, 64px, 32px)};    // 4rem → 2rem
 ///    }
 ///
-/// 2. INCREASING VALUES (inverse) — Value grows as viewport shrinks
+/// 2. IMPLICIT UNITS (numbers = px) — Fast, concise syntax
+///    // Same as above, px implied for numeric inputs
+///    .heading {
+///      font-size: #{fluid-value(1280, 641, 80, 64)};                 // 5rem → 4rem
+///      padding: #{fluid-value(768, 320, 40, 20)};                    // 2.5rem → 1.25rem
+///    }
+///
+/// 3. INCREASING VALUES — Value grows as viewport shrinks
 ///    // At 640px: 720px value, at 320px: 800px value
 ///    .compact-scale {
-///      padding: #{fluid-value(640, 320, 720, 800)};         // 45rem → 50rem
-///      gap: #{fluid-value(768, 375, 24, 40)};               // 1.5rem → 2.5rem
+///      padding: #{fluid-value(640px, 320px, 720px, 800px)};          // 45rem → 50rem
+///      gap: #{fluid-value(768, 375, 24, 40)};                        // 1.5rem → 2.5rem
 ///    }
 ///
-/// 3. EM — Component-scaled values (relative to parent font-size)
+/// 4. EM — Component-scaled values (relative to parent font-size)
 ///    .card {
 ///      font-size: 1.25rem;
-///      padding: #{fluid-value(1280, 640, 32, 16, em)};      // 2em → 1em
-///      border-radius: #{fluid-value(1280, 640, 16, 8, em)}; // 1em → 0.5em
+///      padding: #{fluid-value(1280px, 641px, 32px, 16px, em)};       // 2em → 1em
+///      border-radius: #{fluid-value(1280, 640, 16, 8, em)};          // 1em → 0.5em
 ///    }
 ///
-/// 4. PX — Borders, shadows, hairlines, precise pixel control
+/// 5. PX OUTPUT — Keep pixels for borders, shadows, hairlines
 ///    .button {
-///      border: #{fluid-value(1280, 640, 3, 1, px)} solid #000;     // 3px → 1px
+///      border: #{fluid-value(1280px, 641px, 3px, 1px, px)} solid;    // 3px → 1px
 ///      box-shadow: 0 #{fluid-value(1280, 640, 8, 4, px)}
 ///                    #{fluid-value(1280, 640, 16, 8, px)} rgba(0,0,0,0.2);
 ///    }
 ///
-/// 5. PERCENT — Fluid widths, line-height, aspect ratios
+/// 6. PERCENT — Fluid widths, line-height, aspect ratios
 ///    .container {
-///      width: #{fluid-value(1280, 640, 100, 90, %)};        // 100% → 90%
-///      line-height: #{fluid-value(1280, 640, 180, 160, %)};  // 180% → 160%
+///      width: #{fluid-value(1280px, 641px, 100px, 90px, %)};         // 100% → 90%
+///      line-height: #{fluid-value(1280, 640, 180, 160, %)};          // 180% → 160%
 ///    }
+
+/// Helper: Strip unit from value, returning number only
+/// @param {Number} $value - Value with or without unit
+/// @return {Number} Unitless number
+@function strip-unit($value) {
+  @if meta.type-of($value) == "number" and not math.is-unitless($value) {
+    @return math.div($value, ($value * 0 + 1));
+  }
+  @return $value;
+}
 
 @function fluid-value(
   $max-media,
@@ -129,6 +153,13 @@ $element-shadow: 0.15em, 0.3em, rgba(0, 0, 0, .8);
   $unit: rem,
   $base-size: 16
 ) {
+  // Extract numeric values from inputs (handle both 80px and 80)
+  // All inputs are treated as pixel values for calculation
+  $max-media-num: strip-unit($max-media);
+  $min-media-num: strip-unit($min-media);
+  $max-value-num: strip-unit($max-value);
+  $min-value-num: strip-unit($min-value);
+
   // Determine if unit conversion from pixels is needed
   // Relative units (rem, em, %) require division by base font size
   // Absolute units (px) pass through unchanged
@@ -137,13 +168,13 @@ $element-shadow: 0.15em, 0.3em, rgba(0, 0, 0, .8);
   // Convert target values from px to specified unit
   // rem/em/%: divide by base-size (e.g., 16px → 1rem)
   // px: keep original value (e.g., 16px → 16px)
-  $min-size: if($needs-conversion, math.div($min-value, $base-size), $min-value);
-  $max-size: if($needs-conversion, math.div($max-value, $base-size), $max-value);
+  $min-size: if($needs-conversion, math.div($min-value-num, $base-size), $min-value-num);
+  $max-size: if($needs-conversion, math.div($max-value-num, $base-size), $max-value-num);
 
   // Convert viewport boundaries using same logic
   // Ensures slope calculation uses consistent units
-  $min-width: if($needs-conversion, math.div($min-media, $base-size), $min-media);
-  $max-width: if($needs-conversion, math.div($max-media, $base-size), $max-media);
+  $min-width: if($needs-conversion, math.div($min-media-num, $base-size), $min-media-num);
+  $max-width: if($needs-conversion, math.div($max-media-num, $base-size), $max-media-num);
 
   // Calculate slope (m): rate of change per viewport unit
   // Formula: rise / run = (size difference) / (viewport range)
