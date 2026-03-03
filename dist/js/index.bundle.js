@@ -11119,7 +11119,7 @@ const i = {
   headingAccentHero: ".section__heading-block--hero .accent",
   headingHeroRest: ".section__heading-block--hero .rest-of-heading",
   textBlockHero: ".section__text-block--hero",
-  biddingBlockHero: ".section__bidding-block--hero",
+  biddingBlockHero: ".section__bidding-block",
   iconWrapperHero: ".section__img-wrapper--hero",
   galleryWork: "#gallery-work",
   fadeInLeft: "[data-anime=fade-in-left]",
