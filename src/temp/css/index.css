@@ -1221,6 +1221,9 @@ h2, h3, h4, h5 {
 .section__text-block p + p {
   margin-top: 0.5em;
 }
+.section__text-block .button-request {
+  margin-top: 1.4em;
+}
 
 .section__text-separ {
   font-weight: 600;
@@ -1437,8 +1440,7 @@ h2, h3, h4, h5 {
 .section__content-block--pair {
   position: relative;
   z-index: 5;
-  width: 100%;
-  display: flex;
+  align-items: center;
   /* tablet (portrait): (max-width: 1024px) */
   /* mobile (portrait wide): (max-width: 640px) */
 }
@@ -1487,21 +1489,19 @@ h2, h3, h4, h5 {
 }
 
 .section__text-block--pair {
+  font-size: var(--range_18-16_1280-641);
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 30rem;
+  max-width: 30em;
   /* tablet (portrait): (max-width: 1024px) */
-  /* mobile (landscape): (max-width: 768px)*/
   /* mobile (portrait wide): (max-width: 640px) */
+  /* mobile (portrait narrow): (max-width: 480px)*/
 }
 @media (max-width: 1024px) {
-  .section__text-block--pair {
-    max-width: 28rem;
-  }
   .section__text-block--pair:before {
-    display: block;
     position: absolute;
+    display: block;
     z-index: -1;
     width: 100%;
     height: 100%;
@@ -1511,14 +1511,14 @@ h2, h3, h4, h5 {
     opacity: 0.7;
   }
 }
-@media (max-width: 768px) {
-  .section__text-block--pair {
-    max-width: 27rem;
-  }
-}
 @media (max-width: 640px) {
   .section__text-block--pair:before {
     display: none;
+  }
+}
+@media (max-width: 480px) {
+  .section__text-block--pair {
+    font-size: 0.938rem;
   }
 }
 
@@ -1848,24 +1848,24 @@ h2, h3, h4, h5 {
 }
 
 .section__text-block--single {
+  font-size: var(--range_18-16_1280-641);
   width: 100%;
   max-width: 30em;
   /* tablet (portrait): (max-width: 1024px) */
-  /* mobile (landscape): (max-width: 768px)*/
+  /* mobile (portrait narrow): (max-width: 480px)*/
 }
 @media (max-width: 1024px) {
   .section__text-block--single {
     max-width: 28em;
   }
 }
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .section__text-block--single {
-    max-width: 27em;
+    font-size: 0.938rem;
   }
 }
 
 .section--roller-automation {
-  font-size: 1em;
   background-position: 0;
   background-size: cover;
   background-attachment: fixed;
@@ -1878,72 +1878,27 @@ h2, h3, h4, h5 {
 }
 @media (min-width: 1281px) {
   .section--roller-automation {
-    background-image: linear-gradient(to right, rgba(40, 32, 23, 0.4), rgba(40, 32, 23, 0.7)), image-set(url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1440.webp") 1x, url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1440.jpg") 1x);
-    /*        @include root.mediaRetina2x {
-              background-image:
-                linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-                //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
-                image-set(
-                    url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1440@2x.webp") 2x,
-                    url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1440@2x.jpg") 2x
-                );
-            }*/
+    background-image: linear-gradient(to right, rgba(40, 32, 23, 0.4), rgba(40, 32, 23, 0.7)), url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1440.webp");
   }
 }
 @media (max-width: 1280px) {
   .section--roller-automation {
-    background-image: linear-gradient(to right, rgba(40, 32, 23, 0.4), rgba(40, 32, 23, 0.7)), image-set(url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1280.webp") 1x, url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1280.jpg") 1x);
-    /*        @include root.mediaRetina2x {
-              background-image:
-                linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-                //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
-                image-set(
-                    url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1280@2x.webp") 2x,
-                    url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1280@2x.jpg") 2x
-                );
-            }*/
+    background-image: linear-gradient(to right, rgba(40, 32, 23, 0.4), rgba(40, 32, 23, 0.7)), url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1280.webp");
   }
 }
 @media (max-width: 1024px) {
   .section--roller-automation {
-    background-image: linear-gradient(to right, rgba(40, 32, 23, 0.4), rgba(40, 32, 23, 0.7)), image-set(url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1024.webp") 1x, url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1024.jpg") 1x);
-    /*        @include root.mediaRetina2x {
-              background-image:
-                linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-                //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
-                image-set(
-                    url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1024@2x.webp") 2x,
-                    url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1024@2x.jpg") 2x
-                );
-            }*/
+    background-image: linear-gradient(to right, rgba(40, 32, 23, 0.4), rgba(40, 32, 23, 0.7)), url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1024.webp");
   }
 }
 @media (max-width: 640px) {
   .section--roller-automation {
-    background-image: linear-gradient(to right, rgba(40, 32, 23, 0.4), rgba(40, 32, 23, 0.7)), image-set(url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_640.webp") 1x, url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_640.jpg") 1x);
-    /*        @include root.mediaRetina2x {
-              background-image:
-                linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-                //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
-                image-set(
-                    url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_640@2x.webp") 2x,
-                    url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_640@2x.jpg") 2x
-                );
-            }*/
+    background-image: linear-gradient(to right, rgba(40, 32, 23, 0.4), rgba(40, 32, 23, 0.7)), url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_640.webp");
   }
 }
 @media (max-width: 480px) {
   .section--roller-automation {
-    background-image: linear-gradient(to right, rgba(40, 32, 23, 0.4), rgba(40, 32, 23, 0.7)), image-set(url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_480.webp") 1x, url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_480.jpg") 1x);
-    /*        @include root.mediaRetina2x {
-              background-image:
-                linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-                //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
-                image-set(
-                    url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_480@2x.webp") 2x,
-                    url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_480@2x.jpg") 2x
-                );
-            }*/
+    background-image: linear-gradient(to right, rgba(40, 32, 23, 0.4), rgba(40, 32, 23, 0.7)), url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_480.webp");
   }
 }
 
