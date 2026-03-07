@@ -845,45 +845,77 @@
 }
 
 //////////////////// section--roller-automation //////////////////
+.section__content-layer--roller-automation {
+  position: relative;
+  z-index: 2;
+}
+
 .section--roller-automation {
-  background-position: 0;
-  background-size: cover;
-  background-attachment: fixed;
+  position: relative;
+  isolation: isolate; //Forces all z-index values to stay inside this block
+  overflow: hidden; //fallback for old browsers, which not support overflow: clip;
+  overflow: clip; //prevent overflow and software scrolling
+  /*! CRITICAL: clip-path: inset(0) creates a new containing block and traps any fixed, absolute children */
+  clip-path: inset(0);
   color: root.$white;
 
-  /* tablet (landscape) min-width: 1281px */
-  @include root.minTabletLandscape {
-    background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-      url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1440.webp");
-  }
+  min-height: 870px;
 
-  /* tablet (landscape) max-width: 1280px */
-  @include root.maxTabletLandscape {
-    background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-      url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1280.webp");
-  }
-
-  /* tablet (portrait): (max-width: 1024px) */
+  /*** tablet (portrait): (max-width: 1024px) ***/
   @include root.maxTabletPortrait {
-    background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-      url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_1024.webp");
+    min-height: 830px;
   }
 
-  /* mobile (portrait wide): (max-width: 640px) */
+  /*** mobile (landscape): (max-width: 768px) ***/
+  @include root.maxMobileLandscape {
+    min-height: 770px;
+  }
+
+  /*** mobile (portrait wide): (max-width: 640px) ***/
   @include root.maxMobilePortraitWide {
-    background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-      url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_640.webp");
+    min-height: 740px;
   }
 
-  /* mobile (portrait narrow): (max-width: 480px)*/
+  /*** mobile (portrait narrow): (max-width: 480px) ***/
   @include root.maxMobilePortraitNarrow {
-    background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-      url("/assets/img/rollerShuttersAutomation/roller_shutters_automation_480.webp");
+    min-height: 705px;
+  }
+
+  /*** mobile (medium): (max-width: 375px) ***/
+  @include root.maxMobileMedium {
+    min-height: 830px;
+  }
+
+  /*** mobile (small): (max-width: 320px) ***/
+  @include root.maxMobileSmall {
+    min-height: 980px;
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, rgba(40, 32, 23, .5), rgba(40, 32, 23, .7));
+    z-index: 1;
+    pointer-events: none;
+  }
+}
+
+.section--roller-automation__bg {
+  position: fixed; //will be kept inside the relative with clip-path: inset(0);
+  //inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 120%; //up-down parallax reserve
+  z-index: 0;
+  display: block;
+  will-change: transform;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 }
 

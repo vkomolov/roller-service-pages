@@ -25,7 +25,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   //GSAP animation tweens
   const totalTl = animatePage();
-  //log(totalTl, "totalTl: ");
 
   createMasonry("#gallery-work", {
     gap: 20,

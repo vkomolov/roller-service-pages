@@ -219,10 +219,65 @@
 
 	<section class="section section--roller-automation" id="rollerShuttersAutomation"
 	         aria-labelledby="automation-group">
-		<div class="section__content-layer">
+		<!--Using <picture> for various image compositions with different aspect-ratio-->
+		<!--retina is omitted for the hero background-->
+		<picture class="section--roller-automation__bg">
+			<!-- mobile (small): (max-width: 320px) (vertical composition)-->
+			<source
+					media="(max-width: 320px)"
+					srcset="/assets/img/rollerShuttersAutomation/roller_shutters_automation_320x980.webp"
+			>
+
+			<!-- mobile (medium): (max-width: 375px) (vertical composition)-->
+			<source
+					media="(max-width: 375px)"
+					srcset="/assets/img/rollerShuttersAutomation/roller_shutters_automation_375x830.webp"
+			>
+
+			<!-- mobile (portrait narrow): (max-width: 480px) (vertical composition)-->
+			<source
+					media="(max-width: 480px)"
+					srcset="/assets/img/rollerShuttersAutomation/roller_shutters_automation_480x705.webp"
+			>
+
+			<!-- mobile (portrait wide): (max-width: 640px) (vertical composition)-->
+			<source
+					media="(max-width: 640px)"
+					srcset="/assets/img/rollerShuttersAutomation/roller_shutters_automation_640x740.webp"
+			>
+
+			<!-- mobile (landscape): (max-width: 768px) (horizontal composition)-->
+			<source
+					media="(max-width: 768px)"
+					srcset="/assets/img/rollerShuttersAutomation/roller_shutters_automation_768x770.webp"
+			>
+
+			<!-- tablet (portrait): (max-width: 1024px) (horizontal composition)-->
+			<source
+					media="(max-width: 1024px)"
+					srcset="/assets/img/rollerShuttersAutomation/roller_shutters_automation_1024x830.webp"
+			>
+
+			<!-- tablet (portrait): (min-width: 1025px) and wider (horizontal composition)-->
+			<source
+					srcset="/assets/img/rollerShuttersAutomation/roller_shutters_automation_1440x870.webp"
+			>
+			<!-- fallback with img -->
+			<img
+					src="/assets/img/rollerShuttersAutomation/roller_shutters_automation_1440x870.webp"
+					loading="lazy"
+					decoding="async"
+					fetchpriority="low"
+					width="1440"
+					height="870"
+					alt="Roller Shutter Automation"
+			>
+		</picture>
+
+		<div class="section__content-layer section__content-layer--roller-automation">
 			<div class="section__content-block section__content-block--row-right">
 				<div class="section__text-block section__text-block--single" data-anime="fade-in-right">
-					<p class="section__text-separ">@@data.automation.main.service_p_1</p>
+					<p class="section__text-separ" id="automation-group">@@data.automation.main.service_p_1</p>
 					<p>@@data.automation.main.service_p_2</p>
 					<p>@@data.automation.main.service_p_3</p>
 					<p>@@data.automation.main.service_p_4</p>

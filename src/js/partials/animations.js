@@ -25,6 +25,8 @@ const i = {
   biddingBlockHero: ".section__bidding-block",
   iconWrapperHero: ".section__img-wrapper--hero",
   galleryWork: "#gallery-work",
+  rollerAutomation: ".section--roller-automation",
+  rollerAutomationTarget: ".section--roller-automation__bg",
   fadeInLeft: "[data-anime=fade-in-left]",
   fadeInRight: "[data-anime=fade-in-right]",
   fadeInUp: "[data-anime=fade-in-up]",
@@ -113,6 +115,29 @@ const initScrolledNavigation = () => {
   });
 }
 
+const getRollerAutomationParallax = () => {
+  const target = document.querySelector(i.rollerAutomationTarget);
+  const trigger = document.querySelector(i.rollerAutomation);
+
+  if (!target || !trigger) return;
+  // start position: the image is shifted up by 10%
+  return gsap.fromTo(target,
+    { yPercent: 10 },
+    // End position: the image moves to -10%
+    {
+      yPercent: -10,
+      ease: "none", // Linear movement synchronized with scroll
+      scrollTrigger: {
+        trigger,  //The parent container
+        start: "top bottom",  // start animation when top of section enters viewport
+        end: "bottom top",  //end animation when bottom of section leaves viewport
+        scrub: 1.5, //adds 1.5 of smooth "catch-up" delay (inertia)
+        invalidateOnRefresh: true,  // Recalculates values on window resize for responsiveness
+      }
+    }
+  );
+};
+
 const burgerClickHandler = (e) => {
   //if clicked out of the burger-menu range then to check if the burger is opened and reverse the animation...
   if (!(e.target.closest(i.burgerBase))) {
@@ -188,8 +213,15 @@ const initBurgerMenu = () => {
 
 /// ANIMATION PARAMS
 const pageAnimations = {
-  index: () => {
+  // animations for the separate pages
+  automation: () => {
     const tlData = {};
+
+    const rollerParallax = getRollerAutomationParallax();
+
+    if (rollerParallax) {
+      tlData["rollerParallax"] = rollerParallax;
+    }
 
     return tlData;
   },
@@ -339,23 +371,17 @@ function onPageLoaded(animationData) {
   const pageName = document.body.dataset.type;
   const totalTl = {};
 
-
   if (animationData.common) {
-    const commonTl = animationData.common();
-    Object.assign(totalTl, commonTl);
-  }
-  else {
-    console.warn(`at onPageLoaded(): no "common" property found in the given Object...`);
+    Object.assign(totalTl, animationData.common());
   }
 
   if (pageName in animationData) {
-    const tlPage = animationData[pageName]();
-    return Object.assign(totalTl, tlPage);
+    Object.assign(totalTl, animationData[pageName]());
   }
-  else {
-    //console.warn(`at onPageLoaded(): no such page name property: ${pageName} found in the given Object...`);
-    return totalTl;
-  }
+
+  requestAnimationFrame(() => ScrollTrigger.refresh());
+
+  return totalTl;
 }
 
 /**
