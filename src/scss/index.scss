@@ -185,32 +185,6 @@
   }
 }
 
-.section__bidding-block {
-  font-size: var(--range_20-18_1280-641);
-  margin-top: 1.4em;
-
-  ///////// GSAP:
-  opacity: 0;
-
-  @include root.flex-box(column, center, flex-start);
-
-  /* mobile (portrait wide): (max-width: 640px) */
-  @include root.maxMobilePortraitWide {
-    //margin-top: 1.4em;
-    align-items: center;
-    text-align: center;
-    margin-top: 2em;
-  }
-
-  p {
-    max-width: 14em;
-  }
-
-  .button-request {
-    margin-top: 1.4em;
-  }
-}
-
 .section__heading-block--separation {
   font-size: var(--range_38-23_1280-320);
   margin-bottom: 0.77em;
@@ -350,6 +324,32 @@
 
   ////////// GSAP:
   transform: scale(0);
+}
+
+.section__bidding-block {
+  font-size: var(--range_20-18_1280-641);
+  margin-top: 1.4em;
+
+  ///////// GSAP:
+  opacity: 0;
+
+  @include root.flex-box(column, center, flex-start);
+
+  /* mobile (portrait wide): (max-width: 640px) */
+  @include root.maxMobilePortraitWide {
+    //margin-top: 1.4em;
+    align-items: center;
+    text-align: center;
+    margin-top: 2em;
+  }
+
+  p {
+    max-width: 14em;
+  }
+
+  .button-request {
+    margin-top: 1.4em;
+  }
 }
 
 ////////// SECTION pair  ///////////
@@ -500,7 +500,6 @@
 
 //////// SECTION services ///////////
 .section--services {
-  font-size: 1em; //parent font-size (18px at max 1280px)
   background-position: 70%;
   background-size: cover;
   background-attachment: fixed;
@@ -509,34 +508,34 @@
   /* tablet (landscape) min-width: 1281px */
   @include root.minTabletLandscape {
     background-image:
-      //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
-      linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-      image-set(
-          url("/assets/img/servicesSection/window_roller_shutters_1440.webp") 1x,
-          url("/assets/img/servicesSection/window_roller_shutters_1440.jpg") 1x
-      );
+        //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
+        linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
+        image-set(
+                url("/assets/img/servicesSection/window_roller_shutters_1440.webp") 1x,
+                url("/assets/img/servicesSection/window_roller_shutters_1440.jpg") 1x
+        );
 
     //retina can be included
-/*        @include root.mediaRetina2x {
-          background-image:
-            linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-            //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
-            image-set(
-                url("/assets/img/servicesSection/window_roller_shutters_1440@2x.webp") 2x,
-                url("/assets/img/servicesSection/window_roller_shutters_1440@2x.jpg") 2x
-            );
-        }*/
+    /*        @include root.mediaRetina2x {
+							background-image:
+								linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
+								//linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
+								image-set(
+										url("/assets/img/servicesSection/window_roller_shutters_1440@2x.webp") 2x,
+										url("/assets/img/servicesSection/window_roller_shutters_1440@2x.jpg") 2x
+								);
+						}*/
   }
 
   /* tablet (landscape) max-width: 1280px */
   @include root.maxTabletLandscape {
     background-image:
-      //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
-      linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-      image-set(
-          url("/assets/img/servicesSection/window_roller_shutters_1280.webp") 1x,
-          url("/assets/img/servicesSection/window_roller_shutters_1280.jpg") 1x
-      );
+        //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
+        linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
+        image-set(
+                url("/assets/img/servicesSection/window_roller_shutters_1280.webp") 1x,
+                url("/assets/img/servicesSection/window_roller_shutters_1280.jpg") 1x
+        );
 
     //retina can be included
     /*        @include root.mediaRetina2x {
@@ -553,56 +552,56 @@
   /* tablet (portrait): (max-width: 1024px) */
   @include root.maxTabletPortrait {
     background-image:
-      //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
-      linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-      image-set(
-          url("/assets/img/servicesSection/window_roller_shutters_1024.webp") 1x,
-          url("/assets/img/servicesSection/window_roller_shutters_1024.jpg") 1x
-      );
+        //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
+        linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
+        image-set(
+                url("/assets/img/servicesSection/window_roller_shutters_1024.webp") 1x,
+                url("/assets/img/servicesSection/window_roller_shutters_1024.jpg") 1x
+        );
 
     //retina can be included
-/*        @include root.mediaRetina2x {
-          background-image:
-            linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-            //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
-            image-set(
-              url("/assets/img/servicesSection/window_roller_shutters_1024@2x.webp") 2x,
-              url("/assets/img/servicesSection/window_roller_shutters_1024@2x.jpg") 2x
-          );
-        }*/
+    /*        @include root.mediaRetina2x {
+							background-image:
+								linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
+								//linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
+								image-set(
+									url("/assets/img/servicesSection/window_roller_shutters_1024@2x.webp") 2x,
+									url("/assets/img/servicesSection/window_roller_shutters_1024@2x.jpg") 2x
+							);
+						}*/
   }
 
   /* mobile (portrait wide): (max-width: 640px) */
   @include root.maxMobilePortraitWide {
     background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-      //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
-      image-set(
-          url("/assets/img/servicesSection/window_roller_shutters_640.webp") 1x,
-          url("/assets/img/servicesSection/window_roller_shutters_640.jpg") 1x
-      );
+        linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
+          //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
+        image-set(
+                url("/assets/img/servicesSection/window_roller_shutters_640.webp") 1x,
+                url("/assets/img/servicesSection/window_roller_shutters_640.jpg") 1x
+        );
 
     //retina can be included
-/*        @include root.mediaRetina2x {
-          background-image:
-            linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-            //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
-            image-set(
-              url("/assets/img/servicesSection/window_roller_shutters_640@2x.webp") 2x,
-              url("/assets/img/servicesSection/window_roller_shutters_640@2x.jpg") 2x
-          );
-        }*/
+    /*        @include root.mediaRetina2x {
+							background-image:
+								linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
+								//linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
+								image-set(
+									url("/assets/img/servicesSection/window_roller_shutters_640@2x.webp") 2x,
+									url("/assets/img/servicesSection/window_roller_shutters_640@2x.jpg") 2x
+							);
+						}*/
   }
 
   /* mobile (portrait narrow): (max-width: 480px)*/
   @include root.maxMobilePortraitNarrow {
     background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
-        //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
-      image-set(
-          url("/assets/img/servicesSection/window_roller_shutters_480.webp") 1x,
-          url("/assets/img/servicesSection/window_roller_shutters_480.jpg") 1x
-      );
+        linear-gradient(to right, rgba(40, 32, 23, .4), rgba(40, 32, 23, .7)),
+          //linear-gradient(to right, rgba(40, 32, 23, .4) 35%, rgba(40, 32, 23, .7) 85%),
+        image-set(
+                url("/assets/img/servicesSection/window_roller_shutters_480.webp") 1x,
+                url("/assets/img/servicesSection/window_roller_shutters_480.jpg") 1x
+        );
 
     //retina can be included
     /*        @include root.mediaRetina2x {
@@ -618,214 +617,257 @@
 }
 
 .section__text-block--services {
-  max-width: 20em;
-}
-
-.section__bidding-block--services {
-  align-items: center;
-  margin-top: -10em;
-
-  /* tablet (portrait): (max-width: 1024px) */
-  @include root.maxTabletPortrait {
-    margin-top: 0;
-  }
-
-  /* mobile (landscape): (max-width: 768px)*/
-  @include root.maxMobileLandscape {
-    margin-top: 2em;
-  }
-
-  p {
-    font-size: 1.4em;
-    font-weight: 600;
-    display: none;
-
-    /* mobile (portrait wide): (max-width: 640px) */
-    @include root.maxMobilePortraitWide {
-      display: inline;
-
-      &:last-of-type {
-        margin-bottom: .5em;
-      }
-    }
-  }
-}
-
-///////////////////// honeycomb hexagon /////////////////////////
-.hexagon-comb-block {
-  font-size: .95em; //parent font-size
-  --cell-width: 12.22em;  /* cell width of the honeycomb 220px at font-size: 18px */
-  --cell-padding: 0.2em;
-  --p: calc(var(--cell-width) + var(--cell-padding));
-
-  display: grid;
-  padding: var(--p);
-
-  /* mobile (portrait wide): (max-width: 640px) */
-  @include root.maxMobilePortraitWide {
-    font-size: 0.8em;
-  }
+  font-size: var(--range_18-16_1280-641);
+  max-width: 17.8em;
 
   /* mobile (portrait narrow): (max-width: 480px)*/
   @include root.maxMobilePortraitNarrow {
-    padding-bottom: calc(var(--p) * 2.8); //for hexagon-comb-block__cell-link transformations
-    padding-left: calc(var(--p) * 0.6);
-    padding-right: calc(var(--p) * 0.6);
+    font-size: 0.938rem;
+  }
+}
+
+///////////////////// HEXAGON SERVICES WRAPPER /////////////////////////
+
+.hexagon-services-wrapper {
+  // Убираем странный отрицательный margin, делаем нормальный flow
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+
+  @include root.maxTabletPortrait {
+    align-items: center;
+    margin-top: 3rem;
+  }
+}
+
+.hexagon-services-wrapper__heading {
+  font-size: 0.938rem;
+  font-weight: 600;
+  color: root.$white;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  // Показываем только на мобильных как в оригинале
+  display: none;
+
+  @include root.maxMobilePortraitWide {
+    display: block;
+  }
+}
+
+///////////////////// HONEYCOMB HEXAGON GRID /////////////////////////
+
+///////////////////// HONEYCOMB HEXAGON GRID /////////////////////////
+
+.hexagon-comb-block {
+  // === ОДНА ПЕРЕМЕННАЯ РАЗМЕРА ===
+  // 210px → 150px плавно
+  --hex-size: clamp(9.375rem, 15vw + 3rem, 13.125rem);
+  --hex-ratio: 1.1547;
+  --hex-gap: 0.2rem; // Уменьшили как просил
+
+  // Вычисляемые значения
+  --hex-width: var(--hex-size);
+  --hex-height: calc(var(--hex-size) * var(--hex-ratio));
+  // Вертикальное перекрытие: высота ряда = 75% высоты гексагона (т.к. 25% сверху и снизу — "уши")
+  --hex-row-height: calc(var(--hex-height) * 0.75);
+
+  display: grid;
+  // 5 колонок: половинки слева/справа + 3 полных
+  grid-template-columns: repeat(5, calc(var(--hex-width) * 0.5));
+  // 3 ряда с перекрытием
+  grid-template-rows: repeat(3, var(--hex-row-height));
+  gap: var(--hex-gap);
+  justify-content: center;
+  align-items: start; // Важно: start, не center
+
+  // Добавляем padding чтобы углы гексагонов не обрезались
+  padding: calc(var(--hex-height) * 0.25) 0;
+
+  // Позиционирование сот
+  .hexagon-comb-block__cell {
+    width: var(--hex-width);
+    height: var(--hex-height);
+
+    // Ряд 1 (верхний): колонки 2 и 4 (центрируем по вертикали в ячейке)
+    &:nth-child(1) {
+      grid-area: 1 / 2;
+      align-self: end; // Прижимаем к низу ячейки
+    }
+    &:nth-child(2) {
+      grid-area: 1 / 4;
+      align-self: end;
+    }
+
+    // Ряд 2 (средний): колонки 1, 3, 5 (центрируем)
+    &:nth-child(3) { grid-area: 2 / 1; }
+    &:nth-child(4) { grid-area: 2 / 3; }
+    &:nth-child(5) { grid-area: 2 / 5; }
+
+    // Ряд 3 (нижний): колонки 2 и 4 (прижимаем к верху)
+    &:nth-child(6) {
+      grid-area: 3 / 2;
+      align-self: start;
+    }
+    &:nth-child(7) {
+      grid-area: 3 / 4;
+      align-self: start;
+    }
+  }
+
+  // Плавный размер шрифта: 16px → 14px
+  font-size: clamp(0.875rem, 0.8rem + 0.4vw, 1rem);
+
+  // === МОБИЛЬНАЯ ВЕРСИЯ ===
+  @include root.maxMobilePortraitWide {
+    // Вертикальная сота: 1-2-1-2-1-2-1
+    grid-template-columns: repeat(2, calc(var(--hex-width) * 1));
+    grid-template-rows: repeat(4, var(--hex-row-height));
+    padding: calc(var(--hex-height) * 0.25) 0;
+
+    .hexagon-comb-block__cell {
+      &:nth-child(1) {
+        grid-area: 1 / 1 / 2 / 3;
+        justify-self: center;
+        align-self: end;
+      }
+      &:nth-child(2) {
+        grid-area: 2 / 1;
+        align-self: start;
+      }
+      &:nth-child(3) {
+        grid-area: 2 / 2;
+        align-self: start;
+      }
+      &:nth-child(4) {
+        grid-area: 3 / 1 / 4 / 3;
+        justify-self: center;
+      }
+      &:nth-child(5) {
+        grid-area: 4 / 1;
+        align-self: start;
+      }
+      &:nth-child(6) {
+        grid-area: 4 / 2;
+        align-self: start;
+      }
+      // 7-й гексагон — следующий ряд (нужно добавить 5-й ряд в grid)
+    }
+
+    // Расширяем сетку для 7-го элемента
+    grid-template-rows: repeat(5, var(--hex-row-height));
+
+    .hexagon-comb-block__cell:nth-child(7) {
+      grid-area: 5 / 1 / 6 / 3;
+      justify-self: center;
+      align-self: start;
+    }
+  }
+
+  @include root.maxMobilePortraitNarrow {
+    --hex-size: clamp(8rem, 45vw, 9.375rem);
+  }
+}
+
+.hexagon-comb-block__cell {
+  display: block;
+  position: relative;
+  text-decoration: none;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  // aspect-ratio не нужен — размеры заданы явно
+
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.08);
+    z-index: 10;
+
+    .hexagon-comb-block__cell-inner::before {
+      opacity: 0; // Убираем оверлей при hover
+    }
+
+    .hexagon-comb-block__cell-title {
+      opacity: 0; // Убираем текст при hover
+    }
+  }
+
+  // Состояние по умолчанию (без hover) — показываем оверлей и текст
+  .hexagon-comb-block__cell-inner::before {
+    opacity: 1;
+  }
+
+  .hexagon-comb-block__cell-title {
+    opacity: 1;
+  }
+
+  // Active state
+  &.active {
+    transform: scale(1.05);
+
+    .hexagon-comb-block__cell-inner::before {
+      background-color: rgba(101, 92, 82, 0.9);
+      opacity: 1;
+    }
+
+    .hexagon-comb-block__cell-title {
+      opacity: 1;
+      color: root.$white;
+      font-weight: 400;
+    }
+  }
+
+  &:focus-visible {
+    outline: 3px solid root.$color-01;
+    outline-offset: 4px;
+  }
+}
+
+.hexagon-comb-block__cell-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+
+  // Оверлей по умолчанию ВКЛЮЧЕН
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: rgba(220, 220, 220, 0.7); // Светлый фон как в оригинале
+    z-index: 1;
+    transition: opacity 0.2s ease;
+    opacity: 1; // По умолчанию виден
+  }
+
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
   }
 }
 
 .hexagon-comb-block__cell-title {
   position: absolute;
-  font-size: 1em;
-  display: block;
-  width: 9em;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  width: 85%;
+  z-index: 2;
+
   font-family: "Roboto", "Roboto Fallback", system-ui, sans-serif;
   font-weight: 700;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  line-height: 1.35;
+  font-size: 1em; // Наследует clamp из родителя
+  line-height: 1.3;
   text-align: center;
   color: root.$color-02;
 
-  @include root.transition(opacity, 0.2s);
-
-  /* mobile (portrait wide): (max-width: 640px) */
-  @include root.maxMobilePortraitWide {
-    font-size: 1.15em;
-  }
+  transition: opacity 0.2s ease;
+  opacity: 1; // По умолчанию виден
 }
 
-.hexagon-comb-block__cell-link {
-  position: relative;
-  width: var(--cell-width);
-  grid-area: 1/1; //all cells in one row, in one column
-  aspect-ratio: 0.87;  //224px / 257px = 0.8716 original picture size
-  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  transform: translate(var(--_x, 0), var(--_y, 0)) scale(var(--_s, 1));
-
-  @include root.transition();
-
-  &:before {
-    position: absolute;
-    display: block;
-    content: "";
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    //background: linear-gradient(150deg, rgba(255, 133, 2, .8) 40%, rgba(255, 255, 255, .9) 90%);
-    //background: linear-gradient(150deg, rgba(255, 133, 2, .8) 40%, rgba(220, 220, 220, .8) 90%);
-    background: rgba(220, 220, 220, .7);
-    //background: rgba(241, 241, 241, .7);
-
-    //@include transition(transform, 0.2s);
-    @include root.transition(top, 0.2s);
-  }
-
-  &.active {
-    --_s: 1.1;
-    z-index: 1;
-    cursor: default;
-
-    &:before {
-      //top: -100%;
-      //background: linear-gradient(150deg, rgba(255, 133, 2, .8) 40%, rgba(255, 255, 255, .9) 90%);
-      background-color: rgba(101, 92, 82, .7);
-    }
-
-    .hexagon-comb-block__cell-title {
-      opacity: 1;
-      color: rgba(255, 255, 255, 1);
-      font-weight: 400;
-    }
-  }
-}
-
-.hexagon-comb-block__cell-link:not(.active):hover {
-  --_s: 1.1;
-  z-index: 1;
-
-  &:before {
-    top: -100%;
-  }
-
-  .hexagon-comb-block__cell-title {
-    opacity: 0;
-  }
-}
-
-.hexagon-comb-block__cell-link:nth-child(1) {
-  --_x: calc(-50% - var(--cell-padding)*.5);
-  --_y: -76.5%;
-
-  /* mobile (portrait narrow): (max-width: 480px)*/
-  @include root.maxMobilePortraitNarrow {
-    --_x: 0;
-  }
-}
-
-.hexagon-comb-block__cell-link:nth-child(2) {
-  --_x: calc(50% + var(--cell-padding)*.5);
-  --_y: -76.5%;
-
-  /* mobile (portrait narrow): (max-width: 480px)*/
-  @include root.maxMobilePortraitNarrow {
-    --_x: calc(-50% - var(--cell-padding)*.5);
-    --_y: 0;
-  }
-}
-
-.hexagon-comb-block__cell-link:nth-child(3) {
-  --_x: calc(-100% - var(--cell-padding));
-
-  /* mobile (portrait narrow): (max-width: 480px)*/
-  @include root.maxMobilePortraitNarrow {
-    --_x: calc(50% + var(--cell-padding)*.5);
-  }
-}
-
-.hexagon-comb-block__cell-link:nth-child(4) {
-
-  /* mobile (portrait narrow): (max-width: 480px)*/
-  @include root.maxMobilePortraitNarrow {
-    --_y: 76.5%;
-  }
-}
-
-.hexagon-comb-block__cell-link:nth-child(5) {
-  --_x: calc(100% + var(--cell-padding));
-
-  /* mobile (portrait narrow): (max-width: 480px)*/
-  @include root.maxMobilePortraitNarrow {
-    --_x: calc(-50% - var(--cell-padding)*.5);
-    --_y: 153%;
-  }
-}
-
-.hexagon-comb-block__cell-link:nth-child(6) {
-  --_x: calc(-50% - var(--cell-padding)*.5);
-  --_y: calc(76.5%);
-
-  /* mobile (portrait narrow): (max-width: 480px)*/
-  @include root.maxMobilePortraitNarrow {
-    --_x: calc(50% + var(--cell-padding)*.5);
-    --_y: 153%;
-  }
-}
-
-.hexagon-comb-block__cell-link:nth-child(7) {
-  --_x: calc(50% + var(--cell-padding)*.5);
-  --_y: calc(76.5%);
-
-  /* mobile (portrait narrow): (max-width: 480px)*/
-  @include root.maxMobilePortraitNarrow {
-    --_x: 0;
-    --_y: 229.5%
-  }
-}
 
 ///////////////////// single text-block /////////////////////////
 .section__text-block--single {
@@ -845,11 +887,6 @@
 }
 
 //////////////////// section--roller-automation //////////////////
-.section__content-layer--roller-automation {
-  position: relative;
-  z-index: 2;
-}
-
 .section--roller-automation {
   position: relative;
   isolation: isolate; //Forces all z-index values to stay inside this block
@@ -917,6 +954,10 @@
     height: 100%;
     object-fit: cover;
   }
+}
+
+.section__content-layer--roller-automation {
+  z-index: 2;
 }
 
 ///////// logo slider ///////////////

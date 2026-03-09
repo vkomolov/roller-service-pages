@@ -4,20 +4,22 @@ import { activateNavLink, createMasonry, initLangSwitcher, lockedEventListener }
 import { initThumbs } from "./modulesPack/gallery-thumbs/gallery-thumbs-index.js";
 import { animatePage, fadeInGallery } from "./partials/animations.js";
 
+//INITIAL DATA
+const linkAnchors = {
+  index: "#",
+  gates: "#gatesSection",
+  rollers: "#securityShuttersSection",
+  automation: "#rollerShuttersAutomation",
+  barriers: "#barrierSection",
+  awnings: "#awningsSection",
+  windows: "#windowSection",
+  security: "#securitySurveillanceSection",
+};
+const navLinkSelector = ".nav-link";
+const navHexagonSelector = ".hexagon-comb-block__cell";
+
 document.addEventListener("DOMContentLoaded", () => {
   const pageType = document.body.dataset.type;
-  const linkAnchors = {
-    index: "#",
-    gates: "#gatesSection",
-    rollers: "#securityShuttersSection",
-    automation: "#rollerShuttersAutomation",
-    barriers: "#barrierSection",
-    awnings: "#awningsSection",
-    windows: "#windowSection",
-    security: "#securitySurveillanceSection",
-  };
-  const navLinkSelector = ".nav-link";
-  const navHexagonSelector = ".hexagon-comb-block__cell-link";
 
   //checking and lighten several duplicate navigations for the .active links:
   activateNavLink(navLinkSelector, pageType, "active", linkAnchors[pageType] || "#");

@@ -11598,20 +11598,22 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
+//INITIAL DATA
+const linkAnchors = {
+  index: "#",
+  gates: "#gatesSection",
+  rollers: "#securityShuttersSection",
+  automation: "#rollerShuttersAutomation",
+  barriers: "#barrierSection",
+  awnings: "#awningsSection",
+  windows: "#windowSection",
+  security: "#securitySurveillanceSection"
+};
+const navLinkSelector = ".nav-link";
+const navHexagonSelector = ".hexagon-comb-block__cell";
 document.addEventListener("DOMContentLoaded", () => {
   const pageType = document.body.dataset.type;
-  const linkAnchors = {
-    index: "#",
-    gates: "#gatesSection",
-    rollers: "#securityShuttersSection",
-    automation: "#rollerShuttersAutomation",
-    barriers: "#barrierSection",
-    awnings: "#awningsSection",
-    windows: "#windowSection",
-    security: "#securitySurveillanceSection"
-  };
-  const navLinkSelector = ".nav-link";
-  const navHexagonSelector = ".hexagon-comb-block__cell-link";
 
   //checking and lighten several duplicate navigations for the .active links:
   (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.activateNavLink)(navLinkSelector, pageType, "active", linkAnchors[pageType] || "#");

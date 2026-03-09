@@ -556,6 +556,8 @@
 	</section>
 
 	<section class="section section--services" aria-labelledby="services-group">
+		<!--todo: to replace background-image of .section--services with picture for different media-->
+
 		<div class="section__content-layer">
 			<div class="section__heading-block section__heading-block--separation" data-anime="fade-in-left">
 				<h2 id="services-group">Наші Послуги</h2>
@@ -568,98 +570,142 @@
 				</div>
 			</div>
 			<div class="section__content-block section__content-block--row-right flex-gap-02-01">
-				<div class="section__bidding-block section__bidding-block--services">
-					<p>Оберить послугу</p>
-					<nav class="hexagon-comb-block" aria-label="Services navigation" data-anime="scale-in">
+				<div class="hexagon-services-wrapper" data-anime="scale-in">
+					<p class="hexagon-services-wrapper__heading">Оберить послугу</p>
+					<nav class="hexagon-comb-block" aria-label="Services navigation">
 						<a href="./gates-installation-repair.html"
-						   class="hexagon-comb-block__cell-link"
+						   class="hexagon-comb-block__cell"
 						   title="Перейти до послуги"
 						   aria-label="Navigate to gates installation services"
 						   tabindex="0"
-						   data-type="gates">
-							<img
-									src="/assets/img/servicesSection/gates_installation/gates_installation.webp"
-									loading="lazy"
-									alt="gates installation services"
-							>
-							<span class="hexagon-comb-block__cell-title">Виготовлення та ремонт воріт</span>
+						   data-type="gates"
+						>
+							<div class="hexagon-comb-block__cell-inner">
+								<img
+										src="/assets/img/servicesSection/gates_installation/gates_installation.webp"
+										loading="lazy"
+										alt="Gates Installation Services"
+										aria-hidden="true"
+								>
+								<span class="hexagon-comb-block__cell-title">
+									Виготовлення та ремонт воріт
+								</span>
+							</div>
+
 						</a>
 						<a href="./rollers-installation-repair.html"
-						   class="hexagon-comb-block__cell-link"
+						   class="hexagon-comb-block__cell"
 						   title="Перейти до послуги"
 						   aria-label="Navigate to roller shutters installation services"
 						   tabindex="0"
-						   data-type="rollers">
-							<img
-									src="/assets/img/servicesSection/shutters_installation/shutters_installation.webp"
-									loading="lazy"
-									alt="roller shutters installation services"
-							>
-							<span class="hexagon-comb-block__cell-title">Монтаж та ремонт захісних ролет</span>
+						   data-type="rollers"
+						>
+							<div class="hexagon-comb-block__cell-inner">
+								<img
+										src="/assets/img/servicesSection/shutters_installation/shutters_installation.webp"
+										loading="lazy"
+										alt="Roller Shutters Installation Services"
+										aria-hidden="true"
+								>
+								<span class="hexagon-comb-block__cell-title">
+									Монтаж та ремонт захісних ролет
+								</span>
+							</div>
 						</a>
 						<a href="./gates-rollers-automation.html"
-						   class="hexagon-comb-block__cell-link"
+						   class="hexagon-comb-block__cell"
 						   title="Перейти до послуги"
 						   aria-label="Navigate to roller automation services"
 						   tabindex="0"
-						   data-type="automation">
-							<img
-									src="/assets/img/servicesSection/roller_automation/roller_automation.webp"
-									loading="lazy"
-									alt="roller automation services"
-							>
-							<span class="hexagon-comb-block__cell-title">Автоматизація воріт та захисних ролет</span>
+						   data-type="automation"
+						>
+							<div class="hexagon-comb-block__cell-inner">
+								<img
+										src="/assets/img/servicesSection/roller_automation/roller_automation.webp"
+										loading="lazy"
+										alt="Roller Automation Services"
+										aria-hidden="true"
+								>
+								<span class="hexagon-comb-block__cell-title">
+									Автоматизація воріт та захисних ролет
+								</span>
+							</div>
 						</a>
 						<a href="./barriers-installation-repair.html"
-						   class="hexagon-comb-block__cell-link"
+						   class="hexagon-comb-block__cell"
 						   title="Перейти до послуги"
 						   aria-label="Navigate to barrier installation services"
 						   tabindex="0"
-						   data-type="barriers">
-							<img
-									src="/assets/img/servicesSection/barrier_installation/barrier.webp"
-									loading="lazy"
-									alt="barrier installation services"
-							>
-							<span class="hexagon-comb-block__cell-title">Встановлення та ремонт шлагбаумів</span>
+						   data-type="barriers"
+						>
+							<div class="hexagon-comb-block__cell-inner">
+								<img
+										src="/assets/img/servicesSection/barrier_installation/barrier.webp"
+										loading="lazy"
+										alt="Barrier Installation Services"
+										aria-hidden="true"
+								>
+								<span class="hexagon-comb-block__cell-title">
+									Встановлення та ремонт шлагбаумів
+								</span>
+							</div>
 						</a>
 						<a href="./awnings-installation-repair.html"
-						   class="hexagon-comb-block__cell-link"
+						   class="hexagon-comb-block__cell"
 						   title="Перейти до послуги"
 						   aria-label="Navigate to awnings installation services"
-						   tabindex="0" data-type="awnings">
-							<img
-									src="/assets/img/servicesSection/awnings_installation/awnings.webp"
-									loading="lazy"
-									alt="awnings installation services"
-							>
-							<span class="hexagon-comb-block__cell-title">Виготовлення, монтаж та ремонт маркіз</span>
+						   tabindex="0"
+						   data-type="awnings"
+						>
+							<div class="hexagon-comb-block__cell-inner">
+								<img
+										src="/assets/img/servicesSection/awnings_installation/awnings.webp"
+										loading="lazy"
+										alt="Awnings Installation Services"
+										aria-hidden="true"
+								>
+								<span class="hexagon-comb-block__cell-title">
+									Виготовлення, монтаж та ремонт маркіз
+								</span>
+							</div>
 						</a>
 						<a href="./security-installation-maintenance.html"
-						   class="hexagon-comb-block__cell-link"
+						   class="hexagon-comb-block__cell"
 						   title="Перейти до послуги"
 						   aria-label="Navigate to surveillance installation services"
 						   tabindex="0"
-						   data-type="security">
-							<img
-									src="/assets/img/servicesSection/surveillance_installation/surveillance_installation.webp"
-									alt="surveillance installation services"
-									loading="lazy"
-							>
-							<span class="hexagon-comb-block__cell-title">Встановлення систем охорони та відеонагляду</span>
+						   data-type="security"
+						>
+							<div class="hexagon-comb-block__cell-inner">
+								<img
+										src="/assets/img/servicesSection/surveillance_installation/surveillance_installation.webp"
+										loading="lazy"
+										alt="Surveillance Installation Services"
+										aria-hidden="true"
+								>
+								<span class="hexagon-comb-block__cell-title">
+									Встановлення систем охорони та відеонагляду
+								</span>
+							</div>
 						</a>
 						<a href="./window-settings-repair.html"
-						   class="hexagon-comb-block__cell-link"
+						   class="hexagon-comb-block__cell"
 						   title="Перейти до послуги"
 						   aria-label="Navigate to window hardening services"
 						   tabindex="0"
-						   data-type="windows">
-							<img
-									src="/assets/img/servicesSection/window_hardening/window_hardening.webp"
-									alt="window hardening services"
-									loading="lazy"
-							>
-							<span class="hexagon-comb-block__cell-title">Бронювання та ремонт вікон і дверей</span>
+						   data-type="windows"
+						>
+							<div class="hexagon-comb-block__cell-inner">
+								<img
+										src="/assets/img/servicesSection/window_hardening/window_hardening.webp"
+										loading="lazy"
+										alt="Window Hardening Services"
+										aria-hidden="true"
+								>
+								<span class="hexagon-comb-block__cell-title">
+									Бронювання та ремонт вікон і дверей
+								</span>
+							</div>
 						</a>
 					</nav>
 				</div>
