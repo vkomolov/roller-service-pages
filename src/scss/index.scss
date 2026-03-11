@@ -186,7 +186,7 @@
 }
 
 .section__heading-block--separation {
-  font-size: var(--range_38-23_1280-320);
+  font-size: var(--range_38-24_1280-320);
   margin-bottom: 0.77em;
   max-width: 15em;
 
@@ -629,28 +629,38 @@
 ///////////////////// HEXAGON SERVICES WRAPPER /////////////////////////
 
 .hexagon-services-wrapper {
-  margin-top: 2rem;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  margin-top: -10rem;
 
-  @include root.maxTabletPortrait {
+  /* mobile (landscape): (max-width: 768px)*/
+  @include root.maxMobileLandscape {
     align-items: center;
     margin-top: 3rem;
   }
 }
 
 .hexagon-services-wrapper__heading {
-  font-size: 0.938rem;
+  font-size: 1.5rem;
   font-weight: 600;
   color: root.$white;
-  margin-bottom: 1.5rem;
   text-align: center;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
   // showing only on mobile devices
   display: none;
 
+  @include root.text-shadow(.08em, .08em);
+
+  /* mobile (portrait wide): (max-width: 640px) */
   @include root.maxMobilePortraitWide {
     display: block;
+  }
+
+  /* mobile (medium): (max-width: 375px) */
+  @include root.maxMobileMedium {
+    font-size: 1.375rem;
   }
 }
 

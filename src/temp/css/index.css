@@ -390,7 +390,7 @@ h1 {
   /*** it is allowed to use also like: mix.fluid-value(1280px, 641px, 120px, 64px, rem) ***/
   --range_120-64_1280-641: clamp(4rem, 8.7636932707vw + 0.4890453834rem, 7.5rem);
   --range_630-480_1280-641: clamp(30rem, 23.4741784038vw + 20.595657277rem, 39.375rem);
-  --range_210-150_1280-641: clamp(9.375rem, 9.3896713615vw + 5.6132629108rem, 13.125rem);
+  --range_210-150_1280-641: clamp(9.375rem, 6.2597809077vw + 6.8671752739rem, 11.875rem);
   --range_80-64_1280-641: clamp(4rem, 2.5039123631vw + 2.9968701095rem, 5rem);
   --range_80-32_1280-641: clamp(2rem, 7.5117370892vw + -1.0093896714rem, 5rem);
   --range_48-32_1280-641: clamp(2rem, 2.5039123631vw + 0.9968701095rem, 3rem);
@@ -402,7 +402,7 @@ h1 {
   --range_18-15_1280-641: clamp(0.9375rem, 0.4694835681vw + 0.7494131455rem, 1.125rem);
   --range_400-330_1280-1025: clamp(20.625rem, 27.4509803922vw + 3.0392156863rem, 25rem);
   --range_18-14_1280-769: clamp(0.875rem, 0.782778865vw + 0.498776908rem, 1.125rem);
-  --range_38-23_1280-320: clamp(1.4375rem, 1.5625vw + 1.125rem, 2.375rem);
+  --range_38-24_1280-320: clamp(1.5rem, 1.4583333333vw + 1.2083333333rem, 2.375rem);
   --range_48-36_1280-320: clamp(2.25rem, 1.25vw + 2rem, 3rem);
   /*** Mobile (breakpoint 640px) ***/
   --range_32-23_640-320: clamp(1.4375rem, 2.8125vw + 0.875rem, 2rem);
@@ -1256,7 +1256,7 @@ h2, h3, h4, h5 {
 }
 
 .section__heading-block--separation {
-  font-size: var(--range_38-23_1280-320);
+  font-size: var(--range_38-24_1280-320);
   margin-bottom: 0.77em;
   max-width: 15em;
 }
@@ -1637,12 +1637,13 @@ h2, h3, h4, h5 {
 }
 
 .hexagon-services-wrapper {
-  margin-top: 2rem;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  margin-top: -10rem;
+  /* mobile (landscape): (max-width: 768px)*/
 }
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
   .hexagon-services-wrapper {
     align-items: center;
     margin-top: 3rem;
@@ -1650,16 +1651,25 @@ h2, h3, h4, h5 {
 }
 
 .hexagon-services-wrapper__heading {
-  font-size: 0.938rem;
+  font-size: 1.5rem;
   font-weight: 600;
   color: rgb(255, 255, 255);
-  margin-bottom: 1.5rem;
   text-align: center;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
   display: none;
+  text-shadow: 0.08em 0.08em 0.08em rgba(0, 0, 0, 0.8);
+  /* mobile (portrait wide): (max-width: 640px) */
+  /* mobile (medium): (max-width: 375px) */
 }
 @media (max-width: 640px) {
   .hexagon-services-wrapper__heading {
     display: block;
+  }
+}
+@media (max-width: 375px) {
+  .hexagon-services-wrapper__heading {
+    font-size: 1.375rem;
   }
 }
 
