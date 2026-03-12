@@ -25,8 +25,10 @@ const i = {
   biddingBlockHero: ".section__bidding-block",
   iconWrapperHero: ".section__img-wrapper--hero",
   galleryWork: "#gallery-work",
-  rollerAutomation: ".section--roller-automation",
-  rollerAutomationTarget: ".section--roller-automation__bg",
+  automationParallax: ".section--roller-automation",
+  automationParallaxBg: "[data-anime=automation]",
+  servicesParallax: ".section--services",
+  servicesParallaxBg: "[data-anime=services]",
   fadeInLeft: "[data-anime=fade-in-left]",
   fadeInRight: "[data-anime=fade-in-right]",
   fadeInUp: "[data-anime=fade-in-up]",
@@ -115,9 +117,16 @@ const initScrolledNavigation = () => {
   });
 }
 
-const getRollerAutomationParallax = () => {
-  const target = document.querySelector(i.rollerAutomationTarget);
-  const trigger = document.querySelector(i.rollerAutomation);
+/**
+ * @description It creates parralax effect on the target Element with GSAP
+ * @param {string} auxTarget - className of the target html Element
+ * @param {string} auxTrigger - className of the trigger html Element
+ * @returns {gsap.core.Tween|undefined}
+ */
+const getBackgroundParallax = (auxTarget, auxTrigger) => {
+  const target = document.querySelector(auxTarget);
+  const trigger = document.querySelector(auxTrigger);
+
 
   if (!target || !trigger) return;
   // start position: the image is shifted up by 10%
@@ -217,7 +226,10 @@ const pageAnimations = {
   automation: () => {
     const tlData = {};
 
-    const rollerParallax = getRollerAutomationParallax();
+    const rollerParallax = getBackgroundParallax(
+      i.automationParallaxBg,
+      i.automationParallax
+    );
 
     if (rollerParallax) {
       tlData["rollerParallax"] = rollerParallax;
@@ -233,6 +245,16 @@ const pageAnimations = {
 
     if (hasRealAnimations(tlHero)) {
       tlData["tlHero"] = tlHero;
+    }
+
+    ///////////// SECTION SERVICES ANIMATION /////////////////
+    const servicesParallax = getBackgroundParallax(
+      i.servicesParallaxBg,
+      i.servicesParallax
+    );
+
+    if (servicesParallax) {
+      tlData["servicesParallax"] = servicesParallax;
     }
 
     ///////////// FADE-IN-LEFT ANIMATIONS ////////////////
