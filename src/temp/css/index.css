@@ -391,6 +391,7 @@ h1 {
   --range_120-64_1280-641: clamp(4rem, 8.7636932707vw + 0.4890453834rem, 7.5rem);
   --range_630-480_1280-641: clamp(30rem, 23.4741784038vw + 20.595657277rem, 39.375rem);
   --range_210-150_1280-641: clamp(9.375rem, 6.2597809077vw + 6.8671752739rem, 11.875rem);
+  --range_145-80_1280-641: clamp(5rem, 10.172143975vw + 0.92478482rem, 9.0625rem);
   --range_80-64_1280-641: clamp(4rem, 2.5039123631vw + 2.9968701095rem, 5rem);
   --range_80-32_1280-641: clamp(2rem, 7.5117370892vw + -1.0093896714rem, 5rem);
   --range_48-32_1280-641: clamp(2rem, 2.5039123631vw + 0.9968701095rem, 3rem);
@@ -1919,10 +1920,14 @@ h2, h3, h4, h5 {
   flex-flow: row wrap;
   justify-content: center;
   align-items: center;
-  gap: 1em;
+  gap: 1rem;
 }
 .logo-wrapper__item {
-  width: clamp(5em, 12vw, 9em);
+  width: var(--range_145-80_1280-641);
+  transition: transform 0.2s ease-in-out;
+}
+.logo-wrapper__item:hover {
+  transform: scale(1.08);
 }
 
 #gallery-work {

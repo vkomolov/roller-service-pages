@@ -897,10 +897,18 @@
   width: 100%;
 
   @include root.flex-box(row, center, center, wrap);
-  gap: 1em;
+
+  gap: 1rem;
 
   &__item {
-    width: clamp(5em, 12vw, 9em);
+    width: var(--range_145-80_1280-641);
+    transition: transform 0.2s ease-in-out;
+
+
+    &:hover {
+      transform: scale(1.08);
+      //@include root.box-shadow(.15rem, .6rem);
+    }
   }
 }
 
