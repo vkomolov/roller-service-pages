@@ -7,6 +7,9 @@ import { setAttributes } from "../helpers/funcsDOM.js";
 ///////////////// REGISTER GSAP PLUGINS /////////////
 gsap.registerPlugin(ScrollTrigger);
 
+////////////////// INITIATING SCROLL CONTROLLER /////////
+//const { lockScroll } = initLockScroll();
+
 //////////////// ANIMATION DATA /////////////////////
 /// ANIMATION SELECTORS
 /// index.html
@@ -164,7 +167,7 @@ const burgerClickHandler = (e) => {
       navMenuAnime.reverse();
 
       //returning scroll to the page...
-      //lockScroll(true);
+      //lockScroll(false);
       document.body.style.overflow = "auto";
     }
   }
@@ -186,7 +189,7 @@ const burgerInitListener = (burger) => {
       if (isExpanded) {
         burgerHidden.classList.remove("opened");
         burgerFixed.classList.remove("opened");
-        //lockScroll(true);
+        //lockScroll(false);
         document.documentElement.style.scrollbarGutter = "initial";
         document.body.style.scrollbarGutter = "initial";
 
@@ -195,7 +198,7 @@ const burgerInitListener = (burger) => {
       else {
         burgerHidden.classList.add("opened");
         burgerFixed.classList.add("opened");
-        //lockScroll(false);
+        //lockScroll(true);
         document.documentElement.style.scrollbarGutter = "stable";
         document.body.style.scrollbarGutter = "stable";
 

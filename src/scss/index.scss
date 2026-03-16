@@ -915,19 +915,20 @@
 /////////////////// gallery ///////////////////
 #gallery-work {
   width: 100%;
-  height: 45em;
-  @include root.scroll-init(0.45em, rgba(255, 133, 2, 1), rgba(255, 133, 2, .5));
+  height: 45rem;
+  @include root.scroll-init(0.45rem, rgba(255, 133, 2, 1), rgba(255, 133, 2, .5));
 }
 
 .gallery__item {
-  width: 30%;
-  min-width: 12.22em;
+  width: clamp(12rem, 30%, 20.625rem);
+
   will-change: transform, opacity;
-  border-radius: 0.5em;
+  border-radius: 0.5rem;
   overflow: hidden;
+  overflow: clip;
   opacity: 0;
 
-  @include root.box-shadow(0.2em, 0.4em);
+  @include root.box-shadow(0.2rem, 0.4rem);
 
   &:hover {
     cursor: pointer;
@@ -938,7 +939,7 @@
   }
 
   img, svg, picture, video, object {
-    border-radius: 0.5em;
+    border-radius: 0.5rem;
 
     @include root.transition(transform, 0.15s);
   }

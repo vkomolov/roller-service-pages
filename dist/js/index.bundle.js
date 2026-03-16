@@ -10293,20 +10293,20 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   activateNavLink: function() { return /* binding */ activateNavLink; },
 /* harmony export */   createMasonry: function() { return /* binding */ createMasonry; },
-/* harmony export */   customTargetStyleOnScroll: function() { return /* binding */ customTargetStyleOnScroll; },
 /* harmony export */   getImagesLoaded: function() { return /* binding */ getImagesLoaded; },
 /* harmony export */   getSelectorName: function() { return /* binding */ getSelectorName; },
 /* harmony export */   initLangSwitcher: function() { return /* binding */ initLangSwitcher; },
+/* harmony export */   initLockScroll: function() { return /* binding */ initLockScroll; },
 /* harmony export */   isStyleSupported: function() { return /* binding */ isStyleSupported; },
-/* harmony export */   lockScroll: function() { return /* binding */ lockScroll; },
 /* harmony export */   lockedEventListener: function() { return /* binding */ lockedEventListener; },
 /* harmony export */   migrateElement: function() { return /* binding */ migrateElement; },
-/* harmony export */   setAttributes: function() { return /* binding */ setAttributes; }
+/* harmony export */   observeIntersection: function() { return /* binding */ observeIntersection; },
+/* harmony export */   setAttributes: function() { return /* binding */ setAttributes; },
+/* harmony export */   toggleClassOnIntersection: function() { return /* binding */ toggleClassOnIntersection; }
 /* harmony export */ });
 /* harmony import */ var imagesloaded__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! imagesloaded */ "./node_modules/imagesloaded/imagesloaded.js");
 
 
-//import { gsap } from "gsap";
 
 
 /**
@@ -10331,8 +10331,8 @@ function migrateElement({
   parentFrom,
   parentTo
 }) {
-  if (target.parentNode) {
-    (target.parentNode === parentFrom ? parentTo : parentFrom).appendChild(target);
+  if (target.isConnected) {
+    (target.parentElement === parentFrom ? parentTo : parentFrom).appendChild(target);
   } else {
     console.warn(`transitBox: target in not in DOM: ${target}`);
   }
@@ -10361,7 +10361,7 @@ function migrateElement({
  * removeClickListener();
  */
 function lockedEventListener(event, listenerOwner, delay = 300) {
-  if (window !== listenerOwner && document !== listenerOwner && !document.body.contains(listenerOwner)) {
+  if (listenerOwner instanceof HTMLElement && !listenerOwner.isConnected) {
     throw new Error("Provided listenerOwner at lockedEventListener() is not a valid DOM element...");
   }
   let isLocked = false;
@@ -10383,57 +10383,121 @@ function lockedEventListener(event, listenerOwner, delay = 300) {
 }
 
 /**
- * Adds or removes a class on a target element based on the scroll position of a trigger element.
- * The class is added when the trigger element is scrolled past the top of the viewport,
- * and removed when the trigger element is scrolled back above the viewport.
+ * Toggles a CSS class on a target element when a trigger element
+ * crosses the top boundary of the viewport.
  *
- * The function ensures that the class is only toggled once per specified time interval during scrolling,
- * preventing excessive animations or layout changes.
+ * Uses IntersectionObserver instead of scroll listeners,
+ * which improves performance and avoids unnecessary scroll handling.
  *
- * @param {HTMLElement} target - The DOM element that will have the class added or removed based on scroll position.
- * @param {HTMLElement} trigger - The DOM element that triggers the style change when it reaches the top of the viewport.
- * @param {string} classActivation - The CSS class that will be added or removed on the target element.
- * @param {HTMLElement|Window|Document} [scrollOwner=window] - The element or object that will be used to track the scroll event. Default is the `window`.
- * @param {number} [scrollTimeLimit=300] - The time delay in milliseconds to limit the frequency of scroll event handling. Default is 300ms.
+ * @param {HTMLElement} targetElement - The element whose class will be toggled.
+ * @param {HTMLElement} triggerElement - The element that triggers the class change.
+ * @param {string} activeClass - The CSS class to add/remove.
+ * @param {Element|null} [root=null] - The scrolling container. Default is the viewport.
+ * @param {string} [rootMargin="-1px 0px 0px 0px"] - Margin around the root to fine-tune trigger timing.
+ *
+ * @returns {Function} Cleanup function that disconnects the observer.
+ */
+function toggleClassOnIntersection(targetElement, triggerElement, activeClass, root = null, rootMargin = "-1px 0px 0px 0px") {
+  if (!targetElement?.isConnected || !triggerElement?.isConnected) {
+    throw new Error("[toggleClassOnIntersection]: targetElement or triggerElement is not connected to the DOM.");
+  }
+  let isClassActive = false;
+  const observer = new IntersectionObserver(([entry]) => {
+    const shouldActivate = entry.boundingClientRect.top <= 0 && !entry.isIntersecting;
+    if (shouldActivate && !isClassActive) {
+      requestAnimationFrame(() => {
+        targetElement.classList.add(activeClass);
+        isClassActive = true;
+      });
+    }
+    if (!shouldActivate && isClassActive) {
+      requestAnimationFrame(() => {
+        targetElement.classList.remove(activeClass);
+        isClassActive = false;
+      });
+    }
+  }, {
+    root,
+    threshold: 0,
+    rootMargin
+  });
+  observer.observe(triggerElement);
+  return () => observer.disconnect();
+}
+
+/**
+ * Observes visibility changes of a DOM element using IntersectionObserver.
+ *
+ * Provides convenient callbacks for when an element enters or leaves
+ * the viewport (or a custom scroll container).
+ *
+ * This utility simplifies common IntersectionObserver patterns such as:
+ * - reveal-on-scroll animations
+ * - lazy loading
+ * - sticky headers
+ * - infinite scrolling triggers
+ *
+ * @param {HTMLElement} targetElement - The element to observe.
+ * @param {Object} [options]
+ * @param {Element|null} [options.root=null] - The scroll container used as the viewport.
+ * @param {string} [options.rootMargin="0px"] - Margin around the root to expand or shrink the observation area.
+ * @param {number|number[]} [options.threshold=0] - Intersection ratio(s) that trigger the observer callback.
+ * @param {(entry: IntersectionObserverEntry) => void} [options.onEnter] - Called when the element enters the viewport.
+ * @param {(entry: IntersectionObserverEntry) => void} [options.onLeave] - Called when the element leaves the viewport.
+ * @param {(entry: IntersectionObserverEntry) => void} [options.onChange] - Called whenever intersection state changes.
+ * @param {boolean} [options.once=false] - If true, observer disconnects after the first enter event.
+ *
+ * @returns {Function} Cleanup function that disconnects the observer.
  *
  * @example
- * customTargetStyleOnScroll(
- *   document.querySelector(".target"),
- *   document.querySelector(".trigger"),
- *   "scrolled",
- *   window,
- *   200
- * );
+ * observeIntersection(document.querySelector(".card"), {
+ *   onEnter: () => console.log("Card visible"),
+ *   onLeave: () => console.log("Card hidden")
+ * });
  */
-function customTargetStyleOnScroll(target, trigger, classActivation, scrollOwner = window, scrollTimeLimit = 300) {
-  if (!document.body.contains(target) || !document.body.contains(trigger)) {
-    throw new Error("at initTopAppearanceOnScroll(): the given target or trigger are not found in DOM...");
+function observeIntersection(targetElement, options = {}) {
+  const {
+    root = null,
+    rootMargin = "0px",
+    threshold = 0,
+    onEnter,
+    onLeave,
+    onChange,
+    once = false
+  } = options;
+  if (!targetElement?.isConnected) {
+    throw new Error("[observeIntersection]: targetElement is not connected to the DOM.");
   }
+  let wasIntersecting = false;
+  const observer = new IntersectionObserver(([entry]) => {
+    const isIntersecting = entry.isIntersecting;
 
-  /**
-   * is scrolledNav is already active to avoid extra animations
-   * @type {boolean}
-   */
-  let isScrolledActive = false;
-  const initScrollLimiter = lockedEventListener("scroll", scrollOwner, scrollTimeLimit);
-  initScrollLimiter(() => {
-    const triggerTop = trigger.getBoundingClientRect().top;
-    if (triggerTop <= 0) {
-      if (!isScrolledActive) {
-        requestAnimationFrame(() => {
-          target.classList.add(classActivation);
-          isScrolledActive = true;
-        });
-      }
-    } else {
-      if (isScrolledActive && target.classList.contains(classActivation)) {
-        requestAnimationFrame(() => {
-          target.classList.remove(classActivation);
-          isScrolledActive = false;
-        });
+    // Trigger generic change callback
+    onChange?.(entry);
+
+    // Element entered viewport
+    if (isIntersecting && !wasIntersecting) {
+      onEnter?.(entry);
+      if (once) {
+        observer.disconnect();
+        return;
       }
     }
+
+    // Element left viewport
+    if (!isIntersecting && wasIntersecting) {
+      onLeave?.(entry);
+    }
+    wasIntersecting = isIntersecting;
+  }, {
+    root,
+    rootMargin,
+    threshold
   });
+  observer.observe(targetElement);
+
+  // Return cleanup function
+  return () => observer.disconnect();
 }
 
 /**
@@ -10452,96 +10516,279 @@ function setAttributes(elements = [], targetAttr = {}) {
     });
   });
 }
-function lockScroll(isScrolled = true) {
-  const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-  if (isScrolled) {
-    requestAnimationFrame(() => {
-      document.body.style.paddingRight = `0`;
-      document.body.style.overflow = "auto";
-    });
-  } else {
-    requestAnimationFrame(() => {
+
+/**
+ * It creates a scroll lock controller with encapsulated state
+ * @description When the scroll container switches to overflow: hidden, the function replaces
+ * the width of the hidden scrollbar with the same width of the right padding
+ * to avoid shifting elements on the page.
+ *
+ * @returns {{ lockScroll: function(): void, destroy: function(): void }}
+ *
+ * @sample
+ * const scrollLocker = initLockScroll();
+ * scrollLocker.lockScroll(true); //locking scrolling
+ * scrollLocker.lockScroll(false); //unlocking scrolling
+ * scrollLocker.destroy() //resetting scroll controller
+ */
+function initLockScroll() {
+  // Encapsulated state - not accessible from outside
+  const state = {
+    /** @type {number|null} */
+    rafId: null,
+    /** @type {boolean} */
+    isLocked: false,
+    /** @type {string} */
+    originalPaddingRight: '',
+    /** @type {number} */
+    scrollbarWidth: 0,
+    /** @type {boolean} */
+    isInitialized: false
+  };
+
+  /**
+   * Calculates scrollbar width once and caches it
+   * @returns {number}
+   */
+  const getScrollbarWidth = () => {
+    if (!state.scrollbarWidth) {
+      state.scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    }
+    return state.scrollbarWidth;
+  };
+
+  /**
+   * Applies scroll lock styles
+   */
+  const applyLock = () => {
+    const scrollbarWidth = getScrollbarWidth();
+
+    // Save original padding only on first lock
+    if (!state.isInitialized) {
+      state.originalPaddingRight = document.body.style.paddingRight;
+      state.isInitialized = true;
+    }
+    document.body.style.overflow = 'hidden';
+
+    // Apply padding compensation only if scrollbar was visible
+    if (scrollbarWidth > 0) {
       document.body.style.paddingRight = `${scrollbarWidth}px`;
-      document.body.style.overflow = "hidden";
-    });
+    }
+    state.rafId = null;
+  };
+
+  /**
+   * Removes scroll lock styles
+   */
+  const applyUnlock = () => {
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = state.originalPaddingRight;
+    state.rafId = null;
+  };
+
+  /**
+   * Locks or unlocks page scroll with scrollbar width compensation
+   * @param {boolean} [lock=true] - true to lock, false to unlock
+   */
+  const lockScroll = (lock = true) => {
+    // Early return if state hasn't changed
+    if (state.isLocked === lock) return;
+
+    // Cancel pending animation frame to prevent race conditions
+    if (state.rafId !== null) {
+      cancelAnimationFrame(state.rafId);
+    }
+    state.isLocked = lock;
+    state.rafId = requestAnimationFrame(lock ? applyLock : applyUnlock);
+  };
+  return {
+    lockScroll,
+    /**
+     * reset capability (when unmounting a component)
+     */
+    destroy() {
+      if (state.rafId !== null) cancelAnimationFrame(state.rafId);
+      if (state.isLocked) applyUnlock();
+      state.isInitialized = false;
+      state.scrollbarWidth = 0;
+    }
+  };
+}
+
+//// getImagesLoaded SECTION ////
+/**
+ * @typedef {Object} ImageSize
+ * @property {number} naturalWidth - Original image width in pixels
+ * @property {number} naturalHeight - Original image height in pixels
+ * @property {number} offsetWidth - Rendered width including padding/borders
+ * @property {number} offsetHeight - Rendered height including padding/borders
+ */
+
+/**
+ * @typedef {Object} LoadedImageResult
+ * @property {HTMLElement} element - The parent element containing the image
+ * @property {ImageSize} size - Dimension information
+ */
+
+/**
+ * Validates that container is attached to DOM
+ * @param {HTMLElement} container - Element to validate
+ * @throws {Error} If container is not connected to DOM
+ */
+function validateContainer(container) {
+  if (!container?.isConnected) {
+    throw new Error('[getImagesLoaded]: Container must be a DOM element connected to the document');
   }
 }
 
 /**
- * @function getImagesLoaded
- * @description Processes all images within a given container, ensuring they are fully loaded and retrieves their dimensions.
- * Removes broken images along with their parent elements from the DOM.
+ * Builds a mapping between image elements and their parent containers
+ * Handles both <img> tags and background images
  *
- * @param {HTMLElement} container - The container element holding image elements or their parent blocks.
- * @param {Object} [options={}] - Additional options for controlling how background images are detected on load.
- * @param {boolean|string} [options.background] -
- *   - If set to `true`, the function will also watch for the load of background images (as defined by CSS `background-image`).
- *   - If set to a string, it specifies a CSS selector to watch for background images within elements that match this selector.
- *
- *   Examples:
- *   - `{ background: true }` - Will detect background images for all elements.
- *   - `{ background: '.item' }` - Will detect background images for elements matching the `.item` selector.
+ * @param {HTMLElement} container - The container element
+ * @param {Object} options - imagesLoaded options
+ * @returns {Map<HTMLImageElement, HTMLElement>} Map of image -> parent
  */
-function getImagesLoaded(container, options = {}) {
+function buildImageParentMap(container, options) {
+  const map = new Map();
+  Array.from(container.children).forEach(child => {
+    // Case 1: Direct img child
+    if (child.matches('img')) {
+      map.set(child, child);
+    }
+
+    // Case 2: img inside wrapper
+    const nestedImg = child.querySelector('img');
+    if (nestedImg) {
+      map.set(nestedImg, child);
+    }
+
+    // Case 3: Background images (child itself is the target)
+    if (options.background && (typeof options.background === 'boolean' || child.matches(options.background))) {
+      map.set(child, child);
+    }
+  });
+  return map;
+}
+
+/**
+ * Extracts dimension information from a loaded image
+ * @param {HTMLImageElement} img - The image element
+ * @returns {ImageSize} Dimension data object
+ */
+function extractDimensions(img) {
+  return {
+    naturalWidth: img.naturalWidth,
+    naturalHeight: img.naturalHeight,
+    offsetWidth: img.offsetWidth,
+    offsetHeight: img.offsetHeight
+  };
+}
+
+/**
+ * Waits for image dimensions to be available
+ * Handles cached images that already have dimensions
+ *
+ * @param {HTMLImageElement} img - Image to check
+ * @returns {Promise<ImageSize|null>} Resolves with dimensions or null on error
+ */
+function getImageDimensions(img) {
+  return new Promise(resolve => {
+    // Image already loaded (cached)
+    if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+      resolve(extractDimensions(img));
+      return;
+    }
+
+    // Wait for load event
+    const handleLoad = () => resolve(extractDimensions(img));
+    const handleError = () => resolve(null);
+    img.addEventListener('load', handleLoad, {
+      once: true
+    });
+    img.addEventListener('error', handleError, {
+      once: true
+    });
+  });
+}
+
+/**
+ * Removes broken images and their parent elements from DOM
+ * @param {Array<{src: string, element: HTMLElement}>} brokenImages - Array of broken image data
+ */
+function removeBrokenImages(brokenImages) {
+  if (brokenImages.length === 0) return;
+  console.warn(`[getImagesLoaded] Removed ${brokenImages.length} broken image(s):`, brokenImages.map(b => b.src));
+  brokenImages.forEach(({
+    element
+  }) => {
+    if (element?.isConnected) {
+      element.remove();
+    }
+  });
+}
+
+/**
+ * Processes imagesLoaded instance results
+ * Separates broken and loaded images, collects dimensions
+ *
+ * @param {Object} instance - imagesLoaded instance
+ * @param {Map<HTMLImageElement, HTMLElement>} parentMap - Mapping of images to parents
+ * @returns {Promise<Array<LoadedImageResult>>} Processed image results
+ */
+async function processImageResults(instance, parentMap) {
+  const loadedPromises = [];
+  const brokenImages = [];
+  instance.images.forEach(item => {
+    const img = item.img;
+    const parentElement = parentMap.get(img);
+    if (!item.isLoaded) {
+      brokenImages.push({
+        src: img.src || img.currentSrc || 'unknown',
+        element: parentElement
+      });
+    } else {
+      loadedPromises.push(getImageDimensions(img).then(size => ({
+        element: parentElement,
+        size
+      })));
+    }
+  });
+  removeBrokenImages(brokenImages);
+  const results = await Promise.all(loadedPromises);
+  return results.filter(r => r.size !== null);
+}
+
+/**
+ * Waits for all images within a container to finish loading.
+ * Collects dimensions of successfully loaded images and removes broken images.
+ *
+ * @param {HTMLElement} container - The DOM element containing images to be processed.
+ * @param {Object} [options={}] - Configuration options passed to imagesLoaded library.
+ * @param {boolean|string} [options.background] - Background image detection strategy:
+ *   - `true`: Detect background images on all elements
+ *   - `string` (CSS selector): Detect background images only on matching elements
+ * @returns {Promise<Array<LoadedImageResult>>} Resolves with loaded image data
+ * @throws {Error} When container is invalid or processing fails
+ */
+async function getImagesLoaded(container, options = {}) {
+  // Validate container
+  validateContainer(container);
+
+  // Return a promise that resolves when imagesLoaded completes
   return new Promise((resolve, reject) => {
     try {
-      // Check if imagesLoaded library is available
-      if (typeof imagesloaded__WEBPACK_IMPORTED_MODULE_0__ === "undefined") {
-        reject(new Error("imagesLoaded library is not loaded. Please ensure it is included before using getImagesLoaded."));
-        return;
-      }
-      if (!container || !document.body.contains(container)) {
-        reject(new Error("The given container is not found in the DOM."));
-        return;
-      }
-      imagesloaded__WEBPACK_IMPORTED_MODULE_0__(container, options, instance => {
-        const brokenImages = [];
-        const loadedImagesPromises = [];
-
-        //making the static array with references to DOM elements
-        const imgArr = Array.from(container.children);
-        const getSize = img => ({
-          naturalWidth: img.naturalWidth,
-          naturalHeight: img.naturalHeight,
-          offsetWidth: img.offsetWidth,
-          offsetHeight: img.offsetHeight
-        });
-        const ensureSize = img => new Promise(res => {
-          if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-            res(getSize(img));
-          } else {
-            img.onload = () => res(getSize(img));
-          }
-        });
-        instance.images.forEach((item, index) => {
-          if (!item.isLoaded) {
-            brokenImages.push({
-              src: item.img.src,
-              elem: imgArr[index] //adding the block with the broken image
-            });
-          } else {
-            const sizePromise = ensureSize(item.img).then(size => ({
-              elem: imgArr[index],
-              size
-            }));
-            loadedImagesPromises.push(sizePromise);
-          }
-        });
-
-        // Displaying a warning and removing the elements with the broken images...
-        if (brokenImages.length > 0) {
-          brokenImages.forEach(({
-            src,
-            elem
-          }) => {
-            console.warn("The following URL of the image is not found at getImagesLoaded: ", src);
-            if (elem) elem.remove();
-          });
+      imagesloaded__WEBPACK_IMPORTED_MODULE_0__(container, options, async instance => {
+        try {
+          const parentMap = buildImageParentMap(container, options);
+          const results = await processImageResults(instance, parentMap);
+          resolve(results);
+        } catch (error) {
+          reject(new Error(`[getImagesLoaded] Processing error: ${error.message}`));
         }
-        resolve(Promise.all(loadedImagesPromises));
       });
-    } catch (e) {
-      reject(new Error("Error in getImagesLoaded: " + e.message));
+    } catch (error) {
+      reject(new Error(`[getImagesLoaded] Initialization error: ${error.message}`));
     }
   });
 }
@@ -10558,7 +10805,7 @@ function getImagesLoaded(container, options = {}) {
  * @param {Object} [params={}] - Optional configuration parameters for masonry initialization.
  * @param {number} [params.gap=0] - The gap (in pixels) between the items in the masonry grid. Defaults to 0.
  *
- * @returns {Promise<Element[]>} - A promise that resolves to an array of image elements in the container, after they have been positioned.
+ * @returns {Promise<HTMLElement[]>} - A promise that resolves to an array of positioned image elements.
  *
  * @throws {Error} - If the specified container is not found in the DOM or if there is an issue with loading the images.
  *
@@ -10570,76 +10817,108 @@ function getImagesLoaded(container, options = {}) {
  */
 async function createMasonry(containerSelector, params = {}) {
   const options = {
-    gap: 0
-  };
-  const auxOptions = {
-    ...options,
+    gap: 0,
     ...params
   };
   try {
     const container = document.querySelector(containerSelector);
-    if (!container) {
-      throw new Error(`at initMasonry: no such selector ${containerSelector} found in DOM`);
+    if (!container?.isConnected) {
+      throw new Error(`[createMasonry]: Container with selector "${containerSelector}" not found in DOM`);
     }
+
+    // Get loaded images data
     const imagesArr = await getImagesLoaded(container);
-    const imageItems = [];
-    const imgItem = imagesArr[0].elem;
-    const itemWidth = imgItem.offsetWidth;
+
+    // Validate that we have images
+    if (!Array.isArray(imagesArr) || imagesArr.length === 0) {
+      throw new Error(`[createMasonry]: No images found in container "${containerSelector}"`);
+    }
+
+    // Validate first image data structure and get dimensions
+    const firstImage = imagesArr[0];
+    if (!firstImage?.element || !firstImage?.size) {
+      throw new Error('[createMasonry]: Invalid image data structure returned from getImagesLoaded');
+    }
+    const itemWidth = firstImage.size.offsetWidth;
     const containerWidth = container.clientWidth;
+
+    // Validate dimensions
+    if (!itemWidth || itemWidth === 0) {
+      throw new Error('[createMasonry]: Image width is zero or undefined');
+    }
     const {
       gap
-    } = auxOptions;
+    } = options;
     const {
       columns,
       freeWidth
     } = getColumnsNumber(containerWidth, itemWidth, gap);
     const leftOffset = freeWidth / 2;
-    container.style.position = "relative";
-    container.style.overflowX = "hidden";
 
-    // Initializing arrays for calculating positions
+    // Set container styles
+    container.style.position = 'relative';
+    container.style.overflowX = 'hidden';
+
+    // Initialize position arrays
     const posLeftArr = Array.from({
       length: columns
     }, (_, i) => leftOffset + i * (itemWidth + gap));
     const posTopArr = new Array(columns).fill(0);
+    const imageItems = [];
 
-    // Arranging the elements
+    // Position each image
     for (let i = 0; i < imagesArr.length; i++) {
-      const item = imagesArr[i].elem;
-      imageItems.push(item);
-      const itemHeight = imagesArr[i].size.offsetHeight;
+      const imageData = imagesArr[i];
 
-      // Finding the index of the column with the minimum height
-      const minColumnIndex = posTopArr.indexOf(Math.min(...posTopArr));
-      // Making sure that minColumnIndex is always a number
+      // Validate image data
+      if (!imageData?.element || !imageData?.size) {
+        console.warn(`[createMasonry]: Skipping invalid image at index ${i}`);
+        continue;
+      }
+      const item = imageData.element;
+      const itemHeight = imageData.size.offsetHeight;
+
+      // Find column with minimum height
+      const minHeight = Math.min(...posTopArr);
+      const minColumnIndex = posTopArr.indexOf(minHeight);
       if (minColumnIndex === -1) {
-        throw new Error("Invalid column index: no minimum found in posTopArr");
+        throw new Error('[createMasonry]: Failed to find valid column index');
       }
 
-      // Setting the position of the element
-      item.style.position = "absolute";
+      // Apply positioning
+      item.style.position = 'absolute';
       item.style.top = `${Math.round(posTopArr[minColumnIndex])}px`;
       item.style.left = `${Math.round(posLeftArr[minColumnIndex])}px`;
 
-      // Updating the column height
+      // Update column height
       posTopArr[minColumnIndex] += itemHeight + gap;
-    }
-    function getColumnsNumber(containerWidth, itemWidth, gap) {
-      const itemGapWidth = itemWidth + gap;
-      const maxColumns = Math.floor(containerWidth / itemGapWidth);
-      const usedWidth = maxColumns * itemGapWidth;
-      const remainingSpace = containerWidth - usedWidth;
-      const columns = remainingSpace >= itemWidth ? maxColumns + 1 : maxColumns;
-      const freeWidth = containerWidth - (columns * itemWidth + (columns - 1) * gap);
-      return {
-        columns,
-        freeWidth
-      };
+      imageItems.push(item);
     }
     return imageItems;
   } catch (error) {
-    console.error("at initMasonry: ", error.message);
+    console.error('[createMasonry]:', error.message);
+    throw error; // Re-throw to allow caller to handle it
   }
+}
+
+/**
+ * Calculates the number of columns and free space for masonry layout
+ * @param {number} containerWidth - Width of the container
+ * @param {number} itemWidth - Width of a single item
+ * @param {number} gap - Gap between items
+ * @returns {{columns: number, freeWidth: number}} Column count and remaining space
+ */
+function getColumnsNumber(containerWidth, itemWidth, gap) {
+  const itemGapWidth = itemWidth + gap;
+  const maxColumns = Math.floor(containerWidth / itemGapWidth);
+  const usedWidth = maxColumns * itemGapWidth;
+  const remainingSpace = containerWidth - usedWidth;
+  const columns = remainingSpace >= itemWidth ? maxColumns + 1 : maxColumns;
+  const freeWidth = containerWidth - (columns * itemWidth + (columns - 1) * gap);
+  return {
+    columns,
+    freeWidth
+  };
 }
 
 /**
@@ -11104,6 +11383,9 @@ __webpack_require__.r(__webpack_exports__);
 ///////////////// REGISTER GSAP PLUGINS /////////////
 gsap__WEBPACK_IMPORTED_MODULE_1__.gsap.registerPlugin(gsap_ScrollTrigger_js__WEBPACK_IMPORTED_MODULE_2__.ScrollTrigger);
 
+////////////////// INITIATING SCROLL CONTROLLER /////////
+//const { lockScroll } = initLockScroll();
+
 //////////////// ANIMATION DATA /////////////////////
 /// ANIMATION SELECTORS
 /// index.html
@@ -11256,7 +11538,7 @@ const burgerClickHandler = e => {
       navMenuAnime.reverse();
 
       //returning scroll to the page...
-      //lockScroll(true);
+      //lockScroll(false);
       document.body.style.overflow = "auto";
     }
   }
@@ -11275,14 +11557,14 @@ const burgerInitListener = burger => {
       if (isExpanded) {
         burgerHidden.classList.remove("opened");
         burgerFixed.classList.remove("opened");
-        //lockScroll(true);
+        //lockScroll(false);
         document.documentElement.style.scrollbarGutter = "initial";
         document.body.style.scrollbarGutter = "initial";
         document.body.style.overflow = "auto";
       } else {
         burgerHidden.classList.add("opened");
         burgerFixed.classList.add("opened");
-        //lockScroll(false);
+        //lockScroll(true);
         document.documentElement.style.scrollbarGutter = "stable";
         document.body.style.scrollbarGutter = "stable";
         document.body.style.overflow = "hidden";

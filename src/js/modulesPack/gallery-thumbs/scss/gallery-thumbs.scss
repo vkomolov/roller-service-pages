@@ -1,18 +1,32 @@
 
 .modal {
-  font-size: 1.2rem;
   position: fixed;
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: min(100vw, 1440px);
+  width: min(100dvw, 1440px);
   height: 100vh;
+  height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: rgba(0, 0, 0, 0.9);
   z-index: 200;
-  padding: 2.5em 5vw;
+  padding: 2.5rem 5svw;
+}
+
+.modal__bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  font-size: 1.375rem;  //22px
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.8rem;
+  z-index: 210;
 
   /* tablet (portrait): (max-width: 1024px) */
   @media (max-width: 1024px) {
@@ -27,24 +41,12 @@
   @media (max-width: 375px) and (min-width: 320px) {
     font-size: .6rem;
   }
-}
-
-.modal__bar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0.8em;
-  z-index: 210;
 
   &.modal__bar--arrow {
     top: 50%;
     transform: translateY(-50%);
     justify-content: space-between;
-    gap: 2em;
+    gap: 2rem;
 
     /* mobile (landscape): (max-width: 768px)*/
     @media (max-width: 768px) {
@@ -55,7 +57,7 @@
   }
 
   .modal-score {
-    font-size: 1em;
+    font-size: 1rem;
     line-height: 1;
     color: rgba(255, 255, 255, .8);
   }
@@ -79,10 +81,10 @@
 }
 
 .thumb-arrow {
-  font-size: 1em;
+  font-size: 1rem;
   display: flex;
-  width: max(1.5em, 28px);
-  height: max(1.5em, 28px);
+  width: max(1.5rem, 28px);
+  height: max(1.5rem, 28px);
   justify-content: center;
   align-items: center;
   border-radius: 50%;
@@ -106,15 +108,7 @@
     position: absolute;
     top: 20%;
     right: 1%;
-    width: max(1.5em, 28px);
-    height: max(1.5em, 28px);
-  }
-
-  &.prev {
-
-  }
-
-  &.next {
-
+    width: max(1.5rem, 28px);
+    height: max(1.5rem, 28px);
   }
 }
