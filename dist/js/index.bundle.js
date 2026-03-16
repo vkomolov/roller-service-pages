@@ -10645,7 +10645,7 @@ function validateContainer(container) {
  * Builds a mapping between image elements and their parent containers
  * Handles both <img> tags and background images
  *
- * @param {HTMLElement} container - The container element
+ * @param {HTMLElement} container - The container which contains the images or image wrappers
  * @param {Object} options - imagesLoaded options
  * @returns {Map<HTMLImageElement, HTMLElement>} Map of image -> parent
  */
@@ -11909,47 +11909,49 @@ const linkAnchors = {
 };
 const navLinkSelector = ".nav-link";
 const navHexagonSelector = ".hexagon-comb-block__cell";
-document.addEventListener("DOMContentLoaded", () => {
+const langSwitchData = {
+  langSwitcherSelector: "#lang-switcher",
+  iconLangSelector: ".lang-switcher__lang-icon",
+  langActiveSelector: ".active",
+  langListSelector: "#lang-list",
+  langOptionArr: ["ua", "ru"],
+  dataSetParam: "lang"
+};
+const gallerySelector = "#gallery-work";
+document.addEventListener("DOMContentLoaded", async () => {
   const pageType = document.body.dataset.type;
 
+  /// Navigation ///
   //checking and lighten several duplicate navigations for the .active links:
   (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.activateNavLink)(navLinkSelector, pageType, "active", linkAnchors[pageType] || "#");
   (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.activateNavLink)(navHexagonSelector, pageType, "active", linkAnchors[pageType] || "#");
 
   //GSAP animation tweens
   const totalTl = (0,_partials_animations_js__WEBPACK_IMPORTED_MODULE_2__.animatePage)();
-  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.createMasonry)("#gallery-work", {
-    gap: 20
-  }).then(imagesArr => {
-    return (0,_partials_animations_js__WEBPACK_IMPORTED_MODULE_2__.fadeInGallery)(imagesArr);
-  }).then(timelines => {
+  try {
+    // Masonry + Gallery + Thumbs - consistent and readable
+    const imageItems = await (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.createMasonry)(gallerySelector, {
+      gap: 20
+    });
+    const timelines = (0,_partials_animations_js__WEBPACK_IMPORTED_MODULE_2__.fadeInGallery)(imageItems);
     Object.assign(totalTl, timelines);
-    //log("total timelines: ", totalTl);
-  })
-
-  //TODO: фильтровать из "/thumbs", "/thumbs/" в "thumbs"
-  .then(() => (0,_modulesPack_gallery_thumbs_gallery_thumbs_index_js__WEBPACK_IMPORTED_MODULE_1__.initThumbs)("#gallery-work", "thumbs")).catch(error => {
-    console.error(error);
-  });
+    await (0,_modulesPack_gallery_thumbs_gallery_thumbs_index_js__WEBPACK_IMPORTED_MODULE_1__.initThumbs)("#gallery-work", "thumbs");
+  } catch (error) {
+    console.error("Gallery initialization failed:", error);
+  }
 
   //initializing optional language versions interaction
-  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.initLangSwitcher)({
-    langSwitcherSelector: "#lang-switcher",
-    iconLangSelector: ".lang-switcher__lang-icon",
-    langActiveSelector: ".active",
-    langListSelector: "#lang-list",
-    langOptionArr: ["ua", "ru"],
-    dataSetParam: "lang"
-  });
+  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.initLangSwitcher)(langSwitchData);
 
   //listening to "resize" event to recompile the masonry gallery with the new parameters...
-  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.lockedEventListener)("resize", window, 2000)(() => {
-    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.createMasonry)("#gallery-work", {
-      gap: 20
-    }).catch(error => {
-      console.error(error);
-    });
-    //.then(res =>  log(res, "elements: "));
+  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.lockedEventListener)("resize", window, 2000)(async () => {
+    try {
+      await (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.createMasonry)(gallerySelector, {
+        gap: 20
+      });
+    } catch (error) {
+      console.error("Resize masonry failed:", error);
+    }
   });
 
   ///////// END OF DOMContentLoaded Listener ////////////

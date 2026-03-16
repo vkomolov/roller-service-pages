@@ -375,13 +375,12 @@ function validateContainer(container) {
  * Builds a mapping between image elements and their parent containers
  * Handles both <img> tags and background images
  *
- * @param {HTMLElement} container - The container element
+ * @param {HTMLElement} container - The container which contains the images or image wrappers
  * @param {Object} options - imagesLoaded options
  * @returns {Map<HTMLImageElement, HTMLElement>} Map of image -> parent
  */
 function buildImageParentMap(container, options) {
   const map = new Map();
-
   Array.from(container.children).forEach((child) => {
     // Case 1: Direct img child
     if (child.matches('img')) {

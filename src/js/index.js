@@ -17,10 +17,20 @@ const linkAnchors = {
 };
 const navLinkSelector = ".nav-link";
 const navHexagonSelector = ".hexagon-comb-block__cell";
+const langSwitchData = {
+  langSwitcherSelector: "#lang-switcher",
+  iconLangSelector: ".lang-switcher__lang-icon",
+  langActiveSelector: ".active",
+  langListSelector: "#lang-list",
+  langOptionArr: ["ua", "ru"],
+  dataSetParam: "lang"
+}
+const gallerySelector = "#gallery-work";
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const pageType = document.body.dataset.type;
 
+  /// Navigation ///
   //checking and lighten several duplicate navigations for the .active links:
   activateNavLink(navLinkSelector, pageType, "active", linkAnchors[pageType] || "#");
   activateNavLink(navHexagonSelector, pageType, "active", linkAnchors[pageType] || "#");
@@ -28,43 +38,34 @@ document.addEventListener("DOMContentLoaded", () => {
   //GSAP animation tweens
   const totalTl = animatePage();
 
-  createMasonry("#gallery-work", {
-    gap: 20,
-  })
-    .then(imagesArr =>  {
-      return fadeInGallery(imagesArr);
-    })
-    .then(timelines => {
-      Object.assign(totalTl, timelines);
-      //log("total timelines: ", totalTl);
-    })
+  try {
+    // Masonry + Gallery + Thumbs - consistent and readable
+    const imageItems = await createMasonry(
+      gallerySelector,
+      { gap: 20 }
+    );
 
-    //TODO: фильтровать из "/thumbs", "/thumbs/" в "thumbs"
+    const timelines = fadeInGallery(imageItems);
+    Object.assign(totalTl, timelines);
 
-    .then(() => initThumbs("#gallery-work", "thumbs"))
-    .catch(error => {
-      console.error(error);
-    });
+    await initThumbs("#gallery-work", "thumbs");
+  } catch (error) {
+    console.error("Gallery initialization failed:", error);
+  }
 
   //initializing optional language versions interaction
-  initLangSwitcher({
-    langSwitcherSelector: "#lang-switcher",
-    iconLangSelector: ".lang-switcher__lang-icon",
-    langActiveSelector: ".active",
-    langListSelector: "#lang-list",
-    langOptionArr: ["ua", "ru"],
-    dataSetParam: "lang"
-  });
+  initLangSwitcher(langSwitchData);
 
   //listening to "resize" event to recompile the masonry gallery with the new parameters...
-  lockedEventListener("resize", window, 2000)(() => {
-    createMasonry("#gallery-work", {
-      gap: 20,
-    })
-      .catch(error => {
-        console.error(error);
-      })
-    //.then(res =>  log(res, "elements: "));
+  lockedEventListener("resize", window, 2000)(async () => {
+    try {
+      await createMasonry(
+        gallerySelector,
+        { gap: 20 }
+      );
+    } catch (error) {
+      console.error("Resize masonry failed:", error);
+    }
   });
 
     ///////// END OF DOMContentLoaded Listener ////////////
