@@ -381,23 +381,39 @@ function validateContainer(container) {
  */
 function buildImageParentMap(container, options) {
   const map = new Map();
-  Array.from(container.children).forEach((child) => {
-    // Case 1: Direct img child
+  const { background } = options;
+
+  for (const child of Array.from(container.children)) {
+    // Priority 1: Direct img child (most common case)
     if (child.matches('img')) {
       map.set(child, child);
+      continue;
     }
-
-    // Case 2: img inside wrapper
+    // Priority 2: Wrapper with nested img
     const nestedImg = child.querySelector('img');
     if (nestedImg) {
       map.set(nestedImg, child);
+      continue;
     }
+    // Priority 3: Background images (only if no regular img found)
+    if (!background) continue;
 
-    // Case 3: Background images (child itself is the target)
-    if (options.background && (typeof options.background === 'boolean' || child.matches(options.background))) {
+    /**
+     * truthy background: boolean true, or string selector ('.image', '.bg', [data-bg], etc...)
+     * option from the imagesLoaded library:
+     * if hasBackground is true, then any child is considered a background image container
+     * @sample
+     * options = {
+     *   background: '.grid-item' // or true
+     * }
+     */
+    const hasBackground =
+      background === true || child.matches(background);
+
+    if (hasBackground) {
       map.set(child, child);
     }
-  });
+  }
 
   return map;
 }
@@ -797,4 +813,160 @@ export function getSelectorName(selector) {
   const regex = /^[.#]?([\w-]+)$/;
   const match = selector.match(regex);
   return match ? match[1] : selector; // If not matched, return original selector
+}
+
+/**
+ * Creates a new HTML element with specified tag and adds the provided CSS classes to it.
+ *
+ * @param {string} tag - The tag name of the element to create (e.g., 'div', 'span', 'p').
+ * @param {...string} classNames - One or more class names to be added to the newly created element.
+ * @returns {HTMLElement} The newly created HTML element with the specified tag and classes.
+ *
+ * @example
+ * const div = createElementWithClass('div', 'container', 'main');
+ * console.log(div); // <div class="container main"></div>
+ */
+export function createElementWithClass(tag, ...classNames) {
+  const element = document.createElement(tag);
+  element.classList.add(...classNames);
+  return element;
+}
+
+/**
+ * Replaces the file path of the given URL with a new base path.
+ *
+ * @param {string} url - The original URL (either `src` or `srcset`) with the file.
+ * @param {string} targetFolder - the part of the path (folder) to remove from the path...
+ * @returns {string} The updated URL with the new base path to the given file.
+ */
+export function replaceFilePath(url, targetFolder) {
+  //to clean from symbols as "./thumbs/", "./thumbs", "/thumbs/", "/thumbs" to "thumbs"
+  const nestedFolder = targetFolder.replace(/^\.?\/?|\/?\.?$/, "");
+
+  return url.replace(new RegExp(`/${nestedFolder}/`), "/"); // If no match is found, return the original URL
+}
+
+/**
+ * @typedef {Object} ModalState
+ * @property {number|null} currentIndex
+ * @property {boolean} isOpen
+ * @property {boolean} isLoading
+ * @property {HTMLElement|null} currentImage
+ */
+
+/**
+ * Creates initial modal state
+ * @returns {ModalState}
+ */
+export function createModalState() {
+  return {
+    currentIndex: null,
+    isOpen: false,
+    isLoading: false,
+    currentImage: null
+  };
+}
+
+/**
+ * Creates modal event handlers
+ * @param {Object} dom - Modal DOM elements
+ * @param {ModalState} state - Modal state reference
+ * @param {Object} callbacks - Action callbacks
+ * @returns {{handleKeydown: Function, handleClick: Function}}
+ */
+export function createModalHandlers(dom, state, callbacks) {
+  const handleKeydown = (event) => {
+    const actions = {
+      Escape: callbacks.close,
+      ArrowLeft: callbacks.prev,
+      ArrowRight: callbacks.next
+    };
+
+    const action = actions[event.key];
+    if (action) {
+      event.preventDefault();
+      action();
+    }
+  };
+
+  const handleClick = (event) => {
+    const button = event.target.closest("[data-action]");
+    if (!button) return;
+
+    const actionMap = {
+      close: callbacks.close,
+      prev: callbacks.prev,
+      next: callbacks.next
+    };
+
+    const action = actionMap[button.dataset.action];
+    if (action) action();
+  };
+
+  return { handleKeydown, handleClick };
+}
+
+/**
+ * Calculates navigation index with wrap-around
+ * @param {number} current - Current index
+ * @param {number} total - Total items
+ * @param {string} direction - 'prev' or 'next'
+ * @returns {number} New index
+ */
+export function calculateNavIndex(current, total, direction) {
+  if (direction === 'prev') {
+    return current === 0 ? total - 1 : current - 1;
+  }
+  return current === total - 1 ? 0 : current + 1;
+}
+
+/**
+ * Attaches modal event listeners
+ * @param {HTMLElement} root - Modal root element
+ * @param {Function} handleClick - Click handler
+ * @param {Function} handleKeydown - Keydown handler
+ * @param {{bind: Function}} touch - Touch handler
+ */
+export function attachModalListeners(root, handleClick, handleKeydown, touch) {
+  root.addEventListener("click", handleClick);
+  document.addEventListener("keydown", handleKeydown);
+  touch.bind();
+}
+
+/**
+ * Detaches modal event listeners
+ * @param {HTMLElement} root - Modal root element
+ * @param {Function} handleClick - Click handler
+ * @param {Function} handleKeydown - Keydown handler
+ * @param {{unbind: Function}} touch - Touch handler
+ */
+export function detachModalListeners(root, handleClick, handleKeydown, touch) {
+  touch.unbind();
+  root.removeEventListener("click", handleClick);
+  document.removeEventListener("keydown", handleKeydown);
+}
+
+/**
+ * Cleanup modal on close with fade animation
+ * @param {Object} dom - Modal DOM elements
+ * @param {ModalState} state - Modal state reference
+ * @param {number} fadeDuration - Fade out duration in ms
+ * @returns {Promise<void>}
+ */
+export async function cleanupModal(dom, state, fadeDuration = 300) {
+  dom.root.style.opacity = "0";
+
+  await new Promise(resolve => setTimeout(resolve, fadeDuration));
+
+  dom.root.remove();
+  dom.root.style.opacity = "";
+
+  document.body.style.overflow = "";
+
+  // Reset state
+  state.currentIndex = null;
+  if (dom.currentImage) {
+    dom.currentImage.remove();
+    dom.currentImage = null;
+  }
 }

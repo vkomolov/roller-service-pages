@@ -452,114 +452,207 @@ h2, h3, h4, h5 {
   line-height: 1.2;
 }
 
-.modal {
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(100dvw, 1440px);
-  height: 100vh;
-  height: 100dvh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(0, 0, 0, 0.9);
-  z-index: 200;
-  padding: 2.5rem 5svw;
+/**
+ * Gallery Thumbs Modal Styles
+ * Modal window for displaying high-resolution images from masonry gallery
+ */
+:root {
+  --modal-bg: rgba(0, 0, 0, 0.92);
+  --modal-text: rgba(255, 255, 255, 0.9);
+  --modal-accent: rgba(255, 133, 2, 1);
+  --modal-accent-hover: rgba(255, 153, 40, 1);
+  --modal-btn-bg: rgba(255, 133, 2, 0.6);
+  --modal-transition: opacity 0.3s ease, transform 0.2s ease;
+  --modal-z-index: 1000;
 }
 
+/**
+ * Main modal container
+ * Fixed position covering entire viewport with dark overlay
+ */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--modal-bg);
+  z-index: var(--modal-z-index);
+  opacity: 0;
+  animation: modalFadeIn 0.3s ease forwards;
+  padding: clamp(1rem, 3vw, 2.5rem);
+}
+@keyframes modalFadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+/**
+ * Top bar with counter and close button
+ */
 .modal__bar {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  font-size: 1.375rem;
+  right: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0.8rem;
-  z-index: 210;
-  /* tablet (portrait): (max-width: 1024px) */
-  /* mobile (portrait wide): (max-width: 640px) */
+  padding: clamp(0.5rem, 2vw, 1rem);
+  z-index: calc(var(--modal-z-index) + 10);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), transparent);
 }
-@media (max-width: 1024px) {
-  .modal__bar {
-    font-size: 1rem;
-  }
-}
-@media (max-width: 640px) {
-  .modal__bar {
-    font-size: 0.8rem;
-  }
-}
-@media (max-width: 375px) and (min-width: 320px) {
-  .modal__bar {
-    font-size: 0.6rem;
-  }
-}
-.modal__bar.modal__bar--arrow {
+.modal__bar--arrow {
   top: 50%;
   transform: translateY(-50%);
   justify-content: space-between;
-  gap: 2rem;
-  /* mobile (landscape): (max-width: 768px)*/
+  padding: 0 clamp(0.5rem, 3vw, 2rem);
+  background: none;
+  pointer-events: none;
 }
-@media (max-width: 768px) {
-  .modal__bar.modal__bar--arrow {
-    justify-content: center;
-    top: 5%;
+@media (max-width: 640px) {
+  .modal__bar--arrow {
+    top: auto;
+    bottom: 1rem;
     transform: none;
+    justify-content: center;
+    gap: 3rem;
   }
 }
-.modal__bar .modal-score {
-  font-size: 1rem;
-  line-height: 1;
-  color: rgba(255, 255, 255, 0.8);
+
+/**
+ * Image counter display (e.g., "1 / 10: Gate Photo")
+ */
+.modal__counter {
+  font-size: clamp(0.875rem, 1.5vw, 1.125rem);
+  color: var(--modal-text);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
-.media-container {
-  box-sizing: border-box;
-  max-width: 100%;
-  height: 100%;
-}
-.media-container .picture-item {
-  opacity: 0;
-  transition: opacity 1s ease;
-}
-.media-container img, .media-container picture {
+/**
+ * Viewport container for hi-res image
+ * Adapts to image aspect ratio while fitting within modal bounds
+ */
+.modal__viewport {
+  position: relative;
+  max-width: min(90vw, 1290px);
+  max-height: min(85vh, 720px);
   width: auto;
-  height: 100%;
-  object-fit: contain;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 4px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
-.thumb-arrow {
-  font-size: 1rem;
+/**
+ * Hi-res image inside modal
+ */
+.modal__image {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.modal__image.is-loaded {
+  opacity: 1;
+}
+
+/**
+ * Control buttons (close, prev, next)
+ */
+.modal__btn {
   display: flex;
-  width: max(1.5rem, 28px);
-  height: max(1.5rem, 28px);
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  width: clamp(2.5rem, 5vw, 3.5rem);
+  height: clamp(2.5rem, 5vw, 3.5rem);
   border-radius: 50%;
-  line-height: 1;
-  background-color: rgba(255, 133, 2, 0.5);
-  color: rgb(255, 255, 255);
+  border: none;
+  background-color: var(--modal-btn-bg);
+  color: #fff;
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  font-weight: 300;
   cursor: pointer;
-  transition: background-color 0.25s ease, color 0.25s ease, transform 0.2s ease-in-out;
+  pointer-events: auto;
+  transition: var(--modal-transition);
+  backdrop-filter: blur(4px);
 }
-.thumb-arrow:hover {
-  background-color: rgb(255, 133, 2);
-  color: rgb(40, 32, 23);
-  transform: scale(1.05);
+.modal__btn:hover {
+  background-color: var(--modal-accent);
+  transform: scale(1.08);
 }
-.thumb-arrow:active {
-  transform: scale(1.2);
+.modal__btn:active {
+  transform: scale(0.95);
 }
-.thumb-arrow.close {
+.modal__btn--close {
   position: absolute;
-  top: 20%;
-  right: 1%;
-  width: max(1.5rem, 28px);
-  height: max(1.5rem, 28px);
+  top: clamp(0.5rem, 2vw, 1rem);
+  right: clamp(0.5rem, 2vw, 1rem);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+@media (max-width: 640px) {
+  .modal__btn--prev, .modal__btn--next {
+    width: 3rem;
+    height: 3rem;
+  }
+}
+
+/**
+ * Loading state for image
+ */
+.modal__loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal__loader::after {
+  content: "";
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--modal-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/**
+ * Error state when hi-res image fails to load
+ */
+.modal__error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--modal-text);
+  gap: 1rem;
+}
+.modal__error-icon {
+  font-size: 3rem;
+  opacity: 0.5;
+}
+.modal__error-text {
+  font-size: 0.875rem;
+  opacity: 0.7;
 }
 
 .section--footer {

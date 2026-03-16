@@ -16,7 +16,7 @@ root folder.
 ### Initialization
 
 1. Scss is used and must be included in the root scss file of the project.
-2. Import `{ initThumbs } from "./path/gallery-thumbs/gallery-thumbs-index.js"` in Your js file.
+2. Import `{ initThumbs } from "./path/gallery-thumbs/index.js"` in Your js file.
 3. Use `initThumbs` with the css selector of the image container:`initThumbs("#gallery-work")`
 
 ### Notes

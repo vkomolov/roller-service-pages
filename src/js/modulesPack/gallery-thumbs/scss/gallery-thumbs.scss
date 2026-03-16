@@ -1,114 +1,217 @@
+/**
+ * Gallery Thumbs Modal Styles
+ * Modal window for displaying high-resolution images from masonry gallery
+ */
 
+// CSS Variables for consistent theming
+:root {
+	--modal-bg: rgba(0, 0, 0, 0.92);
+	--modal-text: rgba(255, 255, 255, 0.9);
+	--modal-accent: rgba(255, 133, 2, 1);
+	--modal-accent-hover: rgba(255, 153, 40, 1);
+	--modal-btn-bg: rgba(255, 133, 2, 0.6);
+	--modal-transition: opacity 0.3s ease, transform 0.2s ease;
+	--modal-z-index: 1000;
+}
+
+/**
+ * Main modal container
+ * Fixed position covering entire viewport with dark overlay
+ */
 .modal {
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(100dvw, 1440px);
-  height: 100vh;
-  height: 100dvh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(0, 0, 0, 0.9);
-  z-index: 200;
-  padding: 2.5rem 5svw;
+	position: fixed;
+	inset: 0; // Shorthand for top/right/bottom/left: 0
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--modal-bg);
+	z-index: var(--modal-z-index);
+	opacity: 0;
+	animation: modalFadeIn 0.3s ease forwards;
+	padding: clamp(1rem, 3vw, 2.5rem); // Responsive padding
+
+	@keyframes modalFadeIn {
+		to { opacity: 1; }
+	}
 }
 
+/**
+ * Top bar with counter and close button
+ */
 .modal__bar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  font-size: 1.375rem;  //22px
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: clamp(0.5rem, 2vw, 1rem);
+	z-index: calc(var(--modal-z-index) + 10);
+	background: linear-gradient(to bottom, rgba(0,0,0,0.4), transparent);
 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0.8rem;
-  z-index: 210;
+	// Navigation arrows bar (left/right buttons)
+	&--arrow {
+		top: 50%;
+		transform: translateY(-50%);
+		justify-content: space-between;
+		padding: 0 clamp(0.5rem, 3vw, 2rem);
+		background: none;
+		pointer-events: none; // Let clicks pass through empty areas
 
-  /* tablet (portrait): (max-width: 1024px) */
-  @media (max-width: 1024px) {
-    font-size: 1rem;
-  }
-
-  /* mobile (portrait wide): (max-width: 640px) */
-  @media (max-width: 640px) {
-    font-size: .8rem;
-  }
-
-  @media (max-width: 375px) and (min-width: 320px) {
-    font-size: .6rem;
-  }
-
-  &.modal__bar--arrow {
-    top: 50%;
-    transform: translateY(-50%);
-    justify-content: space-between;
-    gap: 2rem;
-
-    /* mobile (landscape): (max-width: 768px)*/
-    @media (max-width: 768px) {
-      justify-content: center;
-      top: 5%;
-      transform: none;
-    }
-  }
-
-  .modal-score {
-    font-size: 1rem;
-    line-height: 1;
-    color: rgba(255, 255, 255, .8);
-  }
+		// Stack arrows vertically on mobile
+		@media (max-width: 640px) {
+			top: auto;
+			bottom: 1rem;
+			transform: none;
+			justify-content: center;
+			gap: 3rem;
+		}
+	}
 }
 
-.media-container {
-  box-sizing: border-box;
-  max-width: 100%;
-  height: 100%;
-
-  .picture-item {
-    opacity: 0;
-    transition: opacity 1s ease;
-  }
-
-  img, picture {
-    width: auto;
-    height: 100%;
-    object-fit: contain;
-  }
+/**
+ * Image counter display (e.g., "1 / 10: Gate Photo")
+ */
+.modal__counter {
+	font-size: clamp(0.875rem, 1.5vw, 1.125rem);
+	color: var(--modal-text);
+	font-weight: 500;
+	letter-spacing: 0.02em;
+	text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 
-.thumb-arrow {
-  font-size: 1rem;
-  display: flex;
-  width: max(1.5rem, 28px);
-  height: max(1.5rem, 28px);
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  line-height: 1;
-  background-color: rgba(255, 133, 2, .5);
-  color: rgba(255, 255, 255, 1);
-  cursor: pointer;
-  transition: background-color 0.25s ease, color 0.25s ease, transform 0.2s ease-in-out;
+/**
+ * Viewport container for hi-res image
+ * Adapts to image aspect ratio while fitting within modal bounds
+ */
+.modal__viewport {
+	position: relative;
+	max-width: min(90vw, 1290px);
+	max-height: min(85vh, 720px);
+	width: auto;
+	height: auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	border-radius: 4px;
+	box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
 
-  &:hover {
-    background-color: rgba(255, 133, 2, 1);
-    color: rgba(40, 32, 23, 1);
-    transform: scale(1.05);
-  }
+/**
+ * Hi-res image inside modal
+ */
+.modal__image {
+	display: block;
+	max-width: 100%;
+	max-height: 100%;
+	width: auto;
+	height: auto;
+	object-fit: contain;
+	opacity: 0;
+	transition: opacity 0.4s ease;
 
-  &:active {
-    transform: scale(1.2);
-  }
+	// Loaded state
+	&.is-loaded {
+		opacity: 1;
+	}
+}
 
-  &.close {
-    position: absolute;
-    top: 20%;
-    right: 1%;
-    width: max(1.5rem, 28px);
-    height: max(1.5rem, 28px);
-  }
+/**
+ * Control buttons (close, prev, next)
+ */
+.modal__btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: clamp(2.5rem, 5vw, 3.5rem);
+	height: clamp(2.5rem, 5vw, 3.5rem);
+	border-radius: 50%;
+	border: none;
+	background-color: var(--modal-btn-bg);
+	color: #fff;
+	font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+	font-weight: 300;
+	cursor: pointer;
+	pointer-events: auto; // Re-enable clicks on buttons
+	transition: var(--modal-transition);
+	backdrop-filter: blur(4px);
+
+	&:hover {
+		background-color: var(--modal-accent);
+		transform: scale(1.08);
+	}
+
+	&:active {
+		transform: scale(0.95);
+	}
+
+	// Close button positioning
+	&--close {
+		position: absolute;
+		top: clamp(0.5rem, 2vw, 1rem);
+		right: clamp(0.5rem, 2vw, 1rem);
+		font-size: clamp(1.5rem, 3vw, 2rem);
+	}
+
+	// Navigation arrows
+	&--prev,
+	&--next {
+		@media (max-width: 640px) {
+			// Smaller on mobile when stacked at bottom
+			width: 3rem;
+			height: 3rem;
+		}
+	}
+}
+
+/**
+ * Loading state for image
+ */
+.modal__loader {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	&::after {
+		content: '';
+		width: 3rem;
+		height: 3rem;
+		border: 3px solid rgba(255,255,255,0.1);
+		border-top-color: var(--modal-accent);
+		border-radius: 50%;
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		to { transform: rotate(360deg); }
+	}
+}
+
+/**
+ * Error state when hi-res image fails to load
+ */
+.modal__error {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	color: var(--modal-text);
+	gap: 1rem;
+
+	&-icon {
+		font-size: 3rem;
+		opacity: 0.5;
+	}
+
+	&-text {
+		font-size: 0.875rem;
+		opacity: 0.7;
+	}
 }

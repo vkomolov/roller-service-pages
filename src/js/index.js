@@ -1,7 +1,7 @@
 'use strict';
 
 import { activateNavLink, createMasonry, initLangSwitcher, lockedEventListener } from "./helpers/funcsDOM.js";
-import { initThumbs } from "./modulesPack/gallery-thumbs/gallery-thumbs-index.js";
+import { initThumbs } from "./modulesPack/gallery-thumbs/index.js";
 import { animatePage, fadeInGallery } from "./partials/animations.js";
 
 //INITIAL DATA
@@ -26,6 +26,7 @@ const langSwitchData = {
   dataSetParam: "lang"
 }
 const gallerySelector = "#gallery-work";
+const galleryThumbsFolderName = "thumbs";
 
 document.addEventListener("DOMContentLoaded", async () => {
   const pageType = document.body.dataset.type;
@@ -48,7 +49,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const timelines = fadeInGallery(imageItems);
     Object.assign(totalTl, timelines);
 
-    await initThumbs("#gallery-work", "thumbs");
+    await initThumbs(gallerySelector, galleryThumbsFolderName);
   } catch (error) {
     console.error("Gallery initialization failed:", error);
   }

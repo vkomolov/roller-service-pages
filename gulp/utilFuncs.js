@@ -63,12 +63,12 @@ async function searchInDirectory(dir, fileName, mode) {
  * @throws {Error} - Throws an error if the directory cannot be accessed or read.
  * @example
  * // Search for a file in the current directory (non-recursive)
- * const result = await checkFileInDir('./src', 'gallery-thumbs-index.js');
+ * const result = await checkFileInDir('./src', 'index.js');
  * console.log(result); // true or false
  *
  * @example
  * // Search for a file recursively and return the full path
- * const result = await checkFileInDir('./src', 'gallery-thumbs-index.js', true, true);
+ * const result = await checkFileInDir('./src', 'index.js', true, true);
  * console.log(result); // Full path to the file or false
  */
 export async function checkFileInDir(

@@ -10292,7 +10292,14 @@ return ImagesLoaded;
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   activateNavLink: function() { return /* binding */ activateNavLink; },
+/* harmony export */   attachModalListeners: function() { return /* binding */ attachModalListeners; },
+/* harmony export */   calculateNavIndex: function() { return /* binding */ calculateNavIndex; },
+/* harmony export */   cleanupModal: function() { return /* binding */ cleanupModal; },
+/* harmony export */   createElementWithClass: function() { return /* binding */ createElementWithClass; },
 /* harmony export */   createMasonry: function() { return /* binding */ createMasonry; },
+/* harmony export */   createModalHandlers: function() { return /* binding */ createModalHandlers; },
+/* harmony export */   createModalState: function() { return /* binding */ createModalState; },
+/* harmony export */   detachModalListeners: function() { return /* binding */ detachModalListeners; },
 /* harmony export */   getImagesLoaded: function() { return /* binding */ getImagesLoaded; },
 /* harmony export */   getSelectorName: function() { return /* binding */ getSelectorName; },
 /* harmony export */   initLangSwitcher: function() { return /* binding */ initLangSwitcher; },
@@ -10301,6 +10308,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   lockedEventListener: function() { return /* binding */ lockedEventListener; },
 /* harmony export */   migrateElement: function() { return /* binding */ migrateElement; },
 /* harmony export */   observeIntersection: function() { return /* binding */ observeIntersection; },
+/* harmony export */   replaceFilePath: function() { return /* binding */ replaceFilePath; },
 /* harmony export */   setAttributes: function() { return /* binding */ setAttributes; },
 /* harmony export */   toggleClassOnIntersection: function() { return /* binding */ toggleClassOnIntersection; }
 /* harmony export */ });
@@ -10651,23 +10659,38 @@ function validateContainer(container) {
  */
 function buildImageParentMap(container, options) {
   const map = new Map();
-  Array.from(container.children).forEach(child => {
-    // Case 1: Direct img child
+  const {
+    background
+  } = options;
+  for (const child of Array.from(container.children)) {
+    // Priority 1: Direct img child (most common case)
     if (child.matches('img')) {
       map.set(child, child);
+      continue;
     }
-
-    // Case 2: img inside wrapper
+    // Priority 2: Wrapper with nested img
     const nestedImg = child.querySelector('img');
     if (nestedImg) {
       map.set(nestedImg, child);
+      continue;
     }
+    // Priority 3: Background images (only if no regular img found)
+    if (!background) continue;
 
-    // Case 3: Background images (child itself is the target)
-    if (options.background && (typeof options.background === 'boolean' || child.matches(options.background))) {
+    /**
+     * truthy background: boolean true, or string selector ('.image', '.bg', [data-bg], etc...)
+     * option from the imagesLoaded library:
+     * if hasBackground is true, then any child is considered a background image container
+     * @sample
+     * options = {
+     *   background: '.grid-item' // or true
+     * }
+     */
+    const hasBackground = background === true || child.matches(background);
+    if (hasBackground) {
       map.set(child, child);
     }
-  });
+  }
   return map;
 }
 
@@ -11039,22 +11062,6 @@ function getSelectorName(selector) {
   return match ? match[1] : selector; // If not matched, return original selector
 }
 
-/***/ }),
-
-/***/ "./src/js/modulesPack/gallery-thumbs/gallery-thumbs-funcs.js":
-/*!*******************************************************************!*\
-  !*** ./src/js/modulesPack/gallery-thumbs/gallery-thumbs-funcs.js ***!
-  \*******************************************************************/
-/***/ (function(__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   createElementWithClass: function() { return /* binding */ createElementWithClass; },
-/* harmony export */   replaceFilePath: function() { return /* binding */ replaceFilePath; }
-/* harmony export */ });
-
-
 /**
  * Creates a new HTML element with specified tag and adds the provided CSS classes to it.
  *
@@ -11085,12 +11092,132 @@ function replaceFilePath(url, targetFolder) {
   return url.replace(new RegExp(`/${nestedFolder}/`), "/"); // If no match is found, return the original URL
 }
 
+/**
+ * @typedef {Object} ModalState
+ * @property {number|null} currentIndex
+ * @property {boolean} isOpen
+ * @property {boolean} isLoading
+ * @property {HTMLElement|null} currentImage
+ */
+
+/**
+ * Creates initial modal state
+ * @returns {ModalState}
+ */
+function createModalState() {
+  return {
+    currentIndex: null,
+    isOpen: false,
+    isLoading: false,
+    currentImage: null
+  };
+}
+
+/**
+ * Creates modal event handlers
+ * @param {Object} dom - Modal DOM elements
+ * @param {ModalState} state - Modal state reference
+ * @param {Object} callbacks - Action callbacks
+ * @returns {{handleKeydown: Function, handleClick: Function}}
+ */
+function createModalHandlers(dom, state, callbacks) {
+  const handleKeydown = event => {
+    const actions = {
+      Escape: callbacks.close,
+      ArrowLeft: callbacks.prev,
+      ArrowRight: callbacks.next
+    };
+    const action = actions[event.key];
+    if (action) {
+      event.preventDefault();
+      action();
+    }
+  };
+  const handleClick = event => {
+    const button = event.target.closest("[data-action]");
+    if (!button) return;
+    const actionMap = {
+      close: callbacks.close,
+      prev: callbacks.prev,
+      next: callbacks.next
+    };
+    const action = actionMap[button.dataset.action];
+    if (action) action();
+  };
+  return {
+    handleKeydown,
+    handleClick
+  };
+}
+
+/**
+ * Calculates navigation index with wrap-around
+ * @param {number} current - Current index
+ * @param {number} total - Total items
+ * @param {string} direction - 'prev' or 'next'
+ * @returns {number} New index
+ */
+function calculateNavIndex(current, total, direction) {
+  if (direction === 'prev') {
+    return current === 0 ? total - 1 : current - 1;
+  }
+  return current === total - 1 ? 0 : current + 1;
+}
+
+/**
+ * Attaches modal event listeners
+ * @param {HTMLElement} root - Modal root element
+ * @param {Function} handleClick - Click handler
+ * @param {Function} handleKeydown - Keydown handler
+ * @param {{bind: Function}} touch - Touch handler
+ */
+function attachModalListeners(root, handleClick, handleKeydown, touch) {
+  root.addEventListener("click", handleClick);
+  document.addEventListener("keydown", handleKeydown);
+  touch.bind();
+}
+
+/**
+ * Detaches modal event listeners
+ * @param {HTMLElement} root - Modal root element
+ * @param {Function} handleClick - Click handler
+ * @param {Function} handleKeydown - Keydown handler
+ * @param {{unbind: Function}} touch - Touch handler
+ */
+function detachModalListeners(root, handleClick, handleKeydown, touch) {
+  touch.unbind();
+  root.removeEventListener("click", handleClick);
+  document.removeEventListener("keydown", handleKeydown);
+}
+
+/**
+ * Cleanup modal on close with fade animation
+ * @param {Object} dom - Modal DOM elements
+ * @param {ModalState} state - Modal state reference
+ * @param {number} fadeDuration - Fade out duration in ms
+ * @returns {Promise<void>}
+ */
+async function cleanupModal(dom, state, fadeDuration = 300) {
+  dom.root.style.opacity = "0";
+  await new Promise(resolve => setTimeout(resolve, fadeDuration));
+  dom.root.remove();
+  dom.root.style.opacity = "";
+  document.body.style.overflow = "";
+
+  // Reset state
+  state.currentIndex = null;
+  if (dom.currentImage) {
+    dom.currentImage.remove();
+    dom.currentImage = null;
+  }
+}
+
 /***/ }),
 
-/***/ "./src/js/modulesPack/gallery-thumbs/gallery-thumbs-index.js":
-/*!*******************************************************************!*\
-  !*** ./src/js/modulesPack/gallery-thumbs/gallery-thumbs-index.js ***!
-  \*******************************************************************/
+/***/ "./src/js/modulesPack/gallery-thumbs/index.js":
+/*!****************************************************!*\
+  !*** ./src/js/modulesPack/gallery-thumbs/index.js ***!
+  \****************************************************/
 /***/ (function(__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -11099,262 +11226,503 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   initThumbs: function() { return /* binding */ initThumbs; }
 /* harmony export */ });
 /* harmony import */ var touchsweep__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! touchsweep */ "./node_modules/touchsweep/dist/touchsweep.js");
-/* harmony import */ var _gallery_thumbs_funcs_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./gallery-thumbs-funcs.js */ "./src/js/modulesPack/gallery-thumbs/gallery-thumbs-funcs.js");
+/* harmony import */ var _helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../helpers/funcsDOM.js */ "./src/js/helpers/funcsDOM.js");
 
 
 
 
 
-//const TouchSweep = TouchSweepModule.default;
+//////// CONSTANTS ////////
 
-//////// END OF IMPORTS //////////////////
+/** Aspect ratio constants from README (1290:660) */
+const MODAL_MAX_WIDTH = 1290;
+const MODAL_MAX_HEIGHT = 720;
+
+/** Swipe threshold for touch navigation */
+const SWIPE_THRESHOLD = 50;
+
+//////// MAIN EXPORT ////////
 
 /**
  * Initializes a thumbnail gallery with modal functionality.
- * @param {string} gallerySelector - Selector for the gallery container.
- * @param {string} [thumbsFolder="thumbs"] - the nested folder of the path, where the gallery with the minimized
- * images are located... The gallery container with gallerySelector comprises those images...
- * It is used for replacing the path of the image to the high dimension image for the modal view...
- * @throws {Error} If the gallery container or media elements are not found.
+ * Clicking any image opens a fullscreen modal with the hi-resolution version.
+ * Navigation: click arrows, keyboard arrows/Escape, or swipe on mobile.
+ *
+ * @param {string} gallerySelector - CSS selector for the gallery container
+ * @param {string} [thumbsFolder="thumbs"] - Subfolder containing thumbnail images
+ * @returns {Promise<void>}
+ * @throws {Error} If gallery container not found or no valid media elements
+ *
+ * @example
+ * await initThumbs("#gallery-work", "thumbs");
  */
-function initThumbs(gallerySelector, thumbsFolder = "thumbs") {
-  const galleryBlock = document.querySelector(gallerySelector);
-  if (!galleryBlock) {
-    throw new Error("at initGalleryThumbs: The given 'galleryContainer' is not in the DOM...");
+async function initThumbs(gallerySelector, thumbsFolder = "thumbs") {
+  const gallery = document.querySelector(gallerySelector);
+  if (!gallery?.isConnected) {
+    throw new Error(`[initThumbs]: Gallery "${gallerySelector}" not found in DOM`);
   }
 
-  //for checking media tags (!!! <img> in dist *.html must be located only <picture>)
-  /*	const queryTags = ["picture"];
-  	const mediaArr = Array.from(galleryBlock.querySelectorAll(queryTags.join(", ")));*/
-
-  ////// ALTERNATIVE: to include images, if they are not in <picture> tag...
-  const queryTags = ["picture", "img"];
-  const mediaArr = Array.from(galleryBlock.querySelectorAll(queryTags.join(", "))).filter(elem => {
-    // Condition to exclude <img> inside <picture>
-    if (elem.tagName === "IMG") {
-      // Check if <img> is inside <picture>
-      const parent = elem.parentElement;
-      return !(parent.tagName === "PICTURE");
-    }
-    // For all other elements (not <img>) to keep them in the selection
-    return true;
-  });
-  if (!mediaArr.length) {
-    console.warn(`at initThumbs: the found mediaArr is empty: ${mediaArr.length}... `);
+  // Collect all valid media elements (pictures and standalone images)
+  const mediaItems = collectMediaItems(gallery);
+  if (mediaItems.length === 0) {
+    console.warn(`[initThumbs]: No media found in "${gallerySelector}"`);
     return;
   }
-  const runThumbs = initModal(mediaArr, {
-    thumbsFolder,
-    queryTags
+
+  // Initialize modal system with media data
+  const modal = createModalController(mediaItems, {
+    thumbsFolder
   });
-  galleryBlock.addEventListener("click", ({
-    target
-  }) => {
-    const foundIndex = mediaArr.findIndex(item => item === target.parentElement || item === target);
-    if (foundIndex === -1) {
-      console.error("at initThumbs: the clicked element is not found in the gallery... omitting click...");
-    } else {
-      document.body.style.overflow = "hidden";
-      runThumbs(foundIndex);
+
+  // Delegated click handler on gallery container
+  gallery.addEventListener("click", event => {
+    const mediaItem = event.target.closest("picture, img");
+
+    // Ignore if click wasn't on a media element or if img is inside picture
+    if (!mediaItem || mediaItem.tagName === "IMG" && mediaItem.closest("picture")) {
+      return;
+    }
+    const index = mediaItems.indexOf(mediaItem);
+    if (index !== -1) {
+      modal.open(index);
     }
   });
 }
 
+//////// HELPER FUNCTIONS ////////
+
 /**
- * Initializes the modal for the gallery.
- * @param {HTMLElement[]} mediaArr - Array of media elements.
- * @param {Object} params - params for creating the cloned image
- * @param {string} params.thumbsFolder - the nested folder of the path, where the gallery with the minimized
- * images are located... The gallery container with gallerySelector comprises those images...
- * It is used for replacing the path of the image to the high dimension image for the modal view...
- * @param {Array<string>} params.queryTags - the array of the image tags to operate with...
+ * Collects all valid media elements from gallery container.
+ * Includes <picture> elements and standalone <img> elements (not nested in picture).
  *
- * @returns {Function} Function to run the modal with the clicked index.
+ * @param {HTMLElement} gallery - Gallery container element
+ * @returns {HTMLElement[]} Array of picture and standalone img elements
  */
-function initModal(mediaArr, params) {
-  let currentIndex = null;
-  let swipeListenersAdded = false; // Flag to check if the swipe listeners have already been added
-  const modalData = createModal();
-  const {
-    modal,
-    mediaContainer,
-    imgScore
-  } = modalData;
-  const actions = {
-    close: handleEscape,
-    prev: getPrev,
-    next: getNext,
-    Escape: handleEscape,
-    ArrowLeft: getPrev,
-    ArrowRight: getNext
-  };
+function collectMediaItems(gallery) {
+  const pictures = Array.from(gallery.querySelectorAll("picture"));
 
-  //! swipe handler TouchSweep
-  const touchThreshold = 20;
-  // adding TouchSweep to modal
-  const touchSweepHandler = new touchsweep__WEBPACK_IMPORTED_MODULE_0__["default"](modal, {}, touchThreshold);
-  const handleClick = ({
-    target
-  }) => {
-    const {
-      type
-    } = target.dataset;
-    if (type && actions[type]) {
-      actions[type]();
-    }
-  };
-  return clickedIndex => {
-    if (!document.body.contains(modal)) {
-      document.body.appendChild(modal);
-    }
-    cycleThumbs(clickedIndex);
-    if (!swipeListenersAdded) {
-      // Adding swipe events when a modal is first opened
-      modal.addEventListener("swipeleft", getPrev);
-      modal.addEventListener("swiperight", getNext);
-      swipeListenersAdded = true; // Set the flag that listeners have been added
-    } else {
-      // If the swipe listeners have already been added, simply enable swipe processing
-      touchSweepHandler.bind();
-    }
-    modal.addEventListener("click", handleClick);
-    document.addEventListener("keydown", handleKey);
-  };
-  function getPrev() {
-    const index = currentIndex === 0 ? mediaArr.length - 1 : currentIndex - 1;
-    cycleThumbs(index);
-  }
-  function getNext() {
-    const index = currentIndex === mediaArr.length - 1 ? 0 : currentIndex + 1;
-    cycleThumbs(index);
-  }
-  function handleKey(event) {
-    if (event.key in actions) {
-      actions[event.key]();
-    }
-  }
-  function handleEscape() {
-    touchSweepHandler.unbind(); //remove all previously attached event listeners in TouchSweep
-
-    modal.removeEventListener("click", handleClick);
-    document.removeEventListener("keydown", handleKey);
-    modal.remove();
-    document.body.style.overflow = "auto";
-  }
-  function cycleThumbs(clickedIndex) {
-    if (clickedIndex === currentIndex) return;
-    currentIndex = clickedIndex;
-    const clickedElem = mediaArr[clickedIndex];
-    const imgAlt = getAltText(clickedElem);
-    imgScore.textContent = `${clickedIndex + 1} / ${mediaArr.length}${imgAlt ? `: ${imgAlt}` : ""}`;
-
-    //removing the previous cloned element...
-    if (modalData.clonedMediaItem) {
-      mediaContainer.removeChild(modalData.clonedMediaItem);
-    }
-    modalData.clonedMediaItem = getClonedElement(clickedElem, params);
-    modalData.clonedMediaItem.classList.add("picture-item");
-    mediaContainer.appendChild(modalData.clonedMediaItem);
-    setTimeout(() => {
-      modalData.clonedMediaItem.style.opacity = "1";
-    }, 0);
-  }
-}
-function getAltText(element) {
-  if (element.tagName === "IMG" && element.hasAttribute("alt")) {
-    return element.getAttribute("alt");
-  }
-  //if the element comprises <img> (as a rule)...
-  const img = element.querySelector("img");
-  if (img && img.hasAttribute("alt")) {
-    return img.getAttribute("alt");
-  }
-
-  //If the alt attribute is not found, return the string "picture"
-  return "picture";
+  // Get all images that are NOT inside a picture element
+  const allImages = Array.from(gallery.querySelectorAll("img"));
+  const standaloneImages = allImages.filter(img => !img.closest("picture"));
+  return [...pictures, ...standaloneImages];
 }
 
 /**
- * It creates the clone of the clicked image element and alters the sources to the images
- * @param {HTMLElement} sourceElem - image element (<img> or <picture>)
- * @param {Object} params - params for creating the cloned image
- * @param {string} params.thumbsFolder - the nested folder of the path, where the gallery with the minimized
- * images are located... The gallery container with gallerySelector comprises those images...
- * It is used for replacing the path of the image to the high dimension image for the modal view...
- * @param {Array<string>} params.queryTags - the array of the image tags to operate with...
+ * Creates the modal controller with all functionality.
+ * Refactored for lower complexity - helper functions moved to funcsDOM.
  *
- * @returns {HTMLElement}
+ * @param {HTMLElement[]} items - Array of media elements
+ * @param {Object} config - Configuration object
+ * @param {string} config.thumbsFolder - Name of thumbnails subfolder
+ * @returns {{open: Function}} Modal controller with open method
  */
-function getClonedElement(sourceElem, params) {
+function createModalController(items, config) {
+  const state = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createModalState)();
+  const dom = buildModalDOM();
+  const touch = initTouchHandling(dom.root, navigatePrev, navigateNext);
+
+  // Navigation functions
+  async function navigatePrev() {
+    if (state.isLoading) return;
+    try {
+      await showImage((0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.calculateNavIndex)(state.currentIndex, items.length, 'prev'));
+    } catch (error) {
+      console.error('[Modal] Navigation failed:', error);
+    }
+  }
+  async function navigateNext() {
+    if (state.isLoading) return;
+    try {
+      await showImage((0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.calculateNavIndex)(state.currentIndex, items.length, 'next'));
+    } catch (error) {
+      console.error('[Modal] Navigation failed:', error);
+    }
+  }
+
+  // Create handlers with bound callbacks
   const {
-    thumbsFolder,
-    queryTags
-  } = params;
-  if (!queryTags.includes(sourceElem.tagName.toLowerCase())) {
-    console.warn(`at getClonedImage: the given element with tagName: ${sourceElem.tagName} is not
-		in the tag operation list: [${Object.keys(queryTags).join(", ")}]... returning the origin element...`);
-    return sourceElem;
-  }
-  const updateSource = item => {
-    let attr = null;
-    if (item.hasAttribute("src")) {
-      attr = "src";
-    } else if (item.hasAttribute("srcset")) {
-      attr = "srcset";
-    }
-    const originSrc = item.getAttribute(attr);
-    const updatedSrc = (0,_gallery_thumbs_funcs_js__WEBPACK_IMPORTED_MODULE_1__.replaceFilePath)(originSrc, thumbsFolder);
-    item.setAttribute(attr, updatedSrc);
-  };
+    handleKeydown,
+    handleClick
+  } = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createModalHandlers)(dom, state, {
+    close: closeModal,
+    prev: navigatePrev,
+    next: navigateNext
+  });
 
-  //cloning the image HTMLElement with altering the image sources...
-  const clonedElem = sourceElem.cloneNode(true);
-  if (clonedElem?.children.length) {
-    for (const item of clonedElem.children) {
-      updateSource(item);
-    }
-  } else {
-    updateSource(clonedElem);
-  }
-  return clonedElem;
-}
+  /**
+   * Displays image at given index
+   * @param {number} index - Image index
+   */
+  async function showImage(index) {
+    if (index === state.currentIndex && dom.currentImage) return;
+    state.currentIndex = index;
+    state.isLoading = true;
+    const item = items[index];
+    dom.counter.textContent = formatCounter(index, items.length, getAltText(item));
 
-/**
- * Creates a modal element with all necessary child elements.
- * @returns {Object} An object containing the modal element and its children.
- */
-function createModal() {
-  const modal = (0,_gallery_thumbs_funcs_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", "modal");
-  const scoreBar = (0,_gallery_thumbs_funcs_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", "modal__bar");
-  const arrowBar = (0,_gallery_thumbs_funcs_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", "modal__bar", "modal__bar--arrow");
-  const imgScore = (0,_gallery_thumbs_funcs_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("span", "modal-score");
-  const closeButton = createButton("X", "close");
-  const arrowPrev = createButton("<", "prev");
-  const arrowNext = createButton(">", "next");
-  const mediaContainer = (0,_gallery_thumbs_funcs_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", "media-container");
-  scoreBar.append(imgScore, closeButton);
-  arrowBar.append(arrowPrev, arrowNext);
-  modal.append(scoreBar, arrowBar, mediaContainer);
+    // Show loader
+    dom.viewport.innerHTML = '<div class="modal__loader"></div>';
+
+    // Fade out previous
+    if (dom.currentImage) {
+      dom.currentImage.style.opacity = "0";
+      await delay(200);
+      dom.currentImage.remove();
+      dom.currentImage = null;
+    }
+    try {
+      const {
+        element,
+        naturalSize
+      } = await loadHiResImage(item, config.thumbsFolder);
+      dom.currentImage = element;
+      const dims = calculateViewportDimensions(naturalSize.width, naturalSize.height, dom.root);
+      applyViewportDimensions(dom.viewport, dims);
+      dom.viewport.innerHTML = '';
+      dom.viewport.appendChild(dom.currentImage);
+      requestAnimationFrame(() => {
+        dom.currentImage.classList.add("is-loaded");
+        state.isLoading = false;
+      });
+    } catch (error) {
+      console.error(`[Modal] Failed to load image ${index}:`, error);
+      dom.viewport.innerHTML = `
+                <div class="modal__error">
+                    <span class="modal__error-icon">⚠</span>
+                    <span class="modal__error-text">Failed to load image</span>
+                </div>
+            `;
+      state.isLoading = false;
+    }
+  }
+  async function openModal(startIndex) {
+    if (state.isOpen) return;
+    state.isOpen = true;
+    document.body.style.overflow = "hidden";
+    document.body.appendChild(dom.root);
+    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.attachModalListeners)(dom.root, handleClick, handleKeydown, touch);
+    try {
+      await showImage(startIndex);
+    } catch (error) {
+      console.error('[Modal] Failed to open:', error);
+    }
+  }
+  async function closeModal() {
+    if (!state.isOpen) return;
+    state.isOpen = false;
+    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.detachModalListeners)(dom.root, handleClick, handleKeydown, touch);
+    await (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.cleanupModal)(dom, state);
+  }
   return {
-    modal,
-    mediaContainer,
-    imgScore,
-    clonedMediaItem: null
+    open: openModal
+  };
+}
+
+//////// DOM BUILDING ////////
+
+/**
+ * Builds modal DOM structure with all necessary elements.
+ * Uses createElementWithClass from funcsDOM for consistency.
+ *
+ * @returns {Object} Modal DOM elements reference object
+ */
+function buildModalDOM() {
+  const root = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", "modal");
+
+  // Top bar with counter and close button
+  const header = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", "modal__bar");
+  const counter = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("span", "modal__counter");
+  const closeBtn = createModalButton("×", "close", true);
+  header.append(counter, closeBtn);
+
+  // Navigation arrows (left/right)
+  const navBar = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", "modal__bar", "modal__bar--arrow");
+  const prevBtn = createModalButton("‹", "prev");
+  const nextBtn = createModalButton("›", "next");
+  navBar.append(prevBtn, nextBtn);
+
+  // Main viewport for images
+  const viewport = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", "modal__viewport");
+
+  // Assemble structure
+  root.append(header, navBar, viewport);
+  return {
+    root,
+    counter,
+    viewport,
+    currentImage: null
   };
 }
 
 /**
- * Creates a button element with the specified text and type.
- * @param {string} text - The text content of the button.
- * @param {string} type - The type of the button (e.g., 'close', 'prev', 'next').
- * @returns {HTMLElement} The created button element.
+ * Creates a modal control button.
+ *
+ * @param {string} symbol - Button text/icon
+ * @param {string} action - Action identifier (close, prev, next)
+ * @param {boolean} [isAbsolute=false] - Whether button is absolutely positioned
+ * @returns {HTMLButtonElement} Created button element
  */
-function createButton(text, type) {
-  const button = (0,_gallery_thumbs_funcs_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("span", 'thumb-arrow', type);
-  button.textContent = text;
-  button.dataset.type = type;
-  button.tabIndex = 0;
-  return button;
+function createModalButton(symbol, action, isAbsolute = false) {
+  const btn = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("button", "modal__btn", `modal__btn--${action}`);
+  btn.textContent = symbol;
+  btn.dataset.action = action;
+  btn.type = "button";
+  btn.setAttribute("aria-label", action === "close" ? "Close modal" : action === "prev" ? "Previous image" : "Next image");
+  if (isAbsolute) {
+    btn.style.position = "absolute";
+  }
+  return btn;
+}
+
+//////// IMAGE LOADING ////////
+
+/**
+ * Loads hi-resolution image and returns element with natural dimensions.
+ * Replaces thumbnail path with hi-res path, waits for load, extracts size.
+ *
+ * @param {HTMLElement} original - Original thumbnail element
+ * @param {string} thumbsFolder - Thumbnails subfolder name
+ * @returns {Promise<{element: HTMLElement, naturalSize: {width: number, height: number}}>}
+ */
+async function loadHiResImage(original, thumbsFolder) {
+  /** @type {HTMLElement} */
+  const clone = /** @type {HTMLElement} */original.cloneNode(true);
+  clone.classList.add("modal__image");
+
+  // Remove fixed dimensions from thumbnail
+  clone.removeAttribute("width");
+  clone.removeAttribute("height");
+
+  // Remove lazy loading - not needed in modal
+  clone.removeAttribute("loading");
+  clone.removeAttribute("decoding");
+
+  // Get main image element
+  /** @type {HTMLImageElement|null} */
+  const mainImg = clone.tagName === "IMG" ? (/** @type {HTMLImageElement} */clone) : clone.querySelector("img");
+  if (!mainImg) {
+    throw new Error("No image element found in clone");
+  }
+
+  // Get original src and calculate hi-res URL
+  const originalSrc = mainImg.getAttribute("src");
+  const hiResUrl = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.replaceFilePath)(originalSrc, thumbsFolder);
+
+  // Create a fresh Image object to load hi-res version
+  const loaderImg = new Image();
+
+  // Wait for hi-res to load
+  const naturalSize = await new Promise((resolve, reject) => {
+    loaderImg.onload = () => {
+      resolve({
+        width: loaderImg.naturalWidth,
+        height: loaderImg.naturalHeight
+      });
+    };
+    loaderImg.onerror = () => {
+      reject(new Error(`Failed to load: ${hiResUrl}`));
+    };
+    loaderImg.src = hiResUrl;
+  });
+
+  // Update the clone's src and set natural dimensions as attributes
+  mainImg.src = hiResUrl;
+  mainImg.setAttribute("width", naturalSize.width);
+  mainImg.setAttribute("height", naturalSize.height);
+
+  // Also update srcset if present in sources
+  if (clone.tagName === "PICTURE") {
+    /** @type {NodeListOf<HTMLSourceElement>} */
+    const sources = clone.querySelectorAll("source");
+    sources.forEach(src => {
+      if (src.hasAttribute("srcset")) {
+        const srcsetUrl = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.replaceFilePath)(src.getAttribute("srcset"), thumbsFolder);
+        src.setAttribute("srcset", srcsetUrl);
+      }
+    });
+  }
+  return {
+    element: clone,
+    naturalSize
+  };
+}
+
+/**
+ * Waits for image to load and returns its natural dimensions.
+ * Handles already-cached images immediately.
+ *
+ * @param {HTMLImageElement} img - Image element to wait for
+ * @returns {Promise<{width: number, height: number}>}
+ */
+function waitForImageLoad(img) {
+  return new Promise((resolve, reject) => {
+    // Check if already loaded with valid dimensions
+    if (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
+      console.log(`[waitForImageLoad] Already loaded: ${img.naturalWidth}x${img.naturalHeight}`);
+      resolve({
+        width: img.naturalWidth,
+        height: img.naturalHeight
+      });
+      return;
+    }
+
+    // Set up handlers before setting src to avoid race condition
+    const onLoad = () => {
+      console.log(`[waitForImageLoad] Load event: ${img.naturalWidth}x${img.naturalHeight}`);
+      cleanup();
+      resolve({
+        width: img.naturalWidth,
+        height: img.naturalHeight
+      });
+    };
+    const onError = () => {
+      console.error(`[waitForImageLoad] Error: ${img.src}`);
+      cleanup();
+      reject(new Error(`Failed to load image: ${img.src}`));
+    };
+    const cleanup = () => {
+      img.removeEventListener("load", onLoad);
+      img.removeEventListener("error", onError);
+    };
+    img.addEventListener("load", onLoad, {
+      once: true
+    });
+    img.addEventListener("error", onError, {
+      once: true
+    });
+
+    // If image is not complete, wait for it
+    // If it's complete but naturalWidth is 0, force reload
+    if (img.complete && img.naturalWidth === 0) {
+      console.log(`[waitForImageLoad] Forcing reload`);
+      const currentSrc = img.src;
+      img.src = "";
+      img.src = currentSrc;
+    }
+  });
+}
+
+//////// VIEWPORT CALCULATIONS ////////
+
+/**
+ * Calculates optimal viewport dimensions to fit image in modal.
+ * Preserves aspect ratio, fits within modal bounds with padding.
+ *
+ * @param {number} imgWidth - Image natural width
+ * @param {number} imgHeight - Image natural height
+ * @param {HTMLElement} modal - Modal container element
+ * @returns {{width: number, height: number}} Calculated dimensions
+ */
+function calculateViewportDimensions(imgWidth, imgHeight, modal) {
+  // Get modal styles for padding calculations
+  const modalStyles = window.getComputedStyle(modal);
+  const paddingX = parseFloat(modalStyles.paddingLeft) + parseFloat(modalStyles.paddingRight);
+  const paddingY = parseFloat(modalStyles.paddingTop) + parseFloat(modalStyles.paddingBottom);
+
+  // Available space for image (use full modal space minus padding)
+  const availableWidth = modal.clientWidth - paddingX;
+  const availableHeight = modal.clientHeight - paddingY;
+
+  // Image and available space aspect ratios
+  const imgRatio = imgWidth / imgHeight;
+  const availableRatio = availableWidth / availableHeight;
+  let finalWidth, finalHeight;
+
+  // Fit by the dimension that is more constrained
+  if (imgRatio > availableRatio) {
+    // Image is relatively wider - constrain by available width
+    finalWidth = availableWidth;
+    finalHeight = availableWidth / imgRatio;
+  } else {
+    // Image is relatively taller - constrain by available height
+    finalHeight = availableHeight;
+    finalWidth = availableHeight * imgRatio;
+  }
+
+  // Cap at max dimensions from README
+  finalWidth = Math.min(finalWidth, MODAL_MAX_WIDTH);
+  finalHeight = Math.min(finalHeight, MODAL_MAX_HEIGHT);
+  return {
+    width: Math.round(finalWidth),
+    height: Math.round(finalHeight)
+  };
+}
+
+/**
+ * Applies calculated dimensions to viewport element.
+ *
+ * @param {HTMLElement} viewport - Viewport container element
+ * @param {{width: number, height: number}} dimensions - Dimensions to apply
+ */
+function applyViewportDimensions(viewport, dimensions) {
+  viewport.style.width = `${dimensions.width}px`;
+  viewport.style.height = `${dimensions.height}px`;
+}
+
+//////// TOUCH/SWIPE HANDLING ////////
+
+/**
+ * Initializes touch swipe handling for modal navigation.
+ * Uses TouchSweep library with custom threshold.
+ *
+ * @param {HTMLElement} element - Element to attach swipe to
+ * @param {Function} onSwipeLeft - Handler for left swipe (show previous)
+ * @param {Function} onSwipeRight - Handler for right swipe (show next)
+ * @returns {{bind: Function, unbind: Function}} Control methods
+ */
+function initTouchHandling(element, onSwipeLeft, onSwipeRight) {
+  const handler = new touchsweep__WEBPACK_IMPORTED_MODULE_0__["default"](element, {}, SWIPE_THRESHOLD);
+
+  // TouchSweep fires custom events on the element
+  const handleSwipeLeft = () => onSwipeLeft();
+  const handleSwipeRight = () => onSwipeRight();
+  element.addEventListener("swipeleft", handleSwipeLeft);
+  element.addEventListener("swiperight", handleSwipeRight);
+  return {
+    bind: () => handler.bind(),
+    unbind: () => {
+      handler.unbind();
+      element.removeEventListener("swipeleft", handleSwipeLeft);
+      element.removeEventListener("swiperight", handleSwipeRight);
+    }
+  };
+}
+
+//////// UTILITY FUNCTIONS ////////
+
+/**
+ * Extracts alt text from media element for display.
+ * Checks img element directly or nested within picture.
+ *
+ * @param {HTMLElement} element - Picture or img element
+ * @returns {string} Alt text or empty string
+ */
+function getAltText(element) {
+  const img = element.tagName === "IMG" ? element : element.querySelector("img");
+  return img?.getAttribute("alt") || "";
+}
+
+/**
+ * Formats counter display text.
+ *
+ * @param {number} index - Current index (0-based)
+ * @param {number} total - Total number of images
+ * @param {string} label - Optional label/alt text
+ * @returns {string} Formatted counter string
+ */
+function formatCounter(index, total, label) {
+  const base = `${index + 1} / ${total}`;
+  return label ? `${base}: ${label}` : base;
+}
+
+/**
+ * Simple delay promise for animations.
+ *
+ * @param {number} ms - Milliseconds to delay
+ * @returns {Promise<void>}
+ */
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /***/ }),
@@ -11888,7 +12256,7 @@ var __webpack_exports__ = {};
   \*************************/
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./helpers/funcsDOM.js */ "./src/js/helpers/funcsDOM.js");
-/* harmony import */ var _modulesPack_gallery_thumbs_gallery_thumbs_index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./modulesPack/gallery-thumbs/gallery-thumbs-index.js */ "./src/js/modulesPack/gallery-thumbs/gallery-thumbs-index.js");
+/* harmony import */ var _modulesPack_gallery_thumbs_index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./modulesPack/gallery-thumbs/index.js */ "./src/js/modulesPack/gallery-thumbs/index.js");
 /* harmony import */ var _partials_animations_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./partials/animations.js */ "./src/js/partials/animations.js");
 
 
@@ -11918,6 +12286,7 @@ const langSwitchData = {
   dataSetParam: "lang"
 };
 const gallerySelector = "#gallery-work";
+const galleryThumbsFolderName = "thumbs";
 document.addEventListener("DOMContentLoaded", async () => {
   const pageType = document.body.dataset.type;
 
@@ -11935,7 +12304,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     const timelines = (0,_partials_animations_js__WEBPACK_IMPORTED_MODULE_2__.fadeInGallery)(imageItems);
     Object.assign(totalTl, timelines);
-    await (0,_modulesPack_gallery_thumbs_gallery_thumbs_index_js__WEBPACK_IMPORTED_MODULE_1__.initThumbs)("#gallery-work", "thumbs");
+    await (0,_modulesPack_gallery_thumbs_index_js__WEBPACK_IMPORTED_MODULE_1__.initThumbs)(gallerySelector, galleryThumbsFolderName);
   } catch (error) {
     console.error("Gallery initialization failed:", error);
   }
