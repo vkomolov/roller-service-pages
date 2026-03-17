@@ -20,6 +20,18 @@ const MODAL_MAX_HEIGHT = 720;
 
 /** Swipe threshold for touch navigation */
 const SWIPE_THRESHOLD = 50;
+const THUMBS_FOLDER = "thumbs";
+
+/*** ClassNames ***/
+const MODAL_CLASSNAME = "modal";
+const MODAL_BAR_CLASSNAME = "modal__bar";
+const MODAL_BAR_ARROW_CLASSNAME = "modal__bar--arrow";
+const MODAL_BUTTON_CLASSNAME = "modal__btn";
+const MODAL_COUNTER_CLASSNAME = "modal__counter";
+const MODAL_LOADER_CLASSNAME = "modal__loader";
+const MODAL_VIEWPORT_CLASSNAME = "modal__viewport";
+const IS_LOADED = "is-loaded"; //opacity: 1
+const MODAL_IMAGE = "modal__image";
 
 //////// MAIN EXPORT ////////
 
@@ -36,7 +48,7 @@ const SWIPE_THRESHOLD = 50;
  * @example
  * await initThumbs("#gallery-work", "thumbs");
  */
-export async function initThumbs(gallerySelector, thumbsFolder = "thumbs") {
+export async function initThumbs(gallerySelector, thumbsFolder = THUMBS_FOLDER) {
 	const gallery = document.querySelector(gallerySelector);
 
 	if (!gallery?.isConnected) {
@@ -143,7 +155,7 @@ function createModalController(items, config) {
 		dom.counter.textContent = formatCounter(index, items.length, getAltText(item));
 
 		// Show loader
-		dom.viewport.innerHTML = '<div class="modal__loader"></div>';
+		dom.viewport.innerHTML = `<div class=${MODAL_LOADER_CLASSNAME}></div>`;
 
 		// Fade out previous
 		if (dom.currentImage) {
@@ -165,7 +177,7 @@ function createModalController(items, config) {
 			dom.viewport.appendChild(dom.currentImage);
 
 			requestAnimationFrame(() => {
-				dom.currentImage.classList.add("is-loaded");
+				dom.currentImage.classList.add(IS_LOADED);
 				state.isLoading = false;
 			});
 
@@ -217,22 +229,22 @@ function createModalController(items, config) {
  * @returns {Object} Modal DOM elements reference object
  */
 function buildModalDOM() {
-	const root = createElementWithClass("div", "modal");
+	const root = createElementWithClass("div", MODAL_CLASSNAME);
 
 	// Top bar with counter and close button
-	const header = createElementWithClass("div", "modal__bar");
-	const counter = createElementWithClass("span", "modal__counter");
+	const header = createElementWithClass("div", MODAL_BAR_CLASSNAME);
+	const counter = createElementWithClass("span", MODAL_COUNTER_CLASSNAME);
 	const closeBtn = createModalButton("×", "close", true);
 	header.append(counter, closeBtn);
 
 	// Navigation arrows (left/right)
-	const navBar = createElementWithClass("div", "modal__bar", "modal__bar--arrow");
+	const navBar = createElementWithClass("div", MODAL_BAR_CLASSNAME, MODAL_BAR_ARROW_CLASSNAME);
 	const prevBtn = createModalButton("‹", "prev");
 	const nextBtn = createModalButton("›", "next");
 	navBar.append(prevBtn, nextBtn);
 
 	// Main viewport for images
-	const viewport = createElementWithClass("div", "modal__viewport");
+	const viewport = createElementWithClass("div", MODAL_VIEWPORT_CLASSNAME);
 
 	// Assemble structure
 	root.append(header, navBar, viewport);
@@ -254,7 +266,11 @@ function buildModalDOM() {
  * @returns {HTMLButtonElement} Created button element
  */
 function createModalButton(symbol, action, isAbsolute = false) {
-	const btn = createElementWithClass("button", "modal__btn", `modal__btn--${action}`);
+	const btn = createElementWithClass(
+		"button",
+		MODAL_BUTTON_CLASSNAME,
+		`${MODAL_BUTTON_CLASSNAME}--${action}`
+	);
 	btn.textContent = symbol;
 	btn.dataset.action = action;
 	btn.type = "button";
@@ -282,7 +298,7 @@ function createModalButton(symbol, action, isAbsolute = false) {
 async function loadHiResImage(original, thumbsFolder) {
 	/** @type {HTMLElement} */
 	const clone = /** @type {HTMLElement} */ (original.cloneNode(true));
-	clone.classList.add("modal__image");
+	clone.classList.add(MODAL_IMAGE);
 
 	// Remove fixed dimensions from thumbnail
 	clone.removeAttribute("width");

@@ -20,7 +20,6 @@ const i = {
   burgerFixed: ".burger_nav:not(.hidden)",
   burgerHidden: ".burger_nav.hidden",
   navMenuHidden: ".header__nav.abs",
-  gatesSection: "#gatesSection",
   benefitsSection: "#benefitsSection",
   headingAccentHero: ".section__heading-block--hero .accent",
   headingHeroRest: ".section__heading-block--hero .rest-of-heading",

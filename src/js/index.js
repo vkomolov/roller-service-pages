@@ -6,7 +6,7 @@ import { animatePage, fadeInGallery } from "./partials/animations.js";
 
 //INITIAL DATA
 const linkAnchors = {
-  index: "#",
+  index: "#about-us",
   gates: "#gatesSection",
   rollers: "#securityShuttersSection",
   automation: "#rollerShuttersAutomation",
@@ -15,6 +15,7 @@ const linkAnchors = {
   windows: "#windowSection",
   security: "#securitySurveillanceSection",
 };
+const linkClassNameActive = "active";
 const navLinkSelector = ".nav-link";
 const navHexagonSelector = ".hexagon-comb-block__cell";
 const langSwitchData = {
@@ -33,8 +34,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   /// Navigation ///
   //checking and lighten several duplicate navigations for the .active links:
-  activateNavLink(navLinkSelector, pageType, "active", linkAnchors[pageType] || "#");
-  activateNavLink(navHexagonSelector, pageType, "active", linkAnchors[pageType] || "#");
+  activateNavLink(navLinkSelector, pageType, linkClassNameActive, linkAnchors[pageType] || "#");
+  activateNavLink(navHexagonSelector, pageType, linkClassNameActive, linkAnchors[pageType] || "#");
 
   //GSAP animation tweens
   const totalTl = animatePage();

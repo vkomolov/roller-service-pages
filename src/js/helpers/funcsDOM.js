@@ -441,18 +441,29 @@ function extractDimensions(img) {
  */
 function getImageDimensions(img) {
   return new Promise((resolve) => {
-    // Image already loaded (cached)
     if (img.naturalWidth > 0 && img.naturalHeight > 0) {
       resolve(extractDimensions(img));
       return;
     }
 
-    // Wait for load event
-    const handleLoad = () => resolve(extractDimensions(img));
-    const handleError = () => resolve(null);
+    const cleanup = () => {
+      img.removeEventListener('load', handleLoad);
+      img.removeEventListener('error', handleError);
+    };
 
-    img.addEventListener('load', handleLoad, { once: true });
-    img.addEventListener('error', handleError, { once: true });
+    const handleLoad = () => {
+      cleanup();
+      resolve(extractDimensions(img));
+    };
+
+    const handleError = () => {
+      cleanup();
+      console.warn(`[getImageDimensions]: could not load the image with src: ${img.src}`);
+      resolve(null);
+    };
+
+    img.addEventListener('load', handleLoad);
+    img.addEventListener('error', handleError);
   });
 }
 
@@ -694,7 +705,12 @@ function getColumnsNumber(containerWidth, itemWidth, gap) {
  * // Example usage:
  * activateNavLink('.nav-link', 'home', 'active', '#homeAnchor');
  */
-export function activateNavLink(navLinkSelector, pageType, activeClass, anchorLink) {
+export function activateNavLink(
+  navLinkSelector,
+  pageType,
+  activeClass,
+  anchorLink
+) {
   // Check if all necessary arguments are provided, otherwise, log a warning.
   if (!navLinkSelector || !pageType || !activeClass || !anchorLink) {
     console.warn("at activateNavLink: no given all arguments");

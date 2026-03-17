@@ -42,10 +42,10 @@
     
     <header class="header" role="banner">
         <h2 class="header__logo-heading">Майстер-Сервіс</h2>
-        <div class="header__contacts-wrapper" aria-label="Communication options">
+        <div class="header__contacts-wrapper" aria-label="@@data.gates.header.header__contacts-wrapper_label">
             <div class="header__contacts-block">
-                <a href="tel:380991019368"
-                   aria-label="Mobile connection with the master"
+                <a href="@@data.gates.header.header__contacts-block_mobile"
+                   aria-label="@@data.gates.header.header__contacts-block_mobile_label"
                    class="icon-link"
                    tabindex="0"
                 >
@@ -55,11 +55,11 @@
                             <use xlink:href="/assets/img/svgIcons/sprite.mono.svg#phone"></use>
                         </svg>
                     </div>
-                    <span class="icon-link__text icon-link__text--phone">+38 (099) 101 93 68</span>
+                    <span class="icon-link__text icon-link__text--phone">@@data.gates.header.header__contacts-block_mobile_span</span>
                 </a>
                 <div class="social-icons-wrapper">
-                    <a href="viber://chat?number=+380991019368"
-                       aria-label="Contact via Viber"
+                    <a href="@@data.gates.header.header__contacts-block_viber"
+                       aria-label="@@data.gates.header.header__contacts-block_viber_label"
                        class="social-icons-wrapper__social-icon"
                        tabindex="0"
                     >
@@ -68,9 +68,9 @@
                             <use xlink:href="/assets/img/svgIcons/sprite.multi.svg#viber"></use>
                         </svg>
                     </a>
-                    <a href="https://t.me/username"
+                    <a href="@@data.gates.header.header__contacts-block_telegram"
                        target="_blank"
-                       aria-label="Contact the master via Telegram"
+                       aria-label="@@data.gates.header.header__contacts-block_telegram_label"
                        rel="noopener noreferrer nofollow"
                        class="social-icons-wrapper__social-icon"
                        tabindex="0"
@@ -94,7 +94,7 @@
                     </div>
                     <button
                         class="burger_nav hidden"
-                        aria-label="Navigation to services"
+                        aria-label="@@data.gates.header.header__nav_label"
                         aria-expanded="false"
                         tabindex="0">
                         <span></span>
@@ -102,60 +102,60 @@
                 </div>
             </div>
         </div>
-        <nav class="header__nav" aria-label="Navigation to services">
+        <nav class="header__nav" aria-label="@@data.gates.header.header__nav_label">
             <ul class="header__nav-list">
                 <li><a href="./index.html"
                        class="nav-link"
-                       aria-label="Go to main page"
+                       aria-label="Про нас"
                        tabindex="0"
                        data-type="index">
                     Про нас
                 </a></li>
                 <li><a href="./gates-installation-repair.html"
                        class="nav-link"
-                       aria-label="Go to 'Gates' services"
+                       aria-label="Ворота"
                        tabindex="0"
                        data-type="gates">
                     Ворота
                 </a></li>
                 <li><a href="./rollers-installation-repair.html"
                        class="nav-link"
-                       aria-label="Go to 'Rollers' services"
+                       aria-label="Ролети"
                        tabindex="0"
                        data-type="rollers">
                     Ролети
                 </a></li>
                 <li><a href="./gates-rollers-automation.html"
                        class="nav-link"
-                       aria-label="Go to 'Automation' services"
+                       aria-label="Автоматизація"
                        tabindex="0"
                        data-type="automation">
                     Автоматизація
                 </a></li>
                 <li><a href="./barriers-installation-repair.html"
                        class="nav-link"
-                       aria-label="Go to 'Barriers' services"
+                       aria-label="Шлагбауми"
                        tabindex="0"
                        data-type="barriers">
                     Шлагбауми
                 </a></li>
                 <li><a href="./awnings-installation-repair.html"
                        class="nav-link"
-                       aria-label="Go to 'Awnings' services"
+                       aria-label="Маркізи"
                        tabindex="0"
                        data-type="awnings">
                     Маркізи
                 </a></li>
                 <li><a href="./window-settings-repair.html"
                        class="nav-link"
-                       aria-label="Go to 'Windows and Doors' services"
+                       aria-label="Вікна та двері"
                        tabindex="0"
                        data-type="windows">
                     Вікна та двері
                 </a></li>
                 <li><a href="./security-installation-maintenance.html"
                        class="nav-link"
-                       aria-label="Go to 'Video Surveillance' services"
+                       aria-label="Відеонагляд"
                        tabindex="0"
                        data-type="security">
                     Відеонагляд
@@ -276,7 +276,7 @@
     </div>
   </nav>
 
-  <section class="section section--hero" aria-labelledby="gates">
+  <section class="section section--hero" aria-labelledby="our-business">
     <!--Using <picture> for various image compositions with different aspect-ratio-->
     <!--retina is omitted for the hero background-->
     <picture class="hero-bg" >
@@ -315,7 +315,7 @@
 
     <div class="section__content-layer section__content-layer--hero">
       <div class="section__heading-block section__heading-block--hero">
-        <h1 id="gates">
+        <h1 id="our-business">
           <span class="accent">Аварійний Ремонт</span>
           <span class="rest-of-heading"> та виготовлення воріт</span>
         </h1>
@@ -344,7 +344,7 @@
     </div>
   </section>
 
-  <section class="section">
+  <section class="section" id="gatesSection" aria-labelledby="gates-installation">
     <div class="section__content-layer">
       <div class="section__content-block section__content-block--row-between section__content-block--pair">
         <div class="section__img-wrapper section__img-wrapper--pair" data-anime="fade-in-left">
@@ -361,7 +361,7 @@
         </div>
         <div class="section__text-block section__text-block--pair" data-anime="fade-in-right">
           <div class="section__heading-block section__heading-block--separation" data-anime="fade-in-left">
-            <h2 id="gates-group">Виготовлення та ремонт автоматичних воріт</h2>
+            <h2 id="gates-installation">Виготовлення та ремонт автоматичних воріт</h2>
             <hr>
           </div>
           <p class="section__text-separ">Ласкаво просимо до миру професійних послуг з ремонту та виготовленню воріт!</p>
@@ -375,7 +375,7 @@
     </div>
   </section>
 
-  <section class="section bg-darker" id="gatesSection" aria-labelledby="gates-group">
+  <section class="section bg-darker" aria-label="Gates Repair" >
     <div class="section__content-layer">
       <div class="section__content-block section__content-block--row-between section__content-block--pair img-right">
         <div class="section__text-block section__text-block--pair" data-anime="fade-in-left">

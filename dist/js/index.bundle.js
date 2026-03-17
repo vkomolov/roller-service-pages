@@ -10717,21 +10717,25 @@ function extractDimensions(img) {
  */
 function getImageDimensions(img) {
   return new Promise(resolve => {
-    // Image already loaded (cached)
     if (img.naturalWidth > 0 && img.naturalHeight > 0) {
       resolve(extractDimensions(img));
       return;
     }
-
-    // Wait for load event
-    const handleLoad = () => resolve(extractDimensions(img));
-    const handleError = () => resolve(null);
-    img.addEventListener('load', handleLoad, {
-      once: true
-    });
-    img.addEventListener('error', handleError, {
-      once: true
-    });
+    const cleanup = () => {
+      img.removeEventListener('load', handleLoad);
+      img.removeEventListener('error', handleError);
+    };
+    const handleLoad = () => {
+      cleanup();
+      resolve(extractDimensions(img));
+    };
+    const handleError = () => {
+      cleanup();
+      console.warn(`[getImageDimensions]: could not load the image with src: ${img.src}`);
+      resolve(null);
+    };
+    img.addEventListener('load', handleLoad);
+    img.addEventListener('error', handleError);
   });
 }
 
@@ -11240,6 +11244,18 @@ const MODAL_MAX_HEIGHT = 720;
 
 /** Swipe threshold for touch navigation */
 const SWIPE_THRESHOLD = 50;
+const THUMBS_FOLDER = "thumbs";
+
+/*** ClassNames ***/
+const MODAL_CLASSNAME = "modal";
+const MODAL_BAR_CLASSNAME = "modal__bar";
+const MODAL_BAR_ARROW_CLASSNAME = "modal__bar--arrow";
+const MODAL_BUTTON_CLASSNAME = "modal__btn";
+const MODAL_COUNTER_CLASSNAME = "modal__counter";
+const MODAL_LOADER_CLASSNAME = "modal__loader";
+const MODAL_VIEWPORT_CLASSNAME = "modal__viewport";
+const IS_LOADED = "is-loaded"; //opacity: 1
+const MODAL_IMAGE = "modal__image";
 
 //////// MAIN EXPORT ////////
 
@@ -11256,7 +11272,7 @@ const SWIPE_THRESHOLD = 50;
  * @example
  * await initThumbs("#gallery-work", "thumbs");
  */
-async function initThumbs(gallerySelector, thumbsFolder = "thumbs") {
+async function initThumbs(gallerySelector, thumbsFolder = THUMBS_FOLDER) {
   const gallery = document.querySelector(gallerySelector);
   if (!gallery?.isConnected) {
     throw new Error(`[initThumbs]: Gallery "${gallerySelector}" not found in DOM`);
@@ -11361,7 +11377,7 @@ function createModalController(items, config) {
     dom.counter.textContent = formatCounter(index, items.length, getAltText(item));
 
     // Show loader
-    dom.viewport.innerHTML = '<div class="modal__loader"></div>';
+    dom.viewport.innerHTML = `<div class=${MODAL_LOADER_CLASSNAME}></div>`;
 
     // Fade out previous
     if (dom.currentImage) {
@@ -11381,7 +11397,7 @@ function createModalController(items, config) {
       dom.viewport.innerHTML = '';
       dom.viewport.appendChild(dom.currentImage);
       requestAnimationFrame(() => {
-        dom.currentImage.classList.add("is-loaded");
+        dom.currentImage.classList.add(IS_LOADED);
         state.isLoading = false;
       });
     } catch (error) {
@@ -11427,22 +11443,22 @@ function createModalController(items, config) {
  * @returns {Object} Modal DOM elements reference object
  */
 function buildModalDOM() {
-  const root = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", "modal");
+  const root = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", MODAL_CLASSNAME);
 
   // Top bar with counter and close button
-  const header = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", "modal__bar");
-  const counter = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("span", "modal__counter");
+  const header = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", MODAL_BAR_CLASSNAME);
+  const counter = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("span", MODAL_COUNTER_CLASSNAME);
   const closeBtn = createModalButton("×", "close", true);
   header.append(counter, closeBtn);
 
   // Navigation arrows (left/right)
-  const navBar = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", "modal__bar", "modal__bar--arrow");
+  const navBar = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", MODAL_BAR_CLASSNAME, MODAL_BAR_ARROW_CLASSNAME);
   const prevBtn = createModalButton("‹", "prev");
   const nextBtn = createModalButton("›", "next");
   navBar.append(prevBtn, nextBtn);
 
   // Main viewport for images
-  const viewport = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", "modal__viewport");
+  const viewport = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", MODAL_VIEWPORT_CLASSNAME);
 
   // Assemble structure
   root.append(header, navBar, viewport);
@@ -11463,7 +11479,7 @@ function buildModalDOM() {
  * @returns {HTMLButtonElement} Created button element
  */
 function createModalButton(symbol, action, isAbsolute = false) {
-  const btn = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("button", "modal__btn", `modal__btn--${action}`);
+  const btn = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("button", MODAL_BUTTON_CLASSNAME, `${MODAL_BUTTON_CLASSNAME}--${action}`);
   btn.textContent = symbol;
   btn.dataset.action = action;
   btn.type = "button";
@@ -11487,7 +11503,7 @@ function createModalButton(symbol, action, isAbsolute = false) {
 async function loadHiResImage(original, thumbsFolder) {
   /** @type {HTMLElement} */
   const clone = /** @type {HTMLElement} */original.cloneNode(true);
-  clone.classList.add("modal__image");
+  clone.classList.add(MODAL_IMAGE);
 
   // Remove fixed dimensions from thumbnail
   clone.removeAttribute("width");
@@ -11764,7 +11780,6 @@ const i = {
   burgerFixed: ".burger_nav:not(.hidden)",
   burgerHidden: ".burger_nav.hidden",
   navMenuHidden: ".header__nav.abs",
-  gatesSection: "#gatesSection",
   benefitsSection: "#benefitsSection",
   headingAccentHero: ".section__heading-block--hero .accent",
   headingHeroRest: ".section__heading-block--hero .rest-of-heading",
@@ -12266,7 +12281,7 @@ __webpack_require__.r(__webpack_exports__);
 
 //INITIAL DATA
 const linkAnchors = {
-  index: "#",
+  index: "#about-us",
   gates: "#gatesSection",
   rollers: "#securityShuttersSection",
   automation: "#rollerShuttersAutomation",
@@ -12275,6 +12290,7 @@ const linkAnchors = {
   windows: "#windowSection",
   security: "#securitySurveillanceSection"
 };
+const linkClassNameActive = "active";
 const navLinkSelector = ".nav-link";
 const navHexagonSelector = ".hexagon-comb-block__cell";
 const langSwitchData = {
@@ -12292,8 +12308,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   /// Navigation ///
   //checking and lighten several duplicate navigations for the .active links:
-  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.activateNavLink)(navLinkSelector, pageType, "active", linkAnchors[pageType] || "#");
-  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.activateNavLink)(navHexagonSelector, pageType, "active", linkAnchors[pageType] || "#");
+  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.activateNavLink)(navLinkSelector, pageType, linkClassNameActive, linkAnchors[pageType] || "#");
+  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.activateNavLink)(navHexagonSelector, pageType, linkClassNameActive, linkAnchors[pageType] || "#");
 
   //GSAP animation tweens
   const totalTl = (0,_partials_animations_js__WEBPACK_IMPORTED_MODULE_2__.animatePage)();
