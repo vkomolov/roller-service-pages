@@ -4,26 +4,6 @@
       "description": "Срочный ремонт, автоматизация и установка роллет, ворот, маркизов, шлагбаумов и видеонаблюдения в Киеве и Киевской области. Профессиональная работа и оперативный сервис. Заказывайте сейчас!",
       "title": "Срочный ремонт и установка роллет, ворот, шлагбаумов и видеонаблюдения в Киеве и Киевской области"
     },
-    "header": {
-      "header__logo-heading": "Мастер-Сервис",
-      "header__contacts-wrapper_label": "Опции связи",
-      "header__contacts-block_mobile": "tel:+380991019368",
-      "header__contacts-block_mobile_span": "+38 (099) 101 93 68",
-      "header__contacts-block_mobile_label": "Мобильная связь с мастером",
-      "header__contacts-block_viber": "viber://chat?number=+380991019368",
-      "header__contacts-block_viber_label": "Связь через вайбер",
-      "header__contacts-block_telegram": "https://t.me/username",
-      "header__contacts-block_telegram_label": "Связь через телеграм",
-      "header__nav_label": "Навигация выбора услуг",
-      "nav-link_main": "О нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Роллеты",
-      "nav-link_automation": "Автоматизация",
-      "nav-link_barriers": "Шлагбаумы",
-      "nav-link_awnings": "Маркизы",
-      "nav-link_windows": "Окна и Двери",
-      "nav-link_security": "Видеокамеры"
-    },
     "main": {
       "nav-link_main": "О нас",
       "nav-link_gates": "Ворота",
@@ -104,17 +84,6 @@
     "head": {
       "description": "Срочный ремонт и установка ворот в Киеве и Киевской области. Профессиональная работа и оперативный сервис. Заказывайте сейчас!",
       "title": "Срочный ремонт и установка ворот в Киеве и Киевской области"
-    },
-    "header": {
-      "header__logo-heading": "Мастер-Сервис",
-      "nav-link_main": "О нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Роллеты",
-      "nav-link_automation": "Автоматизация",
-      "nav-link_barriers": "Шлагбаумы",
-      "nav-link_awnings": "Маркизы",
-      "nav-link_windows": "Окна и Двери",
-      "nav-link_security": "Видеокамеры"
     },
     "main": {
       "nav-link_main": "О нас",
@@ -218,17 +187,6 @@
       "description": "Срочный ремонт и установка роллет в Киеве и Киевской области. Профессиональная работа и оперативный сервис. Заказывайте сейчас!",
       "title": "Срочный ремонт и установка роллет в Киеве и Киевской области"
     },
-    "header": {
-      "header__logo-heading": "Мастер-Сервис",
-      "nav-link_main": "О нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Роллеты",
-      "nav-link_automation": "Автоматизация",
-      "nav-link_barriers": "Шлагбаумы",
-      "nav-link_awnings": "Маркизы",
-      "nav-link_windows": "Окна и Двери",
-      "nav-link_security": "Видеокамеры"
-    },
     "main": {
       "nav-link_main": "О нас",
       "nav-link_gates": "Ворота",
@@ -325,17 +283,6 @@
       "description": "Установка автоматики на ворота и роллеты в Киеве и Киевской области. Профессиональная работа и оперативный сервис. Заказывайте сейчас!",
       "title": "Установка автоматики на ворота и роллеты в Киеве и Киевской области"
     },
-    "header": {
-      "header__logo-heading": "Мастер-Сервис",
-      "nav-link_main": "О нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Роллеты",
-      "nav-link_automation": "Автоматизация",
-      "nav-link_barriers": "Шлагбаумы",
-      "nav-link_awnings": "Маркизы",
-      "nav-link_windows": "Окна и Двери",
-      "nav-link_security": "Видеокамеры"
-    },
     "main": {
       "nav-link_main": "О нас",
       "nav-link_gates": "Ворота",
@@ -423,17 +370,6 @@
     "head": {
       "description": "Срочный ремонт и установка шлагбаумов в Киеве и Киевской области. Профессиональная работа и оперативный сервис. Заказывайте сейчас!",
       "title": "Срочный ремонт и установка шлагбаумов в Киеве и Киевской области"
-    },
-    "header": {
-      "header__logo-heading": "Мастер-Сервис",
-      "nav-link_main": "О нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Роллеты",
-      "nav-link_automation": "Автоматизация",
-      "nav-link_barriers": "Шлагбаумы",
-      "nav-link_awnings": "Маркизы",
-      "nav-link_windows": "Окна и Двери",
-      "nav-link_security": "Видеокамеры"
     },
     "main": {
       "nav-link_main": "О нас",
@@ -525,17 +461,6 @@
     "head": {
       "description": "Срочный ремонт и установка маркиз и навесов в Киеве и Киевской области. Профессиональная работа и оперативный сервис. Заказывайте сейчас!",
       "title": "Срочный ремонт и установка маркиз и навесов в Киеве и Киевской области"
-    },
-    "header": {
-      "header__logo-heading": "Мастер-Сервис",
-      "nav-link_main": "О нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Роллеты",
-      "nav-link_automation": "Автоматизация",
-      "nav-link_barriers": "Шлагбаумы",
-      "nav-link_awnings": "Маркизы",
-      "nav-link_windows": "Окна и Двери",
-      "nav-link_security": "Видеокамеры"
     },
     "main": {
       "nav-link_main": "О нас",
@@ -637,17 +562,6 @@
       "description": "Срочный ремонт и бронирование окон в Киеве и Киевской области. Профессиональная работа и оперативный сервис. Заказывайте сейчас!",
       "title": "Срочный ремонт и бронирование окон в Киеве и Киевской области"
     },
-    "header": {
-      "header__logo-heading": "Мастер-Сервис",
-      "nav-link_main": "О нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Роллеты",
-      "nav-link_automation": "Автоматизация",
-      "nav-link_barriers": "Шлагбаумы",
-      "nav-link_awnings": "Маркизы",
-      "nav-link_windows": "Окна и Двери",
-      "nav-link_security": "Видеокамеры"
-    },
     "main": {
       "nav-link_main": "О нас",
       "nav-link_gates": "Ворота",
@@ -745,17 +659,6 @@
     "head": {
       "description": "Срочный ремонт и установка видеокамер в Киеве и Киевской области. Профессиональная работа и оперативный сервис. Заказывайте сейчас!",
       "title": "Срочный ремонт и установка видеокамер в Киеве и Киевской области"
-    },
-    "header": {
-      "header__logo-heading": "Мастер-Сервис",
-      "nav-link_main": "О нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Роллеты",
-      "nav-link_automation": "Автоматизация",
-      "nav-link_barriers": "Шлагбаумы",
-      "nav-link_awnings": "Маркизы",
-      "nav-link_windows": "Окна и Двери",
-      "nav-link_security": "Видеокамеры"
     },
     "main": {
       "nav-link_main": "О нас",

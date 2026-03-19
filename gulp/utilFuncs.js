@@ -225,6 +225,33 @@ export function getDataFromJSON(pathToFile = "") {
 }
 
 /**
+ * @function getGlobalHeaderByLang
+ * @description
+ * Reads global header configuration for a given language from JSON file.
+ * This header is intended to be shared across all pages of the same language
+ * and later merged with page-specific header data (if any).
+ *
+ * @param {string} lang - Language code (e.g. "ru", "ua").
+ * @returns {object}
+ * Returns parsed header object for the language or an empty object
+ * if the file is missing or cannot be parsed.
+ *
+ * @example
+ * const header = getGlobalHeaderByLang("ru");
+ * // header will contain common header labels and links for Russian pages
+ */
+function getGlobalHeaderByLang(lang) {
+    const headerFilePath = path.resolve(
+      "src/assets/data/pagesVersions",
+      `header-${lang}.json`
+    );
+
+    const data = getDataFromJSON(headerFilePath);
+
+    return data && typeof data === "object" ? data : {};
+}
+
+/**
  * Generates a meta HTML link or script tag based on the provided parameters.
  *
  * @param {Object} [params={}] - An object containing configuration for the meta tag.
@@ -327,13 +354,15 @@ function validateInput(pageJsonEntries, initialData) {
 
 function getPagesDataByLang(pageJsonEntries, initialData, lang) {
     const dataByLang = getDataFromJSON(pageJsonEntries[lang]);
+    const globalHeader = getGlobalHeaderByLang(lang);
     const data = {};
 
     for (const [pageName, value] of Object.entries(dataByLang)) {
         const params = {
             ...initialData,
             lang,
-            pageName
+            pageName,
+            globalHeader,
         };
 
         data[pageName] = getPageContent(value, params);
@@ -391,9 +420,38 @@ function getPageContent(pageData, initialData) {
     const pageContent = {};
 
     for (const [key, value] of Object.entries(pageData)) {
-        pageContent[key] = key === "head"
-          ? buildHeadData(value, initialData)
-          : { ...value, ...(key === "main" && { lang, languages }) }
+        if (key === "head") {
+            pageContent[key] = buildHeadData(value, initialData);
+            continue;
+        }
+
+        if (key === "header") {
+            const headerBase = initialData.globalHeader || {};
+            const pageHeader = value || {};
+
+            pageContent[key] = {
+                ...headerBase,
+                ...pageHeader,
+            };
+            continue;
+        }
+
+        if (key === "main") {
+            pageContent[key] = {
+                ...value,
+                lang,
+                languages,
+            };
+            continue;
+        }
+
+        pageContent[key] = value;
+    }
+
+    if (!pageContent.header && initialData.globalHeader) {
+        pageContent.header = {
+            ...initialData.globalHeader,
+        };
     }
 
     return pageContent;

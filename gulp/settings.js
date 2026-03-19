@@ -31,7 +31,7 @@ const linkStyles = {
 
 /**
  * the scripts can be written at the end of the tag <body> omitting writing it in the tag <head>
- * In this case the script links can be empty in the lower linkScripts...
+ * In this case the script links should be empty in the lower linkScripts...
  * @type {{}}
  */
 const linkScripts = {
@@ -96,7 +96,7 @@ const rootUrl = "https://example.com"
  */
 const pageJsonEntries = getFilesEntries("src/assets/data/pagesVersions", "json");
 
-export const languages = Object.keys(pageJsonEntries);
+export const languages = Object.keys(pageJsonEntries);  //["ua", "ru"]
 
 //what languages are to be canonical... checking if they exist in the const languages...
 const metaCanonical = getMatchedFromArray(languages, ["ua", "ru"]);
