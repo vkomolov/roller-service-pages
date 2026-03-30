@@ -56,7 +56,19 @@ import { handleError } from "./utilFuncs.js";
 
 const { src, dest } = gulp;
 const sass = gulpSass(dartSass);
-const filterFiles = filter(file => !file.isDirectory());
+
+/**
+ * @typedef {object} VinylFile
+ * @property {() => boolean} isDirectory - Returns true if file is a directory
+ * @property {() => boolean} isNull - Returns true if file has null contents
+ * @property {() => boolean} isStream - Returns true if file is a stream
+ * @property {Buffer|null|NodeJS.ReadableStream} contents - File contents
+ * @property {string} path - File path
+ * @property {string} base - Base directory
+ * @property {string} [baseName] - Base name of the file
+ */
+
+const filterFiles = filter(/** @param {VinylFile} file */ (file) => !file.isDirectory());
 
 const imgRegex = /<img(?:.|\n|\r)*?>/g;
 
@@ -110,7 +122,7 @@ const tasks = {
           .pipe(dest(tempHtmlPath))
           .pipe(
             //removes extra spaces and line breaks inside a tag <img>
-            replace(imgRegex, function (match) {
+            replace(imgRegex, /** @type {(match: string) => string} */ function (match) {
               return match.replace(/\r?\n|\r/g, "").replace(/\s{2,}/g, " ");
             })
           )
@@ -215,7 +227,7 @@ const tasks = {
           .pipe(fileInclude(setFileIncludeSettings(lang)))
           .pipe(
             //removes extra spaces and line breaks inside a tag <img>
-            replace(imgRegex, function (match) {
+            replace(imgRegex, (/** @type {string} */ match) => {
               return match.replace(/\r?\n|\r/g, "").replace(/\s{2,}/g, " ");
             })
           )

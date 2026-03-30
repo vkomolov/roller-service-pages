@@ -1,5 +1,7 @@
 "use strict";
 
+/*gulp/utilFuncs.js*/
+
 import fs, { constants } from 'fs';
 import path from "path";
 import { rimraf } from 'rimraf';
@@ -11,12 +13,13 @@ import { rimraf } from 'rimraf';
  * @returns {Promise<boolean>}
  */
 export async function checkAccess(targetPath, mode = constants.F_OK) {
-    try {
-        await fs.promises.access(targetPath, mode); // async access
-        return true;
-    } catch {
-        return false;
-    }
+	try {
+		await fs.promises.access(targetPath, mode); // async access
+		return true;
+	}
+	catch {
+		return false;
+	}
 }
 
 /**
@@ -27,432 +30,938 @@ export async function checkAccess(targetPath, mode = constants.F_OK) {
  * @returns {Promise<boolean>}
  */
 async function isMatchingFile(fullPath, fileName, mode) {
-    const isFile = (await fs.promises.stat(fullPath)).isFile();
-    const isMatch = path.basename(fullPath) === fileName;
-    const isAccessible = await checkAccess(fullPath, mode);
-    return isFile && isMatch && isAccessible;
+	const isFile = (await fs.promises.stat(fullPath)).isFile();
+	const isMatch = path.basename(fullPath) === fileName;
+	const isAccessible = await checkAccess(fullPath, mode);
+	return isFile && isMatch && isAccessible;
 }
 
 /**
- * Recursively searches for a file in a flat directory, without nesting
- * @param {string} dir - Directory to search in
+ * Searches for file in a single directory (non-recursive)
+ * @param {string} dir - Directory to search
  * @param {string} fileName - Target filename
  * @param {number} mode - Access mode
- * @returns {Promise<string|boolean>}
+ * @returns {Promise<SearchResult>}
  */
 async function searchInDirectory(dir, fileName, mode) {
-    const items = await fs.promises.readdir(dir);
+	const items = await fs.promises.readdir(dir);
 
-    for (const item of items) {
-        const fullPath = path.join(dir, item);
-        if (await isMatchingFile(fullPath, fileName, mode)) {
-            return fullPath;
-        }
-    }
-    return false;
+	for (const item of items) {
+		const fullPath = path.join(dir, item);
+		const isMatch = await isMatchingFile(fullPath, fileName, mode);
+
+		if (isMatch) {
+			return createResult(true, fullPath);
+		}
+	}
+
+	return createResult(false);
+}
+
+
+/**
+ * @typedef {object} SearchResult
+ * @property {boolean} found - Whether file was found
+ * @property {string} [path] - Full path if found
+ */
+
+/**
+ * Creates a search result object
+ * @param {boolean} found
+ * @param {string} [fullPath]
+ * @returns {SearchResult}
+ */
+const createResult = (found, fullPath) => ({
+	found,
+	...(fullPath && { path: fullPath })
+});
+
+/**
+ * Gets subdirectories of a given directory
+ * @param {string} dir - Directory to scan
+ * @returns {Promise<string[]>} - Array of subdirectory paths
+ */
+async function getSubdirectories(dir) {
+	const items = await fs.promises.readdir(dir, { withFileTypes: true });
+
+	return items
+		.filter(item => item.isDirectory())
+		.map(item => path.join(dir, item.name));
+}
+
+
+/**
+ * Recursively searches directories for a file
+ * @param {string[]} directories - Queue of directories to search
+ * @param {string} fileName - Target filename
+ * @param {number} mode - Access mode
+ * @returns {Promise<SearchResult>}
+ */
+async function searchRecursively(directories, fileName, mode) {
+	for (const dir of directories) {
+		// Search current directory
+		const result = await searchInDirectory(dir, fileName, mode);
+
+		if (result.found) {
+			return result;
+		}
+
+		// Add subdirectories to queue for later processing
+		const subdirs = await getSubdirectories(dir);
+		directories.push(...subdirs);
+	}
+
+	return createResult(false);
 }
 
 /**
  * Recursively searches for a file in a directory and its subdirectories.
  * @param {string} dir - The directory to search in.
  * @param {string} fileName - The name of the file to search for.
- * @param {boolean} [isNested=false] - If true, searches in subdirectories. Default is false.
- * @param {boolean} [returnPath=false] - If true, returns the full path of the found file. Default is false.
- * @param {number} [mode=fs.constants.F_OK] - The access mode to check (e.g., fs.constants.F_OK, fs.constants.R_OK). Default is fs.constants.F_OK.
- * @returns {Promise<string|boolean>} - Returns the full path to the file if found and returnPath is true. Otherwise, returns a boolean indicating whether the file was found.
- * @throws {Error} - Throws an error if the directory cannot be accessed or read.
- * @example
- * // Search for a file in the current directory (non-recursive)
- * const result = await checkFileInDir('./src', 'index.js');
- * console.log(result); // true or false
- *
- * @example
- * // Search for a file recursively and return the full path
- * const result = await checkFileInDir('./src', 'index.js', true, true);
- * console.log(result); // Full path to the file or false
+ * @param {boolean} [isNested=false] - If true, searches in subdirectories.
+ * @param {boolean} [returnPath=false] - If true, returns the full path of the found file.
+ * @param {number} [mode=fs.constants.F_OK] - The access mode to check.
+ * @returns {Promise<string|boolean>} - Returns the full path or boolean.
  */
 export async function checkFileInDir(
-  dir,
-  fileName,
-  isNested = false,
-  returnPath = false,
-  mode = fs.constants.F_OK
+	dir,
+	fileName,
+	isNested = false,
+	returnPath = false,
+	mode = fs.constants.F_OK
 ) {
-    try {
-        const items = await fs.promises.readdir(dir);
+	try {
+		const directories = [dir];
+		const result = isNested
+			? await searchRecursively(directories, fileName, mode)
+			: await searchInDirectory(dir, fileName, mode);
 
-        for (const item of items) {
-            const fullPath = path.join(dir, item);
-            const stats = await fs.promises.stat(fullPath);
-
-            if (stats.isDirectory() && isNested) {
-                const result = await checkFileInDir(fullPath, fileName, isNested, returnPath, mode);
-                if (result) return result;
-            } else if (await isMatchingFile(fullPath, fileName, mode)) {
-                return returnPath ? fullPath : true;
-            }
-        }
-
-        return false;
-    } catch (error) {
-        console.error(`Error in checkFileInDir: ${error.message}`);
-        return false;
-    }
+		return returnPath && result.path ? result.path : result.found;
+	}
+	catch (error) {
+		console.error(`Error in checkFileInDir: ${error instanceof Error ? error.message : String(error)}`);
+		return false;
+	}
 }
 
 /**
  * If the path exists, it returns the Promise of the path to be deleted; else it returns an empty Promise
- * @param {string | [string]} targetPaths - path or array of paths to delete
+ * @param {string | string[]} targetPaths - path or array of paths to delete
  * @returns {Promise<void>}
  */
 export async function cleanDist(targetPaths) {
-    const pathArr = [].concat(targetPaths);
-    const deletePromises = pathArr.map(async pathStr => {
-        const pathExists = await checkAccess(pathStr);
-        if (pathExists) {
-            await rimraf(pathStr);
-        }
-    });
-    await Promise.all(deletePromises);
+	const pathArr = Array.isArray(targetPaths) ? targetPaths : [targetPaths];
+	const deletePromises = pathArr.map(async pathStr => {
+		const pathExists = await checkAccess(pathStr);
+		if (pathExists) {
+			await rimraf(pathStr);
+		}
+	});
+	await Promise.all(deletePromises);
 }
 
+/**
+ *
+ * @param {string} taskTypeError
+ * @return {(function(Error): void)}
+ */
 export function handleError(taskTypeError) {
-    return function(err) {
-        console.error(taskTypeError, err.message);
-        this.emit('end'); // halt the pipe gracefully
-    }
+	/**@param {Error} err
+	 */
+	return function (err) {
+		console.error(taskTypeError, err.message);
+		//this.emit('end'); // halt the pipe gracefully
+	}
 }
 
 /**
  * Combine paths into a single array of strings.
- * @param {(string | string[])} paths - Strings or arrays of strings to combine.
+ * @param {(string | string[])[]} paths - Strings or arrays of strings to combine.
  * @returns {string[]} - Combined array of strings.
  */
 export const combinePaths = (...paths) => {
-    return paths.reduce((acc, path) => {
-        return acc.concat(Array.isArray(path) ? path : [path]);
-    }, []);
+	/** @type {string[]} */
+	const initial = [];
+	return paths.reduce(
+		/** @param {string[]} acc
+		 * @param {string | string[]} path
+		 *
+		 * @returns {string[]} */
+		(acc, path) => {
+			if (Array.isArray(path)) {
+				return [...acc, ...path];
+			}
+			return [...acc, path];
+		},
+		initial
+	);
 }
+
+/**
+ * @typedef {object} VinylFile
+ * @property {Function} isDirectory - Returns true if file is a directory
+ * @property {Function} isNull - Returns true if file has null contents
+ * @property {Function} isStream - Returns true if file is a stream
+ * @property {Buffer|null|NodeJS.ReadableStream} contents - File contents
+ * @property {string} path - File path
+ * @property {string} base - Base directory
+ * @property {string} [baseName] - Base name of the file
+ */
 
 /**
  * Processes file to ensure its contents are in buffer format, handles null and stream files.
- * @param {object} file - The file object from the stream.
+ * @param {VinylFile} file - The file object from the stream (Vinyl file object).
  * @throws {Error} - Throws an error if file is a stream or has null contents.
- * @returns {object} - The processed file object with its contents in buffer format.
+ * @returns {VinylFile|null} - The processed file object with its contents in buffer format, or null if file is null.
  */
 export function processFile(file) {
-    // Check if file.contents is a buffer; if not, convert it to buffer
-    if (!(Buffer.isBuffer(file.contents))) {
-        file.contents = Buffer.from(file.contents);
-    }
+	// Check if file.contents is a buffer; if not, convert it to buffer
+	if (!(Buffer.isBuffer(file.contents))) {
+		// Only convert string contents to buffer, skip null and streams
+		if (typeof file.contents === 'string') {
+			file.contents = Buffer.from(file.contents);
+		}
+	}
 
-    // Handle null file
-    if (file.isNull()) {
-        console.error("file is null...", file.baseName);
-        return null;
-    }
+	// Handle null file
+	if (file.isNull()) {
+		console.error("file is null...", file.baseName);
+		return null;
+	}
 
-    // Handle stream file
-    if (file.isStream()) {
-        throw new Error("Streaming is not supported...");
-    }
+	// Handle stream file
+	if (file.isStream()) {
+		throw new Error("Streaming is not supported...");
+	}
 
-    return file;
+	return file;
 }
 
 /**
- * It searches the files with the target extension at the given path
- * @param {string} pathToFiles - path to the files in search
- * @param {string} targetExt - target extension of the files with or without dot!!! ".js", ".html", "js", "html"
- * @returns {Object} returns the object with the name of the file as the property and the path as the value
- */
-export function getFilesEntries(pathToFiles, targetExt) {
-    const entries = {};
-    const fileExt = targetExt.startsWith(".") ? targetExt : `.${targetExt}`;
-
-    // Checking for the correct path
-    if (!fs.existsSync(path.resolve(pathToFiles))) {
-        console.error("No such path found at getFilesEntries:", pathToFiles);
-        return entries; // Return an empty object
-    }
-
-    // Searching for the files
-    const files = fs.readdirSync(pathToFiles);
-    let foundFiles = false;
-
-    files.forEach(file => {
-        if (file.endsWith(fileExt)) {
-            const fileName = path.basename(file, fileExt); // Getting the file name without extension
-            entries[fileName] = path.resolve(pathToFiles, file); // Creating the path with the file
-            foundFiles = true;
-        }
-    });
-
-    // Checking for the found files
-    if (!foundFiles) {
-        console.error(`at getFilesEntries: no files found with ${targetExt} at ${pathToFiles}`);
-    }
-
-    return entries; // Return the object with or without found files
-}
-
-/**
- * Reads data from a JSON file and returns the parsed content.
- * This function checks if the provided file path is valid. If the path is incorrect or the file doesn't exist,
- * it logs an error and returns `false`.
- * If the path is valid, it reads the file and parses the JSON content.
+ * Escapes double quotes in a value for safe use inside HTML attribute values.
  *
- * @param {string} [pathToFile=""] - The path to the JSON file to read. If no path is provided or the path
- * is invalid, the function returns `false`.
- * @returns {object|boolean} Returns the parsed JSON object if the file exists and is valid, otherwise `false`.
+ * Converts the input to a string and replaces all `"` characters with `&quot;`.
+ *
+ * @param {any} val - Any value to be escaped (will be coerced to string).
+ * @returns {string} A string safe to use inside double-quoted HTML attributes.
  *
  * @example
- * const data = getDataFromJSON('path/to/file.json');
- * if (data) {
- *   console.log(data);
- * } else {
- *   console.log('Failed to read data');
- * }
- */
-export function getDataFromJSON(pathToFile = "") {
-    // Checking for the correct path
-    if (!pathToFile.length || !fs.existsSync(pathToFile)) {
-        console.error("No argument given or No such path found at getDataFromJSON:", pathToFile);
-        return false;
-    }
-
-    return JSON.parse(fs.readFileSync(pathToFile, "utf8"));
-}
-
-/**
- * @function getGlobalHeaderByLang
- * @description
- * Reads global header configuration for a given language from JSON file.
- * This header is intended to be shared across all pages of the same language
- * and later merged with page-specific header data (if any).
- *
- * @param {string} lang - Language code (e.g. "ru", "ua").
- * @returns {object}
- * Returns parsed header object for the language or an empty object
- * if the file is missing or cannot be parsed.
+ * escapeAttr('hello "world"');
+ * // => 'hello &quot;world&quot;'
  *
  * @example
- * const header = getGlobalHeaderByLang("ru");
- * // header will contain common header labels and links for Russian pages
+ * escapeAttr(123);
+ * // => '123'
  */
-function getGlobalHeaderByLang(lang) {
-    const headerFilePath = path.resolve(
-      "src/assets/data/pagesVersions",
-      `header-${lang}.json`
-    );
-
-    const data = getDataFromJSON(headerFilePath);
-
-    return data && typeof data === "object" ? data : {};
+function escapeAttr(val) {
+	return `${val}`.replace(/"/g, "&quot;");
 }
 
 /**
- * Generates a meta HTML link or script tag based on the provided parameters.
+ * Converts attributes object into HTML string.
+ * Filters out invalid values and warns if any were removed.
  *
- * @param {Object} [params={}] - An object containing configuration for the meta tag.
- * @param {string} [params.type] - The type of the meta tag. Can be either 'stylesheet' or 'script'.
- * @param {string} [params.dataSrc] - The source URL for the resource (CSS or JS file).
- * @param {string} [params.loadMode] - The load mode for the script (e.g., 'async', 'defer').
- * @param {Record<string, string>} [params.optionalAttrs={}] - Optional additional attributes for the meta tag (e.g., 'id', 'class').
- * @returns {string|undefined} - The generated HTML string for the meta tag (either `<link>` or `<script>`).
+ * Rules:
+ * - undefined / null / false → removed
+ * - true → boolean attribute (no value)
+ * - string/number → key="value"
+ *
+ * @param {object} attrs
+ * @returns {string}
  */
-export function getMetaTag(params = {}) {
+function stringifyAttrs(attrs) {
+	/**
+	 * @type {string[]} removedKeys
+	 */
+	const removedKeys = [];
 
-    /**
-     * Converts an object of attributes into a string representation.
-     *
-     * @param {Object} [optionalAttrs={}] - An object of string key-value pairs representing attributes.
-     * @returns {string} - A string representation of the attributes in the form of 'key="value"'.
-     */
-    const stringifyAttrs = (optionalAttrs = {}) => {
-        if (!Object.keys(optionalAttrs).length) {
-            return "";
-        }
+	const result = Object.entries(attrs)
+		.filter(([key, value]) => {
+			const isValid =
+				value !== undefined &&
+				value !== null &&
+				value !== false;
 
-        return Object.entries(optionalAttrs).map(([k, v]) => `${k}="${v}"`).join(" ");
-    };
+			if (!isValid) {
+				removedKeys.push(key);
+			}
 
-    const metaTypes = {
-        stylesheet: (dataSrc, attrs) => `<link rel="stylesheet" href="${dataSrc}" ${attrs}>`,
-        script: (dataSrc, attrs, loadMode) => (
-          `<script type="module" src="${dataSrc}" ${attrs} ${loadMode}></script>`
-        ),
-    }
+			return isValid;
+		})
+		.map(([key, value]) => {
+			// Boolean attribute (e.g. defer, async)
+			if (value === true) {
+				return key;
+			}
 
-    const { type, dataSrc, loadMode, ...optionalAttrs } = params;
+			return `${key}="${escapeAttr(value)}"`;
+		})
+		.join(" ");
 
-    // Validation of parameters
-    if (!type || !metaTypes.hasOwnProperty(type) || !dataSrc) {
-        console.error(`at getMetaLink: Unrecognized type: "${type}" or data source: "${dataSrc}"`);
-        return; // Exit function without returning an invalid value
-    }
+	// Warn if any attributes were removed
+	if (removedKeys.length) {
+		console.warn(
+			`[getMetaTag]: removed invalid attributes → ${removedKeys.join(", ")}`
+		);
+	}
 
-    const attrs = stringifyAttrs(optionalAttrs);
-
-    // Return the appropriate meta tag based on the type
-    return metaTypes[type](dataSrc, attrs, loadMode || "");
+	return result;
 }
 
 /**
- * It gets the data for pages from json files and transforms their content depending on the language versions specified.
- * @param {Object.<string, string>} pageJsonEntries - the paths to the json files by language where:
- ** - `key`: language ("ru", "ua"...)
- ** - `value`: path to the json file  ("src/assets/data/pagesVersions/ru.json").
- ** pageJsonEntries can be achieved with the function getFilesEntries("src/assets/data/pagesVersions", "json");
- * @param {Object} initialData - initial data for the pages` content
- * @param {string} initialData.robotsParams - the params for robots at <head>
- * @param {Object.<string, string[]>} initialData.linkStyles - styles to be included in <head> (key - page name)
- * @param {Object.<string, Array<Object.<string, string>>>} [initialData.linkScripts] - Optional scripts to be included in
- * the <head>. The key is the page name, and the value is an Array of Objects where:
- **  - `link`: the path to the script file (string),
- **  - `loadMode`: optional (string, can be "async", "defer", or omitted).
- * @param {string} initialData.rootUrl - the base root url at the server... example: "https://example.com"
- * @param {string[]} initialData.metaCanonical - the list of pages to be canonical in the <head>
- * @param {string[]} initialData.languages - the list of languages to be alternate in the <head>
- * @param {string|null} [lang=null] - optional: null or a language version ("ru" or "ua", etc...)
- ** - if `null`, it gets the pages` data for all language versions...
- ** - if a language version, for instance "ru", it gets the pages` data for the given language...
- * @returns {Object.<string, Object>} where the key is the language version: "ua", "ru", etc...
+ * Generates an HTML <link> or <script> tag based on provided parameters.
+ * params.tagType - Defines the tag behavior:
+ *! tagType: "script" → generates <script>
+ *! any other tagType → generates <link rel="...">
+ * params.dataSrc - URL for the resource (href or src)
+ *! Additional properties will be converted into HTML attributes.
+ * @param {{
+ *  tagType: string,
+ *  dataSrc: string|URL,
+ *  [key: string]: any
+ * }} params - Configuration object
+ *
+ * @returns {string} Generated HTML string
+ *
+ * @example
+ * // Generate stylesheet link
+ * getMetaLinkTag({
+ *   tagType: "stylesheet",
+ *   dataSrc: "/styles.css"
+ * });
+ * // => <link rel="stylesheet" href="/styles.css">
+ *
+ * @example
+ * // Generate script with module type
+ * getMetaLinkTag({
+ *   tagType: "script",
+ *   dataSrc: "/app.js",
+ *   type: "module"
+ * });
+ * // => <script src="/app.js" type="module"></script>
+ *
+ * @example
+ * // Generate script with boolean attribute
+ * getMetaLinkTag({
+ *   tagType: "script",
+ *   dataSrc: "/app.js",
+ *   defer: true
+ * });
+ * // => <script src="/app.js" defer></script>
  */
-export function getPagesContentVersions(
-  pageJsonEntries,
-  initialData = {},
-  lang = null
+function getMetaLinkTag(params) {
+	const { tagType, dataSrc, ...restAttrs } = params;
+
+	if (!tagType || !dataSrc) {
+		throw new Error(
+			`[getMetaTag]: invalid params → tagType: ${tagType}, dataSrc: ${dataSrc}`
+		);
+	}
+
+	const attrStr = stringifyAttrs(restAttrs);
+	//could take URL data and string...
+	const safeSrc = escapeAttr(
+		dataSrc instanceof URL ? dataSrc.href : dataSrc
+	);
+
+	// Generate <script> tag
+	if (tagType === "script") {
+		return `<script src="${safeSrc}"${attrStr ? " " + attrStr : ""}></script>`;
+	}
+
+	// Generate <link> tag
+	return `<link rel="${tagType}" href="${safeSrc}"${attrStr ? " " + attrStr : ""}>`;
+}
+
+/**
+ * Recursively processes a directory to find files with the target extension.
+ * Returns a new object with entries, does not mutate any external state.
+ *
+ * @param {string} targetDir - The current directory being processed.
+ * @param {string} fileExt - The normalized file extension (with leading dot).
+ * @param {boolean} [recursive=false] - Whether to process subdirectories recursively.
+ * @param {string} [joinSymbol="_"] - Symbol to join folder names with file name for nested files.
+ * @param {string} [nestedPrefix=""] - Accumulated folder names for nested files (internal use).
+ * @returns {Record<string, string>} Object with found file entries.
+ */
+function processDirectory(
+	targetDir,
+	fileExt,
+	recursive = false,
+	joinSymbol = "_",
+	nestedPrefix = ""
 ) {
-    validateInput(pageJsonEntries, initialData);
+	/** @type {Record<string, string>} */
+	const entries = {};
 
-    const pagesContentVersions = {};  //all pages data will be assigned here...
+	// Read all items (files and directories) in the current directory
+	const items = fs.readdirSync(targetDir, { withFileTypes: true });
 
-    if (lang) {
-        if (!pageJsonEntries[lang]) {
-            throw new Error(`the given lang version ${lang} is no found in "assets/data/pagesVersions/${lang}.json"`);
-        }
-        pagesContentVersions[lang] = getPagesDataByLang(pageJsonEntries, initialData, lang);
-    }
-    else {
-        for (const lang of Object.keys(pageJsonEntries)) {
-            pagesContentVersions[lang] = getPagesDataByLang(pageJsonEntries, initialData, lang);
-        }
-    }
+	for (const item of items) {
+		const itemPath = path.join(targetDir, item.name);
 
-    return pagesContentVersions;
+		if (item.isDirectory() && recursive) {
+			// Build the nested prefix for subdirectories
+			const newNestedPrefix = nestedPrefix
+				? `${nestedPrefix}${joinSymbol}${item.name}`
+				: item.name;
+
+			// Recursively get entries from subdirectory and merge into current entries
+			const subEntries = processDirectory(itemPath, fileExt, recursive, joinSymbol, newNestedPrefix);
+			Object.assign(entries, subEntries);
+		}
+		else if (item.isFile() && item.name.endsWith(fileExt)) {
+			// Extract filename without extension
+			const fileNameWithoutExt = path.basename(item.name, fileExt);
+
+			// Construct the key: use nestedPrefix with joinSymbol for nested files, plain name for top-level
+			const entryKey = nestedPrefix
+				? `${nestedPrefix}${joinSymbol}${fileNameWithoutExt}`
+				: fileNameWithoutExt;
+
+			// Store the absolute path
+			entries[entryKey] = path.resolve(itemPath);
+		}
+	}
+	/** @type {Record<string, string>} */
+	return entries;
 }
 
-function validateInput(pageJsonEntries, initialData) {
-    if (!pageJsonEntries || typeof pageJsonEntries !== "object") {
-        throw new Error('pageJsonEntries must be an object');
-    }
-    if (!initialData || typeof initialData !== "object") {
-        throw new Error('initialData must be an object');
-    }
+/**
+ * Searches for files with the target extension at the given path.
+ *
+ * @param {string} pathToFiles - Path to the directory to search in.
+ * @param {string} targetExt - Target extension of the files (with or without dot), e.g., ".js", ".html", "js", "html".
+ * @param {boolean} [recursive=false] - If true, searches recursively in all subdirectories.
+ *                                      If false, only searches the top-level directory.
+ * @param {string} [joinSymbol="_"] - Symbol to join folder names with file name for nested files.
+ *                                    Only used when recursive is true. Defaults to "_".
+ * @returns {Record<string, string>} An object where:
+ *         - For top-level files: key is the filename without extension (e.g., "one").
+ *         - For nested files: key is "folderName{joinSymbol}fileName" or nested path with joinSymbol.
+ *         - Value is the absolute path to the file.
+ *
+ * @example
+ * // Search only in the top-level directory (non-recursive)
+ * getFilesEntries("src/js", "js");
+ * // Result: { "one": "/project/src/js/one.js" }
+ *
+ * @example
+ * // Search recursively with default join symbol "_"
+ * getFilesEntries("src/js", "js", true);
+ * // Result: {
+ * //   "one": "/project/src/js/one.js",
+ * //   "foo_two": "/project/src/js/foo/two.js",
+ * //   "foo_bar_three": "/project/src/js/foo/bar/three.js"
+ * // }
+ *
+ * @example
+ * // Search recursively with custom join symbol "-"
+ * getFilesEntries("src/js", "js", true, "-");
+ * // Result: {
+ * //   "one": "/project/src/js/one.js",
+ * //   "foo-two": "/project/src/js/foo/two.js",
+ * //   "foo-bar-three": "/project/src/js/foo/bar/three.js"
+ * // }
+ */
+export function getFilesEntries(
+	pathToFiles,
+	targetExt,
+	recursive = false,
+	joinSymbol = "_"
+) {
+	// Normalize the extension to always include a leading dot
+	const fileExt = targetExt.startsWith(".") ? targetExt : `.${targetExt}`;
+
+	// Resolve the absolute path for consistent path handling
+	const resolvedPath = path.resolve(pathToFiles);
+
+	// Check if the provided path exists
+	if (!fs.existsSync(resolvedPath)) {
+		console.error("No such path found at getFilesEntries:", pathToFiles);
+		return /** @type {Record<string, string>} */ ({});
+	}
+
+	// Get entries from the root directory
+	const entries = processDirectory(resolvedPath, fileExt, recursive, joinSymbol);
+
+	// Log a warning if no files were found
+	if (Object.keys(entries).length === 0) {
+		console.error(`[getFilesEntries]: no files found with ${fileExt} at ${pathToFiles}`);
+	}
+
+	return entries;
 }
 
-function getPagesDataByLang(pageJsonEntries, initialData, lang) {
-    const dataByLang = getDataFromJSON(pageJsonEntries[lang]);
-    const globalHeader = getGlobalHeaderByLang(lang);
-    const data = {};
+/**
+ * Safely reads and parses JSON file.
+ *
+ * @param {string} filePath
+ * @returns {object}
+ */
+export function readJsonSafe(filePath) {
+	if (!filePath || !fs.existsSync(filePath)) {
+		console.error(`[readJsonSafe]: File not found: ${filePath}`);
+		return {};
+	}
 
-    for (const [pageName, value] of Object.entries(dataByLang)) {
-        const params = {
-            ...initialData,
-            lang,
-            pageName,
-            globalHeader,
-        };
-
-        data[pageName] = getPageContent(value, params);
-    }
-
-    return data;
+	try {
+		return JSON.parse(fs.readFileSync(filePath, "utf8"));
+	}
+	catch (e) {
+		console.error(`[readJsonSafe]: Invalid JSON: ${filePath}`);
+		return {};
+	}
 }
 
-function buildHeadData(auxHeadData, initialData) {
-    const {
-        robotsParams,
-        linkStyles,
-        linkScripts,
-        rootUrl,
-        metaCanonical,
-        lang,
-        languages,
-        pageName
-    } = initialData;
+/**
+ * @typedef {object} PageContent
+ * @property {object} head
+ * @property {object} header
+ * @property {object} main
+ * @property {boolean} _hasData
+ * @property {boolean} _hasCanonical
+ * @property {boolean} _hasAlternate
+ */
 
-    if (!linkStyles[pageName]) {
-        throw new Error(`No styles found for page: ${pageName}`);
-    }
+/**
+ * @typedef {object} InitialData
+ * @property {string[]} languages
+ * @property {string} rootUrl
+ * !optional:
+ * @property {string} [robotsParams]
+ * @property {Record<string, string[]>} [metaStylesheetSources]
+ * @property {Record<string, object[]>} [metaScriptSources]
+ * @property {string[]} [metaCanonical]
+ * @property {string} [metaDefaultRel]
+ */
 
-    const headData = {
-        ...auxHeadData,
-        robots: robotsParams,
-        linkStyles: linkStyles[pageName].map(styleHref => {
-            return getMetaTag({ type: "stylesheet", dataSrc: styleHref });
-        }).join('\n'),
-        alternate: languages.map(lang => {
-            return `<link rel="alternate" href="${rootUrl}/${lang}/${pageName}.html" hreflang="${lang}">`;
-        }).join("\n"),
-    }
+/**
+ * @typedef {InitialData & {
+ *   lang: string,
+ *   pageName: string,
+ *   headerData: object
+ *   [key: string]: any  // ← allowing other keys...
+ * }} Context
+ */
 
-    if (linkScripts?.[pageName]?.length) {
-        headData.linkScripts = linkScripts[pageName].map(scriptObj =>
-          getMetaTag({ type: "script", dataSrc: scriptObj.link, loadMode: scriptObj.loadMode || "" })
-        ).join("\n");
-    }
+/**
+ * @typedef {Record<string, PageContent>} PagesData
+ */
 
-    if (metaCanonical?.includes(lang)) {
-        headData.canonical = `<link rel="canonical" href="${rootUrl}/${lang}/${pageName}.html">`;
-    }
+/**
+ *
+ * @param {Record<string, string>} jsonEntries
+ * @param {InitialData} initialData - Global configuration
+ * @param {string} lang
+ *
+ * @returns {PagesData}
+ */
+export function getPageData(
+	jsonEntries,
+	initialData,
+	lang
+) {
+	try {
+		const headerDataSource = `header_${lang}`;
 
-    return headData;
+		//checking arguments
+		if (!(lang in jsonEntries)) {
+			console.error(`[getPageData]: no data for lang: ${lang}`);
+			return {};
+		}
+
+		if (!(headerDataSource in jsonEntries)) {
+			console.error(`[getPageData]: no header data for lang: ${lang}`);
+			return {};
+		}
+
+		//checking key types of initialData, pageJsonEntries and throws error if not valid...
+		validateInput(jsonEntries, initialData);
+
+		//to avoid type {} of jsonEntries (tsconfig.json - "allowJs": true)
+		const entries = /** @type {Record<string, string>} */ (jsonEntries);
+
+		const mainDataJsonSource = entries[lang];
+		const headerDataJsonSource = entries[headerDataSource];
+
+		const pagesData = readJsonSafe(mainDataJsonSource);
+		const headerData = readJsonSafe(headerDataJsonSource);
+
+		return Object.fromEntries(
+			Object.entries(pagesData).map(([pageName, pageData]) => {
+
+
+				const context/** @type {Context} */ = {
+					...initialData,
+					lang,
+					pageName,
+					headerData,
+				};
+
+				return [pageName, buildPageContent(pageData, context)];
+			})
+		);
+
+		//return buildPagesData(entries[lang], initialData, lang);
+
+	}
+	catch (error) {
+		//strict mode: tsconfig.json
+		if (error instanceof Error) {
+			console.error(`[getPageData]: Failed for "${lang}": ${error.message}`);
+		}
+		else {
+			console.error(`[getPageData]: Failed for "${lang}":`, error);
+		}
+		return {};
+	}
 }
 
-function getPageContent(pageData, initialData) {
-    const {
-        lang,
-        languages,
-    } = initialData;
 
-    const pageContent = {};
+/**
+ * @param {object} pageData  // ← not PagesData! It is the data for the single page...
+ * @param {Context} context
+ *
+ * @returns {PageContent}
+ */
+function buildPageContent(pageData, context) {
+	// Проверка полей
+	const requiredForHead = ['lang', 'pageName', 'rootUrl', 'languages'];
+	const missing = requiredForHead.filter(key => !(key in context));
+	if (missing.length) {
+		throw new Error(`[buildPageContent]: Missing head fields: ${missing.join(', ')}`);
+	}
 
-    for (const [key, value] of Object.entries(pageData)) {
-        if (key === "head") {
-            pageContent[key] = buildHeadData(value, initialData);
-            continue;
-        }
+	/**
+	 *
+	 */
+	const { headerData, ...headData } = context;
+	const { lang, languages } = headData;
 
-        if (key === "header") {
-            const headerBase = initialData.globalHeader || {};
-            const pageHeader = value || {};
+	/**
+	 * @typedef {object} Handlers
+	 * @property {(value: object) => object} head
+	 * @property {(value: object) => object} header
+	 * @property {(value: object) => object} main
+	 */
 
-            pageContent[key] = {
-                ...headerBase,
-                ...pageHeader,
-            };
-            continue;
-        }
+	/** @type {Handlers & Record<string, (value: any) => any>} */
+	const handlers = {
+		/**
+		 * @param {object} value
+		 * @return {object}
+		 */
+		head: (value) => {
+			return {
+				...value,
+				...getInitialHeadData(headData),
+				_hasData: true,
+				_hasCanonical: !!headData.metaCanonical?.length,
+				_hasAlternate: headData.languages?.length > 1
+			}
+		},
+		/**
+		 *
+		 * @param {object} value
+		 * @return {*&{_hasData: boolean}}
+		 */
+		header: (value) => ({
+			...(value || {}),
+			...headerData,
+			_hasData: true,
+		}),
 
-        if (key === "main") {
-            pageContent[key] = {
-                ...value,
-                lang,
-                languages,
-            };
-            continue;
-        }
+		/**
+		 *
+		 * @param {object} value
+		 */
+		main: (value) => ({
+			...(value || {}),
+			lang,
+			languages,
+			_hasData: true,
+			_hasLang: !!(lang && lang.length > 0),
+		}),
+	}
 
-        pageContent[key] = value;
-    }
+	return /** @type {PageContent} */ (Object.fromEntries(
+		Object.entries(pageData).map(([key, value]) => {
+			const handler = handlers[key];
+			if (handler) {
+				return [key, handler(value)];
+			}
+			return [key, value];
+		})
+	));
 
-    if (!pageContent.header && initialData.globalHeader) {
-        pageContent.header = {
-            ...initialData.globalHeader,
-        };
-    }
+}
 
-    return pageContent;
+
+/**
+ * Validates input configuration.
+
+ * @param {Record<string, string>} jsonEntries
+ * @param {object} initialData
+ *
+ * @throws {Error}
+ */
+function validateInput(jsonEntries, initialData) {
+	const errors = [];
+
+	if (!isObject(jsonEntries)) {
+		errors.push('"pageJsonEntries" must be an object');
+	}
+
+	if (!isObject(initialData)) {
+		errors.push('"initialData" must be an object');
+	}
+
+	/** @type {Record<string, (v: any) => boolean>} */
+	const schema = {
+		languages: isStringArray,
+		robotsParams: isString,
+		metaStylesheetSources: isObject,
+		metaScriptSources: isObject,
+		metaCanonical: isStringArray,
+		metaDefaultRel: isString,
+		rootUrl: isString,
+	};
+
+	// creating temporal object with index signature
+	/** @type {Record<string, any>} */
+	const dataAny = initialData;
+
+	for (const key in schema) {
+		const validate = schema[key];
+
+		if (dataAny.hasOwnProperty(key) && !validate(dataAny[key])) {
+			errors.push(`[validateInput]: "${key}" is invalid`);
+		}
+	}
+
+	if (errors.length) {
+		throw new Error(`[validateInput]\n- ${errors.join("\n- ")}`);
+	}
+}
+
+/* ---------- Helpers ---------- */
+/** @param {any} v */
+function isObject(v) {
+	return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+
+/** @param {any} v */
+function isString(v) {
+	return typeof v === "string";
+}
+
+/** @param {any} v */
+function isStringArray(v) {
+	return Array.isArray(v) && v.every(isString);
+}
+
+/**
+ * @param {{
+ *   lang: string,
+ *   languages: string[],
+ *   [key: string]: any   // pageName and rootUrl are here...
+ * }} context
+ */
+function getInitialHeadData(context) {
+	const { rootUrl, lang, pageName } = context;
+
+	/**
+	 * Generates a full URL object for a specific language version of the page.
+	 *
+	 * Ensures the base URL has a trailing slash and safely constructs
+	 * a normalized absolute URL using the URL constructor.
+	 *
+	 * @param {string} language - Language code (e.g., "en", "ru", "uk").
+	 * @returns {URL} A URL object pointing to the language-specific page.
+	 *
+	 * @example
+	 * getUrlLangVersion("en")
+	 * // => https://example.com/en/pageName.html
+	 *
+	 * @example
+	 * getUrlLangVersion("ru")
+	 * // => https://example.com/ru/pageName.html
+	 */
+	const getUrlLangVersion = (language) => {
+		const base = rootUrl.endsWith("/") ? rootUrl : rootUrl + "/";
+		return new URL(`${language.trim()}/${pageName}.html`, base);
+	}
+
+	/**
+	 * Handlers to process head initialData properties
+	 * @type {Record<string, function(any): [string, string]>}
+	 */
+	const handlers = {
+		/**
+		 * It creates alternate links of the pages..
+		 * @sample <link rel="alternate" href="https://example.com/ru/pageName.html" hreflang="ru">
+		 * @sample <link rel="alternate" href="https://example.com/uk/pageName.html" hreflang="uk">
+		 * @param {string[]} languages
+		 * @return {[string,string]}
+		 */
+		languages: (languages) => {
+			const alternateLinks = languages
+				.map(language => {
+					const langTrimmed = language.trim();
+					return getMetaLinkTag({
+						tagType: "alternate",
+						dataSrc: getUrlLangVersion(langTrimmed).href,
+						hreflang: langTrimmed,
+					})
+				})
+				.join("\n");
+
+			return ["alternate", alternateLinks];
+		},
+
+		/**
+		 * Creates canonical link of the site`s page
+		 * @sample <link rel="canonical" href="https://example.com/uk/pageName.html" hreflang="uk">
+		 *
+		 * if multilanguage site has two canonical languages, then to use canonical for the active page language
+		 * @param {string[]} metaCanonical - optional languages for links rel="canonical"
+		 * @return {[string,string]}
+		 */
+		metaCanonical: (metaCanonical) => {
+			//if active lang is in metaCanonical language options then to create canonical link with active language
+			const canonicalLang = (metaCanonical.includes(lang)) ? lang : metaCanonical[0];
+			const metaCanonicalStr = getMetaLinkTag({
+				tagType: "canonical",
+				dataSrc: getUrlLangVersion(canonicalLang).href,
+			})
+
+			return ["canonical", metaCanonicalStr];
+		},
+
+		/**
+		 * Creates default language version of the page
+		 * @sample <link rel="alternate" href="https://example.com/uk/pageName.html" hreflang="x-default">
+		 * @param {string} metaDefaultRel
+		 * @return {[string,string]}
+		 */
+		metaDefaultRel: (metaDefaultRel) => {
+			const metaDefaultTrimmed = metaDefaultRel.trim();
+			const metaDefaultTag = metaDefaultTrimmed.length > 1
+				? getMetaLinkTag({
+					tagType: "alternate",
+					dataSrc: getUrlLangVersion(metaDefaultTrimmed).href,
+					hreflang: "x-default"
+				})
+				: "";
+
+			return ["default", metaDefaultTag]
+		},
+
+		/**
+		 * creates robotsParams
+		 * @param {string} robotsParams
+		 * @return {[string,string]}  - ["robots", `<meta name="robots" content=${robotsParams}>`]
+		 */
+		robotsParams: (robotsParams) => {
+			return ["robots", `<meta name="robots" content="${escapeAttr(robotsParams)}">`];
+		},
+
+		/**
+		 * creates *.css links for the <head>
+		 * @sample <link rel="stylesheet" href="" >
+		 * @param {Record<string, string[]>} metaStylesheetSources
+		 * @return {[string,string]}
+		 */
+		metaStylesheetSources: (metaStylesheetSources) => {
+			const pageStyleSheetLinks = metaStylesheetSources[pageName];
+			if (!pageStyleSheetLinks?.length) {
+				console.warn(`[getInitialHeadData]: No stylesheet links found for page: ${pageName}`);
+				return ["stylesheet", ""];
+			}
+
+			const stylesheetLinks = pageStyleSheetLinks.map(href => {
+				return getMetaLinkTag({
+					tagType: "stylesheet",
+					dataSrc: href
+				});
+			}).join('\n');
+
+			return ["stylesheet", stylesheetLinks];
+		},
+
+		/**
+		 * creates links for scripts in <head>
+		 * @sample <script src="/js/*.js" defer></script>
+		 * @param {Record<string, Record<string, string>[]>} metaScriptSources
+		 * @return {[string, string]}
+		 */
+		metaScriptSources: (metaScriptSources) => {
+			const pageScripts = metaScriptSources?.[pageName];
+			const scriptSource = pageScripts?.length > 0
+				? pageScripts.map((scriptSrc) => {
+					const { src, ...restAttr } = scriptSrc;
+
+					return getMetaLinkTag({
+						tagType: "script",
+						dataSrc: src,
+						...restAttr,
+					});
+				}).join('\n')
+				: "";
+
+
+			return ["scriptSource", scriptSource];
+		}
+	}
+
+	return Object.fromEntries(
+		Object.entries(context).map(([key, val]) => {
+			if (key in handlers) {
+				return handlers[key](val);
+			}
+			return [key, val];
+		})
+	);
+}
+
+/**
+ * Recursively searches for the project root directory by looking for a marker file (e.g. package.json).
+ *
+ * Starts from the given directory and traverses up the file system until the marker file is found.
+ * Throws an error if the root directory cannot be determined.
+ *
+ * @param {string} dir - The starting directory path (absolute or relative).
+ * @param {string} [marker="package.json"] - File name used to identify the root directory. Defaults to "package.json".
+ * @returns {string} Absolute path to the detected project root directory.
+ * @throws {Error} Will throw if the root directory cannot be found.
+ *
+ * @example
+ * // Given structure:
+ * // /project
+ * //   package.json
+ * //   /scripts/utils/path-utils.mjs
+ *
+ * const __dirname = dirname(fileURLToPath(import.meta.url));
+ * const root = findRoot(__dirname);
+ *
+ * console.log(root);
+ * // → "/project"
+ *
+ * @example
+ * // Usage in a config file
+ * const rootDir = findRoot(process.cwd());
+ * const srcPath = path.resolve(rootDir, "src");
+ */
+export function findRoot(dir, marker = "package.json") {
+	if (fs.existsSync(path.join(dir, marker))) {
+		return dir;
+	}
+
+	const parent = path.resolve(dir, "..");
+	if (parent === dir) {
+		throw new Error("Root directory not found");
+	}
+
+	return findRoot(parent);
 }

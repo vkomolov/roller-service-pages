@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "Node",
+        "esModuleInterop": true,
+
+        "allowJs": true,
+        "checkJs": true,
+
+        "strict": true,
+        "noImplicitAny": true,
+
+        "typeRoots": ["./types", "./node_modules/@types"],
+
+        //"baseUrl": ".",
+        //with bundlers, using alias
+        /*        "paths": {
+            "@*//*": ["src*//*"]
+        }*/
+    },
+    "exclude": ["node_modules", "dist"]
+}

@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 import imagesLoaded from 'imagesloaded';
 
@@ -10,7 +10,7 @@ import imagesLoaded from 'imagesloaded';
  * @return {boolean}
  */
 export function isStyleSupported(element, param, value) {
-  return param in element.style && CSS.supports(param, value);
+	return param in element.style && CSS.supports(param, value);
 }
 
 /**
@@ -20,12 +20,13 @@ export function isStyleSupported(element, param, value) {
  * @param {HTMLElement} parentTo - the target HTML parent to migrate to
  */
 export function migrateElement({ target, parentFrom, parentTo }) {
-  if (target.isConnected) {
-    (target.parentElement === parentFrom ? parentTo : parentFrom).appendChild(target);
-  }
-  else {
-    console.warn(`transitBox: target in not in DOM: ${target}`);
-  }
+	if (target.isConnected) {
+		(target.parentElement === parentFrom ? parentTo : parentFrom).appendChild(
+			target
+		);
+	} else {
+		console.warn(`transitBox: target in not in DOM: ${target}`);
+	}
 }
 
 /**
@@ -51,30 +52,31 @@ export function migrateElement({ target, parentFrom, parentTo }) {
  * removeClickListener();
  */
 export function lockedEventListener(event, listenerOwner, delay = 300) {
-  if (listenerOwner instanceof HTMLElement &&
-    !listenerOwner.isConnected) {
-    throw new Error("Provided listenerOwner at lockedEventListener() is not a valid DOM element...");
-  }
+	if (listenerOwner instanceof HTMLElement && !listenerOwner.isConnected) {
+		throw new Error(
+			'Provided listenerOwner at lockedEventListener() is not a valid DOM element...'
+		);
+	}
 
-  let isLocked = false;
+	let isLocked = false;
 
-  return (cb, params = []) => {
-    const handler = () => {
-      if (!isLocked) {
-        isLocked = true;
-        setTimeout(() => {
-          cb(...params);
-          isLocked = false;
-        }, delay);
-      }
-    };
+	return (cb, params = []) => {
+		const handler = () => {
+			if (!isLocked) {
+				isLocked = true;
+				setTimeout(() => {
+					cb(...params);
+					isLocked = false;
+				}, delay);
+			}
+		};
 
-    listenerOwner.addEventListener(event, handler);
+		listenerOwner.addEventListener(event, handler);
 
-    return () => {
-      listenerOwner.removeEventListener(event, handler);
-    };
-  };
+		return () => {
+			listenerOwner.removeEventListener(event, handler);
+		};
+	};
 }
 
 /**
@@ -93,48 +95,49 @@ export function lockedEventListener(event, listenerOwner, delay = 300) {
  * @returns {Function} Cleanup function that disconnects the observer.
  */
 export function toggleClassOnIntersection(
-  targetElement,
-  triggerElement,
-  activeClass,
-  root = null,
-  rootMargin = "-1px 0px 0px 0px"
+	targetElement,
+	triggerElement,
+	activeClass,
+	root = null,
+	rootMargin = '-1px 0px 0px 0px'
 ) {
-  if (!targetElement?.isConnected || !triggerElement?.isConnected) {
-    throw new Error(
-      "[toggleClassOnIntersection]: targetElement or triggerElement is not connected to the DOM."
-    );
-  }
+	if (!targetElement?.isConnected || !triggerElement?.isConnected) {
+		throw new Error(
+			'[toggleClassOnIntersection]: targetElement or triggerElement is not connected to the DOM.'
+		);
+	}
 
-  let isClassActive = false;
+	let isClassActive = false;
 
-  const observer = new IntersectionObserver(
-    ([entry]) => {
-      const shouldActivate = entry.boundingClientRect.top <= 0 && !entry.isIntersecting;
+	const observer = new IntersectionObserver(
+		([entry]) => {
+			const shouldActivate =
+				entry.boundingClientRect.top <= 0 && !entry.isIntersecting;
 
-      if (shouldActivate && !isClassActive) {
-        requestAnimationFrame(() => {
-          targetElement.classList.add(activeClass);
-          isClassActive = true;
-        });
-      }
+			if (shouldActivate && !isClassActive) {
+				requestAnimationFrame(() => {
+					targetElement.classList.add(activeClass);
+					isClassActive = true;
+				});
+			}
 
-      if (!shouldActivate && isClassActive) {
-        requestAnimationFrame(() => {
-          targetElement.classList.remove(activeClass);
-          isClassActive = false;
-        });
-      }
-    },
-    {
-      root,
-      threshold: 0,
-      rootMargin
-    }
-  );
+			if (!shouldActivate && isClassActive) {
+				requestAnimationFrame(() => {
+					targetElement.classList.remove(activeClass);
+					isClassActive = false;
+				});
+			}
+		},
+		{
+			root,
+			threshold: 0,
+			rootMargin
+		}
+	);
 
-  observer.observe(triggerElement);
+	observer.observe(triggerElement);
 
-  return () => observer.disconnect();
+	return () => observer.disconnect();
 }
 
 /**
@@ -168,59 +171,59 @@ export function toggleClassOnIntersection(
  * });
  */
 export function observeIntersection(targetElement, options = {}) {
-  const {
-    root = null,
-    rootMargin = "0px",
-    threshold = 0,
-    onEnter,
-    onLeave,
-    onChange,
-    once = false
-  } = options;
+	const {
+		root = null,
+		rootMargin = '0px',
+		threshold = 0,
+		onEnter,
+		onLeave,
+		onChange,
+		once = false
+	} = options;
 
-  if (!targetElement?.isConnected) {
-    throw new Error(
-      "[observeIntersection]: targetElement is not connected to the DOM."
-    );
-  }
+	if (!targetElement?.isConnected) {
+		throw new Error(
+			'[observeIntersection]: targetElement is not connected to the DOM.'
+		);
+	}
 
-  let wasIntersecting = false;
+	let wasIntersecting = false;
 
-  const observer = new IntersectionObserver(
-    ([entry]) => {
-      const isIntersecting = entry.isIntersecting;
+	const observer = new IntersectionObserver(
+		([entry]) => {
+			const isIntersecting = entry.isIntersecting;
 
-      // Trigger generic change callback
-      onChange?.(entry);
+			// Trigger generic change callback
+			onChange?.(entry);
 
-      // Element entered viewport
-      if (isIntersecting && !wasIntersecting) {
-        onEnter?.(entry);
+			// Element entered viewport
+			if (isIntersecting && !wasIntersecting) {
+				onEnter?.(entry);
 
-        if (once) {
-          observer.disconnect();
-          return;
-        }
-      }
+				if (once) {
+					observer.disconnect();
+					return;
+				}
+			}
 
-      // Element left viewport
-      if (!isIntersecting && wasIntersecting) {
-        onLeave?.(entry);
-      }
+			// Element left viewport
+			if (!isIntersecting && wasIntersecting) {
+				onLeave?.(entry);
+			}
 
-      wasIntersecting = isIntersecting;
-    },
-    {
-      root,
-      rootMargin,
-      threshold
-    }
-  );
+			wasIntersecting = isIntersecting;
+		},
+		{
+			root,
+			rootMargin,
+			threshold
+		}
+	);
 
-  observer.observe(targetElement);
+	observer.observe(targetElement);
 
-  // Return cleanup function
-  return () => observer.disconnect();
+	// Return cleanup function
+	return () => observer.disconnect();
 }
 
 /**
@@ -230,16 +233,20 @@ export function observeIntersection(targetElement, options = {}) {
  * @returns {void}
  */
 export function setAttributes(elements = [], targetAttr = {}) {
+	elements.forEach((element, i) => {
+		if (!(element instanceof HTMLElement)) {
+			throw new Error(
+				`one of the elements at index ${i} is not the instance of HTMLElement...`
+			);
+		}
 
-  elements.forEach((element, i) => {
-    if (!(element instanceof HTMLElement)) {
-      throw new Error(`one of the elements at index ${i} is not the instance of HTMLElement...`);
-    }
-
-    Object.entries(targetAttr).forEach(([attr, value]) => {
-      element.setAttribute(attr, (value !== null && value !== undefined) ? value.toString() : "");
-    });
-  });
+		Object.entries(targetAttr).forEach(([attr, value]) => {
+			element.setAttribute(
+				attr,
+				value !== null && value !== undefined ? value.toString() : ''
+			);
+		});
+	});
 }
 
 /**
@@ -257,92 +264,93 @@ export function setAttributes(elements = [], targetAttr = {}) {
  * scrollLocker.destroy() //resetting scroll controller
  */
 export function initLockScroll() {
-  // Encapsulated state - not accessible from outside
-  const state = {
-    /** @type {number|null} */
-    rafId: null,
-    /** @type {boolean} */
-    isLocked: false,
-    /** @type {string} */
-    originalPaddingRight: '',
-    /** @type {number} */
-    scrollbarWidth: 0,
-    /** @type {boolean} */
-    isInitialized: false
-  };
+	// Encapsulated state - not accessible from outside
+	const state = {
+		/** @type {number|null} */
+		rafId: null,
+		/** @type {boolean} */
+		isLocked: false,
+		/** @type {string} */
+		originalPaddingRight: '',
+		/** @type {number} */
+		scrollbarWidth: 0,
+		/** @type {boolean} */
+		isInitialized: false
+	};
 
-  /**
-   * Calculates scrollbar width once and caches it
-   * @returns {number}
-   */
-  const getScrollbarWidth = () => {
-    if (!state.scrollbarWidth) {
-      state.scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    }
-    return state.scrollbarWidth;
-  }
+	/**
+	 * Calculates scrollbar width once and caches it
+	 * @returns {number}
+	 */
+	const getScrollbarWidth = () => {
+		if (!state.scrollbarWidth) {
+			state.scrollbarWidth =
+				window.innerWidth - document.documentElement.clientWidth;
+		}
+		return state.scrollbarWidth;
+	};
 
-  /**
-   * Applies scroll lock styles
-   */
-  const applyLock = () => {
-    const scrollbarWidth = getScrollbarWidth();
+	/**
+	 * Applies scroll lock styles
+	 */
+	const applyLock = () => {
+		const scrollbarWidth = getScrollbarWidth();
 
-    // Save original padding only on first lock
-    if (!state.isInitialized) {
-      state.originalPaddingRight = document.body.style.paddingRight;
-      state.isInitialized = true;
-    }
+		// Save original padding only on first lock
+		if (!state.isInitialized) {
+			state.originalPaddingRight = document.body.style.paddingRight;
+			state.isInitialized = true;
+		}
 
-    document.body.style.overflow = 'hidden';
+		document.body.style.overflow = 'hidden';
 
-    // Apply padding compensation only if scrollbar was visible
-    if (scrollbarWidth > 0) {
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-    }
+		// Apply padding compensation only if scrollbar was visible
+		if (scrollbarWidth > 0) {
+			document.body.style.paddingRight = `${scrollbarWidth}px`;
+		}
 
-    state.rafId = null;
-  }
+		state.rafId = null;
+	};
 
-  /**
-   * Removes scroll lock styles
-   */
-  const applyUnlock = () => {
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = state.originalPaddingRight;
-    state.rafId = null;
-  }
+	/**
+	 * Removes scroll lock styles
+	 */
+	const applyUnlock = () => {
+		document.body.style.overflow = '';
+		document.body.style.paddingRight = state.originalPaddingRight;
+		state.rafId = null;
+	};
 
-  /**
-   * Locks or unlocks page scroll with scrollbar width compensation
-   * @param {boolean} [lock=true] - true to lock, false to unlock
-   */
-  const lockScroll = (lock = true) => {
-    // Early return if state hasn't changed
-    if (state.isLocked === lock) return;
+	/**
+	 * Locks or unlocks page scroll with scrollbar width compensation
+	 * @param {boolean} [lock=true] - true to lock, false to unlock
+	 */
+	const lockScroll = (lock = true) => {
+		// Early return if state hasn't changed
+		if (state.isLocked === lock) return;
 
-    // Cancel pending animation frame to prevent race conditions
-    if (state.rafId !== null) {
-      cancelAnimationFrame(state.rafId);
-    }
+		// Cancel pending animation frame to prevent race conditions
+		if (state.rafId !== null) {
+			cancelAnimationFrame(state.rafId);
+		}
 
-    state.isLocked = lock;
-    state.rafId = requestAnimationFrame(lock ? applyLock : applyUnlock);
-  }
+		state.isLocked = lock;
+		state.rafId = requestAnimationFrame(lock ? applyLock : applyUnlock);
+	};
 
-  return {
-    lockScroll,
+	return {
+		lockScroll,
 
-    /**
-     * reset capability (when unmounting a component)
-     */
-    destroy() {
-      if (state.rafId !== null) cancelAnimationFrame(state.rafId);
-      if (state.isLocked) applyUnlock();
-      state.isInitialized = false;
-      state.scrollbarWidth = 0;
-    }
-  }
+		/**
+		 * reset capability (when unmounting a component)
+		 */
+		destroy() {
+			if (state.rafId !== null) cancelAnimationFrame(state.rafId);
+			if (state.isLocked) applyUnlock();
+			state.isInitialized = false;
+			state.scrollbarWidth = 0;
+		}
+	};
 }
 
 //// getImagesLoaded SECTION ////
@@ -366,9 +374,11 @@ export function initLockScroll() {
  * @throws {Error} If container is not connected to DOM
  */
 function validateContainer(container) {
-  if (!container?.isConnected) {
-    throw new Error('[getImagesLoaded]: Container must be a DOM element connected to the document');
-  }
+	if (!container?.isConnected) {
+		throw new Error(
+			'[getImagesLoaded]: Container must be a DOM element connected to the document'
+		);
+	}
 }
 
 /**
@@ -380,42 +390,41 @@ function validateContainer(container) {
  * @returns {Map<HTMLImageElement, HTMLElement>} Map of image -> parent
  */
 function buildImageParentMap(container, options) {
-  const map = new Map();
-  const { background } = options;
+	const map = new Map();
+	const { background } = options;
 
-  for (const child of Array.from(container.children)) {
-    // Priority 1: Direct img child (most common case)
-    if (child.matches('img')) {
-      map.set(child, child);
-      continue;
-    }
-    // Priority 2: Wrapper with nested img
-    const nestedImg = child.querySelector('img');
-    if (nestedImg) {
-      map.set(nestedImg, child);
-      continue;
-    }
-    // Priority 3: Background images (only if no regular img found)
-    if (!background) continue;
+	for (const child of Array.from(container.children)) {
+		// Priority 1: Direct img child (most common case)
+		if (child.matches('img')) {
+			map.set(child, child);
+			continue;
+		}
+		// Priority 2: Wrapper with nested img
+		const nestedImg = child.querySelector('img');
+		if (nestedImg) {
+			map.set(nestedImg, child);
+			continue;
+		}
+		// Priority 3: Background images (only if no regular img found)
+		if (!background) continue;
 
-    /**
-     * truthy background: boolean true, or string selector ('.image', '.bg', [data-bg], etc...)
-     * option from the imagesLoaded library:
-     * if hasBackground is true, then any child is considered a background image container
-     * @sample
-     * options = {
-     *   background: '.grid-item' // or true
-     * }
-     */
-    const hasBackground =
-      background === true || child.matches(background);
+		/**
+		 * truthy background: boolean true, or string selector ('.image', '.bg', [data-bg], etc...)
+		 * option from the imagesLoaded library:
+		 * if hasBackground is true, then any child is considered a background image container
+		 * @sample
+		 * options = {
+		 *   background: '.grid-item' // or true
+		 * }
+		 */
+		const hasBackground = background === true || child.matches(background);
 
-    if (hasBackground) {
-      map.set(child, child);
-    }
-  }
+		if (hasBackground) {
+			map.set(child, child);
+		}
+	}
 
-  return map;
+	return map;
 }
 
 /**
@@ -424,12 +433,12 @@ function buildImageParentMap(container, options) {
  * @returns {ImageSize} Dimension data object
  */
 function extractDimensions(img) {
-  return {
-    naturalWidth: img.naturalWidth,
-    naturalHeight: img.naturalHeight,
-    offsetWidth: img.offsetWidth,
-    offsetHeight: img.offsetHeight,
-  };
+	return {
+		naturalWidth: img.naturalWidth,
+		naturalHeight: img.naturalHeight,
+		offsetWidth: img.offsetWidth,
+		offsetHeight: img.offsetHeight
+	};
 }
 
 /**
@@ -440,31 +449,33 @@ function extractDimensions(img) {
  * @returns {Promise<ImageSize|null>} Resolves with dimensions or null on error
  */
 function getImageDimensions(img) {
-  return new Promise((resolve) => {
-    if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-      resolve(extractDimensions(img));
-      return;
-    }
+	return new Promise(resolve => {
+		if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+			resolve(extractDimensions(img));
+			return;
+		}
 
-    const cleanup = () => {
-      img.removeEventListener('load', handleLoad);
-      img.removeEventListener('error', handleError);
-    };
+		const cleanup = () => {
+			img.removeEventListener('load', handleLoad);
+			img.removeEventListener('error', handleError);
+		};
 
-    const handleLoad = () => {
-      cleanup();
-      resolve(extractDimensions(img));
-    };
+		const handleLoad = () => {
+			cleanup();
+			resolve(extractDimensions(img));
+		};
 
-    const handleError = () => {
-      cleanup();
-      console.warn(`[getImageDimensions]: could not load the image with src: ${img.src}`);
-      resolve(null);
-    };
+		const handleError = () => {
+			cleanup();
+			console.warn(
+				`[getImageDimensions]: could not load the image with src: ${img.src}`
+			);
+			resolve(null);
+		};
 
-    img.addEventListener('load', handleLoad);
-    img.addEventListener('error', handleError);
-  });
+		img.addEventListener('load', handleLoad);
+		img.addEventListener('error', handleError);
+	});
 }
 
 /**
@@ -472,18 +483,18 @@ function getImageDimensions(img) {
  * @param {Array<{src: string, element: HTMLElement}>} brokenImages - Array of broken image data
  */
 function removeBrokenImages(brokenImages) {
-  if (brokenImages.length === 0) return;
+	if (brokenImages.length === 0) return;
 
-  console.warn(
-    `[getImagesLoaded] Removed ${brokenImages.length} broken image(s):`,
-    brokenImages.map((b) => b.src)
-  );
+	console.warn(
+		`[getImagesLoaded] Removed ${brokenImages.length} broken image(s):`,
+		brokenImages.map(b => b.src)
+	);
 
-  brokenImages.forEach(({ element }) => {
-    if (element?.isConnected) {
-      element.remove();
-    }
-  });
+	brokenImages.forEach(({ element }) => {
+		if (element?.isConnected) {
+			element.remove();
+		}
+	});
 }
 
 /**
@@ -495,32 +506,32 @@ function removeBrokenImages(brokenImages) {
  * @returns {Promise<Array<LoadedImageResult>>} Processed image results
  */
 async function processImageResults(instance, parentMap) {
-  const loadedPromises = [];
-  const brokenImages = [];
+	const loadedPromises = [];
+	const brokenImages = [];
 
-  instance.images.forEach((item) => {
-    const img = item.img;
-    const parentElement = parentMap.get(img);
+	instance.images.forEach(item => {
+		const img = item.img;
+		const parentElement = parentMap.get(img);
 
-    if (!item.isLoaded) {
-      brokenImages.push({
-        src: img.src || img.currentSrc || 'unknown',
-        element: parentElement,
-      });
-    } else {
-      loadedPromises.push(
-        getImageDimensions(img).then((size) => ({
-          element: parentElement,
-          size,
-        }))
-      );
-    }
-  });
+		if (!item.isLoaded) {
+			brokenImages.push({
+				src: img.src || img.currentSrc || 'unknown',
+				element: parentElement
+			});
+		} else {
+			loadedPromises.push(
+				getImageDimensions(img).then(size => ({
+					element: parentElement,
+					size
+				}))
+			);
+		}
+	});
 
-  removeBrokenImages(brokenImages);
+	removeBrokenImages(brokenImages);
 
-  const results = await Promise.all(loadedPromises);
-  return results.filter((r) => r.size !== null);
+	const results = await Promise.all(loadedPromises);
+	return results.filter(r => r.size !== null);
 }
 
 /**
@@ -536,25 +547,29 @@ async function processImageResults(instance, parentMap) {
  * @throws {Error} When container is invalid or processing fails
  */
 export async function getImagesLoaded(container, options = {}) {
-  // Validate container
-  validateContainer(container);
+	// Validate container
+	validateContainer(container);
 
-  // Return a promise that resolves when imagesLoaded completes
-  return new Promise((resolve, reject) => {
-    try {
-      imagesLoaded(container, options, async (instance) => {
-        try {
-          const parentMap = buildImageParentMap(container, options);
-          const results = await processImageResults(instance, parentMap);
-          resolve(results);
-        } catch (error) {
-          reject(new Error(`[getImagesLoaded] Processing error: ${error.message}`));
-        }
-      });
-    } catch (error) {
-      reject(new Error(`[getImagesLoaded] Initialization error: ${error.message}`));
-    }
-  });
+	// Return a promise that resolves when imagesLoaded completes
+	return new Promise((resolve, reject) => {
+		try {
+			imagesLoaded(container, options, async instance => {
+				try {
+					const parentMap = buildImageParentMap(container, options);
+					const results = await processImageResults(instance, parentMap);
+					resolve(results);
+				} catch (error) {
+					reject(
+						new Error(`[getImagesLoaded] Processing error: ${error.message}`)
+					);
+				}
+			});
+		} catch (error) {
+			reject(
+				new Error(`[getImagesLoaded] Initialization error: ${error.message}`)
+			);
+		}
+	});
 }
 
 /**
@@ -580,95 +595,104 @@ export async function getImagesLoaded(container, options = {}) {
  * });
  */
 export async function createMasonry(containerSelector, params = {}) {
-  const options = {
-    gap: 0,
-    ...params,
-  };
+	const options = {
+		gap: 0,
+		...params
+	};
 
-  try {
-    const container = document.querySelector(containerSelector);
+	try {
+		const container = document.querySelector(containerSelector);
 
-    if (!container?.isConnected) {
-      throw new Error(`[createMasonry]: Container with selector "${containerSelector}" not found in DOM`);
-    }
+		if (!container?.isConnected) {
+			throw new Error(
+				`[createMasonry]: Container with selector "${containerSelector}" not found in DOM`
+			);
+		}
 
-    // Get loaded images data
-    const imagesArr = await getImagesLoaded(container);
+		// Get loaded images data
+		const imagesArr = await getImagesLoaded(container);
 
-    // Validate that we have images
-    if (!Array.isArray(imagesArr) || imagesArr.length === 0) {
-      throw new Error(`[createMasonry]: No images found in container "${containerSelector}"`);
-    }
+		// Validate that we have images
+		if (!Array.isArray(imagesArr) || imagesArr.length === 0) {
+			throw new Error(
+				`[createMasonry]: No images found in container "${containerSelector}"`
+			);
+		}
 
-    // Validate first image data structure and get dimensions
-    const firstImage = imagesArr[0];
-    if (!firstImage?.element || !firstImage?.size) {
-      throw new Error('[createMasonry]: Invalid image data structure returned from getImagesLoaded');
-    }
+		// Validate first image data structure and get dimensions
+		const firstImage = imagesArr[0];
+		if (!firstImage?.element || !firstImage?.size) {
+			throw new Error(
+				'[createMasonry]: Invalid image data structure returned from getImagesLoaded'
+			);
+		}
 
-    const itemWidth = firstImage.size.offsetWidth;
-    const containerWidth = container.clientWidth;
+		const itemWidth = firstImage.size.offsetWidth;
+		const containerWidth = container.clientWidth;
 
-    // Validate dimensions
-    if (!itemWidth || itemWidth === 0) {
-      throw new Error('[createMasonry]: Image width is zero or undefined');
-    }
+		// Validate dimensions
+		if (!itemWidth || itemWidth === 0) {
+			throw new Error('[createMasonry]: Image width is zero or undefined');
+		}
 
-    const { gap } = options;
-    const { columns, freeWidth } = getColumnsNumber(containerWidth, itemWidth, gap);
-    const leftOffset = freeWidth / 2;
+		const { gap } = options;
+		const { columns, freeWidth } = getColumnsNumber(
+			containerWidth,
+			itemWidth,
+			gap
+		);
+		const leftOffset = freeWidth / 2;
 
-    // Set container styles
-    container.style.position = 'relative';
-    container.style.overflowX = 'hidden';
+		// Set container styles
+		container.style.position = 'relative';
+		container.style.overflowX = 'hidden';
 
-    // Initialize position arrays
-    const posLeftArr = Array.from(
-      { length: columns },
-      (_, i) => leftOffset + i * (itemWidth + gap)
-    );
-    const posTopArr = new Array(columns).fill(0);
+		// Initialize position arrays
+		const posLeftArr = Array.from(
+			{ length: columns },
+			(_, i) => leftOffset + i * (itemWidth + gap)
+		);
+		const posTopArr = new Array(columns).fill(0);
 
-    const imageItems = [];
+		const imageItems = [];
 
-    // Position each image
-    for (let i = 0; i < imagesArr.length; i++) {
-      const imageData = imagesArr[i];
+		// Position each image
+		for (let i = 0; i < imagesArr.length; i++) {
+			const imageData = imagesArr[i];
 
-      // Validate image data
-      if (!imageData?.element || !imageData?.size) {
-        console.warn(`[createMasonry]: Skipping invalid image at index ${i}`);
-        continue;
-      }
+			// Validate image data
+			if (!imageData?.element || !imageData?.size) {
+				console.warn(`[createMasonry]: Skipping invalid image at index ${i}`);
+				continue;
+			}
 
-      const item = imageData.element;
-      const itemHeight = imageData.size.offsetHeight;
+			const item = imageData.element;
+			const itemHeight = imageData.size.offsetHeight;
 
-      // Find column with minimum height
-      const minHeight = Math.min(...posTopArr);
-      const minColumnIndex = posTopArr.indexOf(minHeight);
+			// Find column with minimum height
+			const minHeight = Math.min(...posTopArr);
+			const minColumnIndex = posTopArr.indexOf(minHeight);
 
-      if (minColumnIndex === -1) {
-        throw new Error('[createMasonry]: Failed to find valid column index');
-      }
+			if (minColumnIndex === -1) {
+				throw new Error('[createMasonry]: Failed to find valid column index');
+			}
 
-      // Apply positioning
-      item.style.position = 'absolute';
-      item.style.top = `${Math.round(posTopArr[minColumnIndex])}px`;
-      item.style.left = `${Math.round(posLeftArr[minColumnIndex])}px`;
+			// Apply positioning
+			item.style.position = 'absolute';
+			item.style.top = `${Math.round(posTopArr[minColumnIndex])}px`;
+			item.style.left = `${Math.round(posLeftArr[minColumnIndex])}px`;
 
-      // Update column height
-      posTopArr[minColumnIndex] += itemHeight + gap;
+			// Update column height
+			posTopArr[minColumnIndex] += itemHeight + gap;
 
-      imageItems.push(item);
-    }
+			imageItems.push(item);
+		}
 
-    return imageItems;
-
-  } catch (error) {
-    console.error('[createMasonry]:', error.message);
-    throw error; // Re-throw to allow caller to handle it
-  }
+		return imageItems;
+	} catch (error) {
+		console.error('[createMasonry]:', error.message);
+		throw error; // Re-throw to allow caller to handle it
+	}
 }
 
 /**
@@ -679,15 +703,16 @@ export async function createMasonry(containerSelector, params = {}) {
  * @returns {{columns: number, freeWidth: number}} Column count and remaining space
  */
 function getColumnsNumber(containerWidth, itemWidth, gap) {
-  const itemGapWidth = itemWidth + gap;
-  const maxColumns = Math.floor(containerWidth / itemGapWidth);
-  const usedWidth = maxColumns * itemGapWidth;
-  const remainingSpace = containerWidth - usedWidth;
+	const itemGapWidth = itemWidth + gap;
+	const maxColumns = Math.floor(containerWidth / itemGapWidth);
+	const usedWidth = maxColumns * itemGapWidth;
+	const remainingSpace = containerWidth - usedWidth;
 
-  const columns = remainingSpace >= itemWidth ? maxColumns + 1 : maxColumns;
-  const freeWidth = containerWidth - (columns * itemWidth + (columns - 1) * gap);
+	const columns = remainingSpace >= itemWidth ? maxColumns + 1 : maxColumns;
+	const freeWidth =
+		containerWidth - (columns * itemWidth + (columns - 1) * gap);
 
-  return { columns, freeWidth };
+	return { columns, freeWidth };
 }
 
 /**
@@ -706,35 +731,36 @@ function getColumnsNumber(containerWidth, itemWidth, gap) {
  * activateNavLink('.nav-link', 'home', 'active', '#homeAnchor');
  */
 export function activateNavLink(
-  navLinkSelector,
-  pageType,
-  activeClass,
-  anchorLink
+	navLinkSelector,
+	pageType,
+	activeClass,
+	anchorLink
 ) {
-  // Check if all necessary arguments are provided, otherwise, log a warning.
-  if (!navLinkSelector || !pageType || !activeClass || !anchorLink) {
-    console.warn("at activateNavLink: no given all arguments");
-    return;
-  }
+	// Check if all necessary arguments are provided, otherwise, log a warning.
+	if (!navLinkSelector || !pageType || !activeClass || !anchorLink) {
+		console.warn('at activateNavLink: no given all arguments');
+		return;
+	}
 
-  // Get all navigation link items using the provided selector.
-  const navLinkItems = Array.from(document.querySelectorAll(navLinkSelector));
+	// Get all navigation link items using the provided selector.
+	const navLinkItems = Array.from(document.querySelectorAll(navLinkSelector));
 
-  // If no matching navigation items are found, log a warning and exit.
-  if (!navLinkItems.length) {
-    console.warn(`at activateNavLink: the nav link items with selector: ${navLinkSelector} are not found in the page...`);
-    return;
-  }
+	// If no matching navigation items are found, log a warning and exit.
+	if (!navLinkItems.length) {
+		console.warn(
+			`at activateNavLink: the nav link items with selector: ${navLinkSelector} are not found in the page...`
+		);
+		return;
+	}
 
-  // Iterate over each navigation item to check if its pagesVersions-type matches the provided pageType.
-  for (const navItem of navLinkItems) {
-
-    // If the page type matches, add the active class and update the href attribute.
-    if (navItem?.dataset?.type === pageType) {
-      navItem.classList.add(activeClass);
-      navItem.setAttribute("href", anchorLink);
-    }
-  }
+	// Iterate over each navigation item to check if its pagesVersions-type matches the provided pageType.
+	for (const navItem of navLinkItems) {
+		// If the page type matches, add the active class and update the href attribute.
+		if (navItem?.dataset?.type === pageType) {
+			navItem.classList.add(activeClass);
+			navItem.setAttribute('href', anchorLink);
+		}
+	}
 }
 
 /**
@@ -749,74 +775,80 @@ export function activateNavLink(
  * @returns {void} Returns early if any critical elements are missing.
  */
 export function initLangSwitcher(params = {}) {
-  const {
-    langSwitcherSelector = "#lang-switcher",
-    iconLangSelector = ".lang-switcher__lang-icon",
-    langActiveSelector = ".active",
-    langListSelector = "#listbox",
-    langOptionArr = ["ua", "ru"],
-    dataSetParam = "lang"
-  } = params;
+	const {
+		langSwitcherSelector = '#lang-switcher',
+		iconLangSelector = '.lang-switcher__lang-icon',
+		langActiveSelector = '.active',
+		langListSelector = '#listbox',
+		langOptionArr = ['ua', 'ru'],
+		dataSetParam = 'lang'
+	} = params;
 
-  const notFoundError = (selector, addition="") => {
-    console.error(
-      `at initLangSwitcher: the given selector: ${selector} is not found in DOM`,
-      addition
-    );
-  }
+	const notFoundError = (selector, addition = '') => {
+		console.error(
+			`at initLangSwitcher: the given selector: ${selector} is not found in DOM`,
+			addition
+		);
+	};
 
-  const url = window.location.href;
-  const langSwitcher = document.querySelector(langSwitcherSelector);
+	const url = window.location.href;
+	const langSwitcher = document.querySelector(langSwitcherSelector);
 
-  if (!langSwitcher) {
-    notFoundError(langSwitcherSelector);
-    return;
-  }
+	if (!langSwitcher) {
+		notFoundError(langSwitcherSelector);
+		return;
+	}
 
-  const langActiveElement = langSwitcher.querySelector(`${iconLangSelector}${langActiveSelector}`);
-  const langActive = langActiveElement?.dataset[dataSetParam];
+	const langActiveElement = langSwitcher.querySelector(
+		`${iconLangSelector}${langActiveSelector}`
+	);
+	const langActive = langActiveElement?.dataset[dataSetParam];
 
-  if (!langActive) {
-    notFoundError(`${iconLangSelector}${langActiveSelector}`, `or data-${dataSetParam} has no value...`);
-    return;
-  }
+	if (!langActive) {
+		notFoundError(
+			`${iconLangSelector}${langActiveSelector}`,
+			`or data-${dataSetParam} has no value...`
+		);
+		return;
+	}
 
-  if (!Array.isArray(langOptionArr) || !langOptionArr.length) {
-    console.error(`at initLangSwitcher: the given array of language versions is not Array or empty: ${langOptionArr}`);
-    return;
-  }
+	if (!Array.isArray(langOptionArr) || !langOptionArr.length) {
+		console.error(
+			`at initLangSwitcher: the given array of language versions is not Array or empty: ${langOptionArr}`
+		);
+		return;
+	}
 
-  const langVerArr = langOptionArr.filter(lang => lang !== langActive);
+	const langVerArr = langOptionArr.filter(lang => lang !== langActive);
 
-  const langList = langSwitcher.querySelector(langListSelector);
+	const langList = langSwitcher.querySelector(langListSelector);
 
-  if (!langList) {
-    notFoundError(langListSelector);
-    return;
-  }
+	if (!langList) {
+		notFoundError(langListSelector);
+		return;
+	}
 
-  const optionListElems = langVerArr.map((langVer) => {
-    const listElem = document.createElement("li");
-    listElem.classList.add(getSelectorName(iconLangSelector));
-    listElem.setAttribute("role", "option");
-    listElem.setAttribute(`data-${dataSetParam}`, langVer);
+	const optionListElems = langVerArr.map(langVer => {
+		const listElem = document.createElement('li');
+		listElem.classList.add(getSelectorName(iconLangSelector));
+		listElem.setAttribute('role', 'option');
+		listElem.setAttribute(`data-${dataSetParam}`, langVer);
 
-    const spanElem = document.createElement("span");
-    spanElem.textContent = langVer;
-    listElem.appendChild(spanElem);
+		const spanElem = document.createElement('span');
+		spanElem.textContent = langVer;
+		listElem.appendChild(spanElem);
 
-    return listElem;
-  });
+		return listElem;
+	});
 
-  langList.append(...optionListElems);
+	langList.append(...optionListElems);
 
-  const handleClick = ({ target }) => {
-    const clickedLang = target.closest(iconLangSelector).dataset[dataSetParam];
-    window.location.replace(url.replace(`/${langActive}/`, `/${clickedLang}/`));
-  };
+	const handleClick = ({ target }) => {
+		const clickedLang = target.closest(iconLangSelector).dataset[dataSetParam];
+		window.location.replace(url.replace(`/${langActive}/`, `/${clickedLang}/`));
+	};
 
-  langList.addEventListener("click", handleClick);
-
+	langList.addEventListener('click', handleClick);
 }
 
 /**
@@ -825,10 +857,10 @@ export function initLangSwitcher(params = {}) {
  * @returns {string} Selector name without symbols "." и "#".
  */
 export function getSelectorName(selector) {
-  // Regular expression for ".selector", "#selector", "selector"
-  const regex = /^[.#]?([\w-]+)$/;
-  const match = selector.match(regex);
-  return match ? match[1] : selector; // If not matched, return original selector
+	// Regular expression for ".selector", "#selector", "selector"
+	const regex = /^[.#]?([\w-]+)$/;
+	const match = selector.match(regex);
+	return match ? match[1] : selector; // If not matched, return original selector
 }
 
 /**
@@ -843,9 +875,9 @@ export function getSelectorName(selector) {
  * console.log(div); // <div class="container main"></div>
  */
 export function createElementWithClass(tag, ...classNames) {
-  const element = document.createElement(tag);
-  element.classList.add(...classNames);
-  return element;
+	const element = document.createElement(tag);
+	element.classList.add(...classNames);
+	return element;
 }
 
 /**
@@ -856,10 +888,10 @@ export function createElementWithClass(tag, ...classNames) {
  * @returns {string} The updated URL with the new base path to the given file.
  */
 export function replaceFilePath(url, targetFolder) {
-  //to clean from symbols as "./thumbs/", "./thumbs", "/thumbs/", "/thumbs" to "thumbs"
-  const nestedFolder = targetFolder.replace(/^\.?\/?|\/?\.?$/, "");
+	//to clean from symbols as "./thumbs/", "./thumbs", "/thumbs/", "/thumbs" to "thumbs"
+	const nestedFolder = targetFolder.replace(/^\.?\/?|\/?\.?$/, '');
 
-  return url.replace(new RegExp(`/${nestedFolder}/`), "/"); // If no match is found, return the original URL
+	return url.replace(new RegExp(`/${nestedFolder}/`), '/'); // If no match is found, return the original URL
 }
 
 /**
@@ -875,12 +907,12 @@ export function replaceFilePath(url, targetFolder) {
  * @returns {ModalState}
  */
 export function createModalState() {
-  return {
-    currentIndex: null,
-    isOpen: false,
-    isLoading: false,
-    currentImage: null
-  };
+	return {
+		currentIndex: null,
+		isOpen: false,
+		isLoading: false,
+		currentImage: null
+	};
 }
 
 /**
@@ -891,35 +923,35 @@ export function createModalState() {
  * @returns {{handleKeydown: Function, handleClick: Function}}
  */
 export function createModalHandlers(dom, state, callbacks) {
-  const handleKeydown = (event) => {
-    const actions = {
-      Escape: callbacks.close,
-      ArrowLeft: callbacks.prev,
-      ArrowRight: callbacks.next
-    };
+	const handleKeydown = event => {
+		const actions = {
+			Escape: callbacks.close,
+			ArrowLeft: callbacks.prev,
+			ArrowRight: callbacks.next
+		};
 
-    const action = actions[event.key];
-    if (action) {
-      event.preventDefault();
-      action();
-    }
-  };
+		const action = actions[event.key];
+		if (action) {
+			event.preventDefault();
+			action();
+		}
+	};
 
-  const handleClick = (event) => {
-    const button = event.target.closest("[data-action]");
-    if (!button) return;
+	const handleClick = event => {
+		const button = event.target.closest('[data-action]');
+		if (!button) return;
 
-    const actionMap = {
-      close: callbacks.close,
-      prev: callbacks.prev,
-      next: callbacks.next
-    };
+		const actionMap = {
+			close: callbacks.close,
+			prev: callbacks.prev,
+			next: callbacks.next
+		};
 
-    const action = actionMap[button.dataset.action];
-    if (action) action();
-  };
+		const action = actionMap[button.dataset.action];
+		if (action) action();
+	};
 
-  return { handleKeydown, handleClick };
+	return { handleKeydown, handleClick };
 }
 
 /**
@@ -930,10 +962,10 @@ export function createModalHandlers(dom, state, callbacks) {
  * @returns {number} New index
  */
 export function calculateNavIndex(current, total, direction) {
-  if (direction === 'prev') {
-    return current === 0 ? total - 1 : current - 1;
-  }
-  return current === total - 1 ? 0 : current + 1;
+	if (direction === 'prev') {
+		return current === 0 ? total - 1 : current - 1;
+	}
+	return current === total - 1 ? 0 : current + 1;
 }
 
 /**
@@ -944,9 +976,9 @@ export function calculateNavIndex(current, total, direction) {
  * @param {{bind: Function}} touch - Touch handler
  */
 export function attachModalListeners(root, handleClick, handleKeydown, touch) {
-  root.addEventListener("click", handleClick);
-  document.addEventListener("keydown", handleKeydown);
-  touch.bind();
+	root.addEventListener('click', handleClick);
+	document.addEventListener('keydown', handleKeydown);
+	touch.bind();
 }
 
 /**
@@ -957,9 +989,9 @@ export function attachModalListeners(root, handleClick, handleKeydown, touch) {
  * @param {{unbind: Function}} touch - Touch handler
  */
 export function detachModalListeners(root, handleClick, handleKeydown, touch) {
-  touch.unbind();
-  root.removeEventListener("click", handleClick);
-  document.removeEventListener("keydown", handleKeydown);
+	touch.unbind();
+	root.removeEventListener('click', handleClick);
+	document.removeEventListener('keydown', handleKeydown);
 }
 
 /**
@@ -970,19 +1002,19 @@ export function detachModalListeners(root, handleClick, handleKeydown, touch) {
  * @returns {Promise<void>}
  */
 export async function cleanupModal(dom, state, fadeDuration = 300) {
-  dom.root.style.opacity = "0";
+	dom.root.style.opacity = '0';
 
-  await new Promise(resolve => setTimeout(resolve, fadeDuration));
+	await new Promise(resolve => setTimeout(resolve, fadeDuration));
 
-  dom.root.remove();
-  dom.root.style.opacity = "";
+	dom.root.remove();
+	dom.root.style.opacity = '';
 
-  document.body.style.overflow = "";
+	document.body.style.overflow = '';
 
-  // Reset state
-  state.currentIndex = null;
-  if (dom.currentImage) {
-    dom.currentImage.remove();
-    dom.currentImage = null;
-  }
+	// Reset state
+	state.currentIndex = null;
+	if (dom.currentImage) {
+		dom.currentImage.remove();
+		dom.currentImage = null;
+	}
 }

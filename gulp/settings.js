@@ -1,92 +1,34 @@
-"use strict";
+'use strict';
 
-import autoprefixer from "autoprefixer";
-import cssnano from "cssnano";
-import discardUnused from "postcss-discard-unused";
-import normalizeWhitespace from "postcss-normalize-whitespace";
-import sortMediaQueries from "postcss-sort-media-queries";
-import TerserPlugin from "terser-webpack-plugin";
-import { getMatchedFromArray } from "../src/js/helpers/funcs.js";
-import { entries } from "./paths.js";
-import { getFilesEntries, getPagesContentVersions } from "./utilFuncs.js";
+/*gulp/settings.js*/
+
+import autoprefixer from 'autoprefixer';
+import cssnano from 'cssnano';
+import discardUnused from 'postcss-discard-unused';
+import normalizeWhitespace from 'postcss-normalize-whitespace';
+import sortMediaQueries from 'postcss-sort-media-queries';
+import TerserPlugin from 'terser-webpack-plugin';
+import { getMatchedFromArray } from '../src/js/helpers/funcs.js';
+import { fileEntries } from './paths.js';
+import { getPageData} from './utilFuncs.js';
 
 /////////////// END OF IMPORTS /////////////////////////
 
 ////////////// INITIAL SETTINGS ///////////////////////
 export const modes = {
-    dev: "dev",
-    build: "build"
-}
-const robotsParams = "noindex";
-const linkStyles = {
-    index: ["/css/index.min.css"],
-    gates: ["/css/index.min.css"],
-    rollers: ["/css/index.min.css"],
-    automation: ["/css/index.min.css"],
-    barriers: ["/css/index.min.css"],
-    awnings: ["/css/index.min.css"],
-    windows: ["/css/index.min.css"],
-    security: ["/css/index.min.css"],
-}
-
-/**
- * the scripts can be written at the end of the tag <body> omitting writing it in the tag <head>
- * In this case the script links should be empty in the lower linkScripts...
- * @type {{}}
- */
-const linkScripts = {
-/*    index: [
-        {
-            link: "/js/index.bundle.js", //this property must exist in linkScripts
-            loadMode: "async"   //"differ" this property may not exist in linkScripts
-        },
-    ],*/
-/*    gates: [
-        {
-            link: "/js/index.bundle.js", //this property must exist in linkScripts
-            loadMode: "async"   //"differ" this property may not exist in linkScripts
-        },
-    ],*/
-/*    rollers: [
-        {
-            link: "/js/index.bundle.js", //this property must exist in linkScripts
-            loadMode: "async"   //"differ" this property may not exist in linkScripts
-        },
-    ],*/
-/*    automation: [
-        {
-            link: "/js/index.bundle.js", //this property must exist in linkScripts
-            loadMode: "async"   //"differ" this property may not exist in linkScripts
-        },
-    ],*/
-/*    barriers: [
-        {
-            link: "/js/index.bundle.js", //this property must exist in linkScripts
-            loadMode: "async"   //"differ" this property may not exist in linkScripts
-        },
-    ],*/
-/*    awnings: [
-        {
-            link: "/js/index.bundle.js", //this property must exist in linkScripts
-            loadMode: "async"   //"differ" this property may not exist in linkScripts
-        },
-    ],*/
-/*    windows: [
-        {
-            link: "/js/index.bundle.js", //this property must exist in linkScripts
-            loadMode: "async"   //"differ" this property may not exist in linkScripts
-        },
-    ],*/
-/*    security: [
-        {
-            link: "/js/index.bundle.js", //this property must exist in linkScripts
-            loadMode: "async"   //"differ" this property may not exist in linkScripts
-        },
-    ],*/
-}
+	dev: 'dev',
+	build: 'build'
+};
+const robotsParams = 'noindex';
 
 //base root url at the server... example: "https://example.com"
-const rootUrl = "https://example.com"
+const rootUrl = 'https://example.com';
+//! json pages` data could have more language versions... setting target languages to use...
+const alternateLanguages = ["uk", "ru"];
+// canonical languages could be multiple for crawler indexation
+const canonicalLanguages = ["uk", "ru"];
+// default language for <link rel="alternate" href="..." hreflang="x-default" />
+const metaDefaultRel = "uk";
 
 /**
  * getting the file entries for all *.json with the pages` content.
@@ -94,221 +36,216 @@ const rootUrl = "https://example.com"
  * Gulp automatically compiles pages for each ${lang}.json and passes them to dist/html/${lang}
  * Gulp automatically adds language version navigation at <header> of the pages...
  */
-const pageJsonEntries = getFilesEntries("src/assets/data/pagesVersions", "json");
+const jsonEntries = fileEntries.jsonPaths;
+const jsEntries = fileEntries.jsEntries;
+const metaStylesheetSources = fileEntries.metaStylesheetSources;
+const metaScriptSources = fileEntries.metaScriptSources;
 
-export const languages = Object.keys(pageJsonEntries);  //["ua", "ru"]
+const jsonEntriesKeys = Object.keys(jsonEntries);
 
-//what languages are to be canonical... checking if they exist in the const languages...
-const metaCanonical = getMatchedFromArray(languages, ["ua", "ru"]);
+/**
+ * alternate languages to be used from json files at "assets/data/pagesVersions": ["ru", "uk"]
+ * @type {string[]}
+ * checking the given languages to be in jsonEntries... could be also [] if not contained...
+ */
+export const languages = getMatchedFromArray(jsonEntriesKeys, alternateLanguages);
+
+/**
+ * The array of canonical languages to be used
+ * @type {string[]}
+ */
+const metaCanonical = getMatchedFromArray(jsonEntriesKeys, canonicalLanguages);
 
 ////////////// END OF INITIAL SETTINGS ///////////////////////
 
-//collecting data from 'assets/data/pagesVersions/*.json'
-const getPageData = (lang) => {
-    try {
-        const pagesContent = getPagesContentVersions(pageJsonEntries, {
-            robotsParams,
-            linkStyles,
-            //linkScripts,  //optional
-            rootUrl,
-            metaCanonical,
-            languages,
-            lang
-        });
-        //console.log(`pageContent by ${lang}: `, pagesContent[lang]);
-        return pagesContent[lang];
-    }
-    catch (error) {
-        console.error(`Failed to process data for lang ${lang}: ${error.message}`);
-        return {}
-    }
+/**
+ * ! it returns the page`s data context with the language version for the gulp-file-include settings
+ * @param {string} lang
+ * @return {{
+ * prefix: string,
+ * basepath: string,
+ * context: {data: ({}|Record<string, Object>)}}}
+ */
+export const setFileIncludeSettings = lang => {
+	return {
+		prefix: '@@',
+		basepath: '@file',
+		context: {
+			data: (Object.keys(jsonEntries).length > 0)
+				? getPageData(
+					jsonEntries,
+					{
+						robotsParams,
+						metaStylesheetSources,
+						metaScriptSources,
+						rootUrl,
+						metaCanonical,
+						metaDefaultRel,
+						languages
+					},
+					lang
+				)
+				: {},
+		}
+	};
+};
 
-}
-
-//it returns the page`s data context with the language version for the gulp-file-include settings
-export const setFileIncludeSettings = (lang) => {
-    return {
-        prefix: "@@",
-        basepath: "@file",
-        context: {
-            data: getPageData(lang),
-        }
-    }
-}
 export const beautifySettings = {
-    html: {
-        //indent_size: 2,
-        //indent_char: ' ',
-        indent_with_tabs: true,
-        preserve_newlines: false,
-        //max_preserve_newlines: 0,
-        //wrap_line_length: 80,
-        //extra_liners: ['head', 'body', '/html']
-    }
-}
+	html: {
+		//indent_size: 2,
+		//indent_char: ' ',
+		indent_with_tabs: true,
+		preserve_newlines: false
+		//max_preserve_newlines: 0,
+		//wrap_line_length: 80,
+		//extra_liners: ['head', 'body', '/html']
+	}
+};
 export const optimizeCss = [
-    sortMediaQueries({
-        sort: "mobile-first"
-    }),
-    autoprefixer(),
-    discardUnused({}),
-    cssnano({
-        preset: [
-            "default",
-            {
-                normalizeWhitespace: false //avoiding compressing css file
-            }
-        ]
-    })
+	sortMediaQueries({
+		sort: 'mobile-first'
+	}),
+	autoprefixer(),
+	discardUnused({}),
+	cssnano({
+		preset: [
+			'default',
+			{
+				normalizeWhitespace: false //avoiding compressing css file
+			}
+		]
+	})
 ];
-export const minifyCss = [
-    normalizeWhitespace(),
-];
+export const minifyCss = [normalizeWhitespace()];
 export const useGulpSizeConfig = (params = {}) => {
-    return Object.assign({
-        showFiles: true,
-        pretty: true,
-        showTotal: false,
-        gzip: false,
-    }, params);
+	return Object.assign(
+		{
+			showFiles: true,
+			pretty: true,
+			showTotal: false,
+			gzip: false
+		},
+		params
+	);
 };
 export const webpackConfigJs = {
-    dev: {
-        mode: "development",
-        devtool: 'source-map',
-        entry: {
-            ...entries.js,
-        },
-        output: {
-            filename: "[name].bundle.js",
-            //path: pathData.build.js,  //will be piped to gulp.dest with the path: pathData.build.js
-        },
-        module: {
-            rules: [
-                {
-                    test: /\.js$/,
-                    exclude: /node_modules/,
-                    use: [
-                        {
-                            loader: "babel-loader",
-                            options: {
-                                presets: [
-                                    [
-                                        "@babel/preset-env",
-                                        { "modules": false, }
-                                    ]
-                                ],
-                                plugins: [
-                                    "@babel/plugin-transform-runtime",
-                                    "@babel/plugin-transform-classes",
-                                ],
-                            },
-                        },
-                    ]
-                },
-                {
-                    test: /\.css$/,
-                    use: [
-                        "style-loader",
-                        "css-loader"
-                    ],
-                },
-            ],
-        },
-    },
-    build: {
-        mode: "production",
-        entry: {
-            ...entries.js,
-        },
-        output: {
-            filename: "[name].bundle.js",
-            //path: pathData.build.js,  //will be piped to gulp.dest with the path: pathData.build.js
-        },
-        optimization: {
-            minimize: true,
-            minimizer: [
-                new TerserPlugin({
-                    parallel: true,
-                    terserOptions: {
-                        format: {
-                            comments: false,
-                        },
-                    },
-                    extractComments: false,
-                }),
-            ],
-        },
-        module: {
-            rules: [
-                {
-                    test: /\.js$/,
-                    exclude: /node_modules/,
-                    use: [
-                        {
-                            loader: "babel-loader",
-                            options: {
-                                presets: [
-                                    [
-                                        "@babel/preset-env",
-                                        { "modules": false, }
-                                    ]
-                                ],
-                                plugins: [
-                                    "@babel/plugin-transform-runtime",
-                                    "@babel/plugin-transform-classes",
-                                ],
-                            },
-                        }
-                    ]
-                },
-                {
-                    test: /\.css$/,
-                    use: [
-                        "style-loader",
-                        "css-loader"
-                    ],
-                },
-            ],
-        },
-    }
-}
-export const svgoSpriteOptions = {
-    mono: {
-        plugins: [
-            {
-                name: "removeAttrs",
-                params: {
-                    attrs: ["class", "pagesVersions-name", "fill", "stroke.*"], //"stroke.*" removing all stroke-related attributes
-                },
-            },
-            {
-                name: "removeDimensions", // it removes width and height
-            }
-        ]
-    },
-    multi: {
-        plugins: [
-            {
-                name: "removeAttrs",
-                params: {
-                    attrs: ["class", "pagesVersions-name"],
-                },
-            },
-            {
-                name: "removeDimensions", // it removes width and height
-            },
-            {
-                name: "removeUselessStrokeAndFill",
-                active: false,
-            },
-            {
-                name: "inlineStyles",
-                active: true,
-            }
-        ]
-    }
+	dev: {
+		mode: 'development',
+		devtool: 'source-map',
+		entry: {
+			...jsEntries
+		},
+		output: {
+			filename: '[name].bundle.js'
+			//path: pathData.build.js,  //will be piped to gulp.dest with the path: pathData.build.js
+		},
+		module: {
+			rules: [
+				{
+					test: /\.js$/,
+					exclude: /node_modules/,
+					use: [
+						{
+							loader: 'babel-loader',
+							options: {
+								presets: [['@babel/preset-env', { modules: false }]],
+								plugins: [
+									'@babel/plugin-transform-runtime',
+									'@babel/plugin-transform-classes'
+								]
+							}
+						}
+					]
+				},
+				{
+					test: /\.css$/,
+					use: ['style-loader', 'css-loader']
+				}
+			]
+		}
+	},
+	build: {
+		mode: 'production',
+		entry: {
+			...jsEntries
+		},
+		output: {
+			filename: '[name].bundle.js'
+			//path: pathData.build.js,  //will be piped to gulp.dest with the path: pathData.build.js
+		},
+		optimization: {
+			minimize: true,
+			minimizer: [
+				new TerserPlugin({
+					parallel: true,
+					terserOptions: {
+						format: {
+							comments: false
+						}
+					},
+					extractComments: false
+				})
+			]
+		},
+		module: {
+			rules: [
+				{
+					test: /\.js$/,
+					exclude: /node_modules/,
+					use: [
+						{
+							loader: 'babel-loader',
+							options: {
+								presets: [['@babel/preset-env', { modules: false }]],
+								plugins: [
+									'@babel/plugin-transform-runtime',
+									'@babel/plugin-transform-classes'
+								]
+							}
+						}
+					]
+				},
+				{
+					test: /\.css$/,
+					use: ['style-loader', 'css-loader']
+				}
+			]
+		}
+	}
 };
-
-
-
+export const svgoSpriteOptions = {
+	mono: {
+		plugins: [
+			{
+				name: 'removeAttrs',
+				params: {
+					attrs: ['class', 'pagesVersions-name', 'fill', 'stroke.*'] //"stroke.*" removing all stroke-related attributes
+				}
+			},
+			{
+				name: 'removeDimensions' // it removes width and height
+			}
+		]
+	},
+	multi: {
+		plugins: [
+			{
+				name: 'removeAttrs',
+				params: {
+					attrs: ['class', 'pagesVersions-name']
+				}
+			},
+			{
+				name: 'removeDimensions' // it removes width and height
+			},
+			{
+				name: 'removeUselessStrokeAndFill',
+				active: false
+			},
+			{
+				name: 'inlineStyles',
+				active: true
+			}
+		]
+	}
+};

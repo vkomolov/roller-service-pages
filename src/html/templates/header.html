@@ -1,11 +1,11 @@
 <div class="header-layer">
-    @@if (page && data && data[page] && data[page].header && data[page].main) {
+    @@if (page && data[page] && data[page]._hasData && data[page].header._hasData && data[page].main._hasData) {
     <header class="header" role="banner">
-        <h2 class="header__logo-heading">@@data.@@page.header.header__logo-heading</h2>
-        <div class="header__contacts-wrapper" aria-label="@@data.@@page.header.header__contacts-wrapper_label">
+        <h2 class="header__logo-heading">@@data[@@page].header.header__logo-heading</h2>
+        <div class="header__contacts-wrapper" aria-label="@@data[@@page].header.header__contacts-wrapper_label">
             <div class="header__contacts-block">
-                <a href="@@data.@@page.header.header__contacts-block_mobile"
-                   aria-label="@@data.@@page.header.header__contacts-block_mobile_label"
+                <a href="@@data[@@page].header.header__contacts-block_mobile"
+                   aria-label="@@data[@@page].header.header__contacts-block_mobile_label"
                    class="icon-link"
                    tabindex="0"
                 >
@@ -15,11 +15,11 @@
                             <use xlink:href="/assets/img/svgIcons/sprite.mono.svg#phone"></use>
                         </svg>
                     </div>
-                    <span class="icon-link__text icon-link__text--phone">@@data.@@page.header.header__contacts-block_mobile_span</span>
+                    <span class="icon-link__text icon-link__text--phone">@@data[@@page].header.header__contacts-block_mobile_span</span>
                 </a>
                 <div class="social-icons-wrapper">
-                    <a href="@@data.@@page.header.header__contacts-block_viber"
-                       aria-label="@@data.@@page.header.header__contacts-block_viber_label"
+                    <a href="@@data[@@page].header.header__contacts-block_viber"
+                       aria-label="@@data[@@page].header.header__contacts-block_viber_label"
                        class="social-icons-wrapper__social-icon"
                        tabindex="0"
                     >
@@ -28,9 +28,9 @@
                             <use xlink:href="/assets/img/svgIcons/sprite.multi.svg#viber"></use>
                         </svg>
                     </a>
-                    <a href="@@data.@@page.header.header__contacts-block_telegram"
+                    <a href="@@data[@@page].header.header__contacts-block_telegram"
                        target="_blank"
-                       aria-label="@@data.@@page.header.header__contacts-block_telegram_label"
+                       aria-label="@@data[@@page].header.header__contacts-block_telegram_label"
                        rel="noopener noreferrer nofollow"
                        class="social-icons-wrapper__social-icon"
                        tabindex="0"
@@ -45,8 +45,8 @@
                              role="button"
                              aria-expanded="false"
                              aria-controls="lang-list"
-                             data-lang="@@data.@@page.main.lang">
-                            <span>@@data.@@page.main.lang</span>
+                             data-lang="@@data[@@page].main.lang">
+                            <span>@@data[@@page].main.lang</span>
                         </div>
                         <div class="lang-switcher__lang-dropdown">
                             <ul id="lang-list" role="listbox"></ul>
@@ -54,7 +54,7 @@
                     </div>
                     <button
                         class="burger_nav hidden"
-                        aria-label="@@data.@@page.header.header__nav_label"
+                        aria-label="@@data[@@page].header.header__nav_label"
                         aria-expanded="false"
                         tabindex="0">
                         <span></span>
@@ -62,63 +62,63 @@
                 </div>
             </div>
         </div>
-        <nav class="header__nav" aria-label="@@data.@@page.header.header__nav_label">
+        <nav class="header__nav" aria-label="@@data[@@page].header.header__nav_label">
             <ul class="header__nav-list">
                 <li><a href="./index.html"
                        class="nav-link"
-                       aria-label="@@data.@@page.header.nav-link_main"
+                       aria-label="@@data[@@page].header.nav-link_main"
                        tabindex="0"
                        data-type="index">
-                    @@data.@@page.header.nav-link_main
+                    @@data[@@page].header.nav-link_main
                 </a></li>
                 <li><a href="./gates-installation-repair.html"
                        class="nav-link"
-                       aria-label="@@data.@@page.header.nav-link_gates"
+                       aria-label="@@data[@@page].header.nav-link_gates"
                        tabindex="0"
                        data-type="gates">
-                    @@data.@@page.header.nav-link_gates
+                    @@data[@@page].header.nav-link_gates
                 </a></li>
                 <li><a href="./rollers-installation-repair.html"
                        class="nav-link"
-                       aria-label="@@data.@@page.header.nav-link_rollers"
+                       aria-label="@@data[@@page].header.nav-link_rollers"
                        tabindex="0"
                        data-type="rollers">
-                    @@data.@@page.header.nav-link_rollers
+                    @@data[@@page].header.nav-link_rollers
                 </a></li>
                 <li><a href="./gates-rollers-automation.html"
                        class="nav-link"
-                       aria-label="@@data.@@page.header.nav-link_automation"
+                       aria-label="@@data[@@page].header.nav-link_automation"
                        tabindex="0"
                        data-type="automation">
-                    @@data.@@page.header.nav-link_automation
+                    @@data[@@page].header.nav-link_automation
                 </a></li>
                 <li><a href="./barriers-installation-repair.html"
                        class="nav-link"
-                       aria-label="@@data.@@page.header.nav-link_barriers"
+                       aria-label="@@data[@@page].header.nav-link_barriers"
                        tabindex="0"
                        data-type="barriers">
-                    @@data.@@page.header.nav-link_barriers
+                    @@data[@@page].header.nav-link_barriers
                 </a></li>
                 <li><a href="./awnings-installation-repair.html"
                        class="nav-link"
-                       aria-label="@@data.@@page.header.nav-link_awnings"
+                       aria-label="@@data[@@page].header.nav-link_awnings"
                        tabindex="0"
                        data-type="awnings">
-                    @@data.@@page.header.nav-link_awnings
+                    @@data[@@page].header.nav-link_awnings
                 </a></li>
                 <li><a href="./window-settings-repair.html"
                        class="nav-link"
-                       aria-label="@@data.@@page.header.nav-link_windows"
+                       aria-label="@@data[@@page].header.nav-link_windows"
                        tabindex="0"
                        data-type="windows">
-                    @@data.@@page.header.nav-link_windows
+                    @@data[@@page].header.nav-link_windows
                 </a></li>
                 <li><a href="./security-installation-maintenance.html"
                        class="nav-link"
-                       aria-label="@@data.@@page.header.nav-link_security"
+                       aria-label="@@data[@@page].header.nav-link_security"
                        tabindex="0"
                        data-type="security">
-                    @@data.@@page.header.nav-link_security
+                    @@data[@@page].header.nav-link_security
                 </a></li>
             </ul>
         </nav>

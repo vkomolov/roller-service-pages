@@ -12,10 +12,10 @@ export function randomNum(max, min) {
  * filters the remaining arguments (`...values`) to find which ones are included in `targetArr`.
  * If `targetArr` is not a valid array or is empty, a warning is logged to the console and an empty array is returned.
  *
- * @param {Array} targetArr - The array to check for matches.
+ * @param {Array<any>} targetArr - The array to check for matches.
  * @param {...*} values - A list of values to check against the `targetArr`.
  *
- * @returns {Array} - An array of matched values from `values` that exist in `targetArr`.
+ * @returns {Array<any>} - An array of matched values from `values` that exist in `targetArr`.
  *
  * @example
  * const result = getMatchedFromArray([1, 2, 3, 4], 2, 4, 6);
@@ -27,7 +27,7 @@ export function randomNum(max, min) {
  */
 export function getMatchedFromArray(targetArr, ...values) {
   if (!Array.isArray(targetArr) || !targetArr.length) {
-    console.warn(`at getMatchedFromArray: the given targetArr is not Array or empty...`);
+    console.error(`at getMatchedFromArray: the given array of values is not Array or empty...`);
     return [];
   }
 

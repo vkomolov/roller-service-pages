@@ -16,7 +16,7 @@ const rootFolder = path.basename(path.resolve());
 
 const srcPath = path.resolve(curWD, "src");
 const distPath = path.resolve(curWD, "dist");
-const tempPath = path.resolve(srcPath, "temp");
+const tempPath = path.join(srcPath, "temp");
 export const pathData = {
 	rootFolder,
 	srcPath,
@@ -88,6 +88,102 @@ export const pathData = {
 		tempPath,
 	],
 }
-export const entries = {
-	js: getFilesEntries(path.resolve(pathData.srcPath, "js"), "js"),
+
+/**
+ * is used as common css file source for the meta <link rel="stylesheet"> tag at head
+ * @type {string} commonStyleSource
+ * ! if some page needs separate css files, it could be added separately to fileEntries.stylesheetTagSource...
+ */
+const commonStyleSource = "/css/index.min.css";
+
+const metaStylesheetSources = {
+	index: [commonStyleSource],
+	gates: [commonStyleSource],
+	rollers: [commonStyleSource],
+	automation: [commonStyleSource],
+	barriers: [commonStyleSource],
+	awnings: [commonStyleSource],
+	windows: [commonStyleSource],
+	security: [commonStyleSource],
+}
+
+/**
+ * the scripts can be written at the end of the tag <body> omitting writing it in the tag <head>
+ * In metaScriptSources <script> tag will be written at head...
+ * @type {Record<string, Record<string, string>[]>}
+ */
+const metaScriptSources = {
+	index: [
+		/*{
+				src: "/js/index.bundle.js", //this property must exist in scriptSource
+				defer: true   //this property may not exist in scriptSource
+		},*/
+	],
+	gates: [
+		/*{
+				src: "/js/index.bundle.js", //this property must exist in scriptSource
+				defer: true   //this property may not exist in scriptSource
+		},*/
+	],
+	rollers: [
+		/*{
+				src: "/js/index.bundle.js", //this property must exist in scriptSource
+				defer: true   //this property may not exist in scriptSource
+		},*/
+	],
+	automation: [
+		/*{
+				src: "/js/index.bundle.js", //this property must exist in scriptSource
+				defer: true   //this property may not exist in scriptSource
+		},*/
+	],
+	barriers: [
+		/*{
+				src: "/js/index.bundle.js", //this property must exist in scriptSource
+				defer: true   //this property may not exist in scriptSource
+		},*/
+	],
+	awnings: [
+		/*{
+				src: "/js/index.bundle.js", //this property must exist in scriptSource
+				defer: true   //this property may not exist in scriptSource
+		},*/
+	],
+	windows: [
+		/*{
+				src: "/js/index.bundle.js", //this property must exist in scriptSource
+				defer: true   //this property may not exist in scriptSource
+		},*/
+	],
+	security: [
+		/*{
+				src: "/js/index.bundle.js", //this property must exist in scriptSource
+				defer: true   //this property may not exist in scriptSource
+		},*/
+	],
+}
+
+
+//source folder for the pages` data json files:
+export const pagesDataJsonFolder = "assets/data/pagesVersions";
+
+/**
+ * @type {{
+ *   jsEntries: Record<string, string>,
+ *   jsonPaths: Record<string, string>,  // paths to JSON files
+ *   metaStylesheetSources: Record<string, string[]>,
+ *   metaScriptSources: Record<string, object[]>
+ * }}
+ */
+export const fileEntries = {
+	jsEntries: getFilesEntries(path.join(pathData.srcPath, "js"), "js"),
+	//getting all **/*.json
+	jsonPaths: getFilesEntries(
+		path.join(pathData.srcPath,pagesDataJsonFolder),
+		"json",
+		true,
+		"_"
+	),
+	metaStylesheetSources,
+	metaScriptSources,
 }

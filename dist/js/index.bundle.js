@@ -10370,7 +10370,7 @@ function migrateElement({
  */
 function lockedEventListener(event, listenerOwner, delay = 300) {
   if (listenerOwner instanceof HTMLElement && !listenerOwner.isConnected) {
-    throw new Error("Provided listenerOwner at lockedEventListener() is not a valid DOM element...");
+    throw new Error('Provided listenerOwner at lockedEventListener() is not a valid DOM element...');
   }
   let isLocked = false;
   return (cb, params = []) => {
@@ -10405,9 +10405,9 @@ function lockedEventListener(event, listenerOwner, delay = 300) {
  *
  * @returns {Function} Cleanup function that disconnects the observer.
  */
-function toggleClassOnIntersection(targetElement, triggerElement, activeClass, root = null, rootMargin = "-1px 0px 0px 0px") {
+function toggleClassOnIntersection(targetElement, triggerElement, activeClass, root = null, rootMargin = '-1px 0px 0px 0px') {
   if (!targetElement?.isConnected || !triggerElement?.isConnected) {
-    throw new Error("[toggleClassOnIntersection]: targetElement or triggerElement is not connected to the DOM.");
+    throw new Error('[toggleClassOnIntersection]: targetElement or triggerElement is not connected to the DOM.');
   }
   let isClassActive = false;
   const observer = new IntersectionObserver(([entry]) => {
@@ -10466,7 +10466,7 @@ function toggleClassOnIntersection(targetElement, triggerElement, activeClass, r
 function observeIntersection(targetElement, options = {}) {
   const {
     root = null,
-    rootMargin = "0px",
+    rootMargin = '0px',
     threshold = 0,
     onEnter,
     onLeave,
@@ -10474,7 +10474,7 @@ function observeIntersection(targetElement, options = {}) {
     once = false
   } = options;
   if (!targetElement?.isConnected) {
-    throw new Error("[observeIntersection]: targetElement is not connected to the DOM.");
+    throw new Error('[observeIntersection]: targetElement is not connected to the DOM.');
   }
   let wasIntersecting = false;
   const observer = new IntersectionObserver(([entry]) => {
@@ -10520,7 +10520,7 @@ function setAttributes(elements = [], targetAttr = {}) {
       throw new Error(`one of the elements at index ${i} is not the instance of HTMLElement...`);
     }
     Object.entries(targetAttr).forEach(([attr, value]) => {
-      element.setAttribute(attr, value !== null && value !== undefined ? value.toString() : "");
+      element.setAttribute(attr, value !== null && value !== undefined ? value.toString() : '');
     });
   });
 }
@@ -10966,7 +10966,7 @@ function getColumnsNumber(containerWidth, itemWidth, gap) {
 function activateNavLink(navLinkSelector, pageType, activeClass, anchorLink) {
   // Check if all necessary arguments are provided, otherwise, log a warning.
   if (!navLinkSelector || !pageType || !activeClass || !anchorLink) {
-    console.warn("at activateNavLink: no given all arguments");
+    console.warn('at activateNavLink: no given all arguments');
     return;
   }
 
@@ -10984,7 +10984,7 @@ function activateNavLink(navLinkSelector, pageType, activeClass, anchorLink) {
     // If the page type matches, add the active class and update the href attribute.
     if (navItem?.dataset?.type === pageType) {
       navItem.classList.add(activeClass);
-      navItem.setAttribute("href", anchorLink);
+      navItem.setAttribute('href', anchorLink);
     }
   }
 }
@@ -11002,14 +11002,14 @@ function activateNavLink(navLinkSelector, pageType, activeClass, anchorLink) {
  */
 function initLangSwitcher(params = {}) {
   const {
-    langSwitcherSelector = "#lang-switcher",
-    iconLangSelector = ".lang-switcher__lang-icon",
-    langActiveSelector = ".active",
-    langListSelector = "#listbox",
-    langOptionArr = ["ua", "ru"],
-    dataSetParam = "lang"
+    langSwitcherSelector = '#lang-switcher',
+    iconLangSelector = '.lang-switcher__lang-icon',
+    langActiveSelector = '.active',
+    langListSelector = '#listbox',
+    langOptionArr = ['ua', 'ru'],
+    dataSetParam = 'lang'
   } = params;
-  const notFoundError = (selector, addition = "") => {
+  const notFoundError = (selector, addition = '') => {
     console.error(`at initLangSwitcher: the given selector: ${selector} is not found in DOM`, addition);
   };
   const url = window.location.href;
@@ -11035,11 +11035,11 @@ function initLangSwitcher(params = {}) {
     return;
   }
   const optionListElems = langVerArr.map(langVer => {
-    const listElem = document.createElement("li");
+    const listElem = document.createElement('li');
     listElem.classList.add(getSelectorName(iconLangSelector));
-    listElem.setAttribute("role", "option");
+    listElem.setAttribute('role', 'option');
     listElem.setAttribute(`data-${dataSetParam}`, langVer);
-    const spanElem = document.createElement("span");
+    const spanElem = document.createElement('span');
     spanElem.textContent = langVer;
     listElem.appendChild(spanElem);
     return listElem;
@@ -11051,7 +11051,7 @@ function initLangSwitcher(params = {}) {
     const clickedLang = target.closest(iconLangSelector).dataset[dataSetParam];
     window.location.replace(url.replace(`/${langActive}/`, `/${clickedLang}/`));
   };
-  langList.addEventListener("click", handleClick);
+  langList.addEventListener('click', handleClick);
 }
 
 /**
@@ -11092,8 +11092,8 @@ function createElementWithClass(tag, ...classNames) {
  */
 function replaceFilePath(url, targetFolder) {
   //to clean from symbols as "./thumbs/", "./thumbs", "/thumbs/", "/thumbs" to "thumbs"
-  const nestedFolder = targetFolder.replace(/^\.?\/?|\/?\.?$/, "");
-  return url.replace(new RegExp(`/${nestedFolder}/`), "/"); // If no match is found, return the original URL
+  const nestedFolder = targetFolder.replace(/^\.?\/?|\/?\.?$/, '');
+  return url.replace(new RegExp(`/${nestedFolder}/`), '/'); // If no match is found, return the original URL
 }
 
 /**
@@ -11138,7 +11138,7 @@ function createModalHandlers(dom, state, callbacks) {
     }
   };
   const handleClick = event => {
-    const button = event.target.closest("[data-action]");
+    const button = event.target.closest('[data-action]');
     if (!button) return;
     const actionMap = {
       close: callbacks.close,
@@ -11176,8 +11176,8 @@ function calculateNavIndex(current, total, direction) {
  * @param {{bind: Function}} touch - Touch handler
  */
 function attachModalListeners(root, handleClick, handleKeydown, touch) {
-  root.addEventListener("click", handleClick);
-  document.addEventListener("keydown", handleKeydown);
+  root.addEventListener('click', handleClick);
+  document.addEventListener('keydown', handleKeydown);
   touch.bind();
 }
 
@@ -11190,8 +11190,8 @@ function attachModalListeners(root, handleClick, handleKeydown, touch) {
  */
 function detachModalListeners(root, handleClick, handleKeydown, touch) {
   touch.unbind();
-  root.removeEventListener("click", handleClick);
-  document.removeEventListener("keydown", handleKeydown);
+  root.removeEventListener('click', handleClick);
+  document.removeEventListener('keydown', handleKeydown);
 }
 
 /**
@@ -11202,11 +11202,11 @@ function detachModalListeners(root, handleClick, handleKeydown, touch) {
  * @returns {Promise<void>}
  */
 async function cleanupModal(dom, state, fadeDuration = 300) {
-  dom.root.style.opacity = "0";
+  dom.root.style.opacity = '0';
   await new Promise(resolve => setTimeout(resolve, fadeDuration));
   dom.root.remove();
-  dom.root.style.opacity = "";
-  document.body.style.overflow = "";
+  dom.root.style.opacity = '';
+  document.body.style.overflow = '';
 
   // Reset state
   state.currentIndex = null;

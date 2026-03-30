@@ -3,28 +3,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
-  @@if (page && data && data[page] && data[page].head) {
-    <meta name="description" content="@@data.@@page.head.description">
-    <meta name="robots" content="@@data.@@page.head.robots">
+  @@if (page && data[page] && data[page]._hasData) {
+  <meta name="description" content="@@data[@@page].head.description">
+  <meta name="robots" content="@@data[@@page].head.robots">
 
-    @@if (data[page].head.canonical) {
-      @@data.@@page.head.canonical
-    }
-
-    @@if (data[page].head.alternate) {
-      @@data.@@page.head.alternate
-    }
-
-    <title>@@data.@@page.head.title</title>
-
-    @@if (data[page].head.linkStyles) {
-    @@data.@@page.head.linkStyles
-    }
-
-    @@if (data[page].head.linkScripts) {
-      @@data.@@page.head.linkScripts
-    }
+  @@if (data[page]._hasCanonical) {
+  @@data[@@page].head.canonical
   }
+
+  @@if (data[page]._hasAlternate) {
+  @@data[@@page].head.alternate
+  }
+
+  <title>@@data[@@page].head.title</title>
+
+  @@if (data[page].head.styleSource) {
+  @@data[@@page].head.styleSource
+  }
+
+  @@if (data[page].head.scriptSource) {
+  @@data[@@page].head.scriptSource
+  }
+  }
+
   <link rel="shortcut icon" sizes="24x24" href="/assets/img/24_7_24x24.ico" type="image/x-icon">
   <link rel="shortcut icon" sizes="32x32" href="/assets/img/24_7_32x32.ico" type="image/x-icon">
   <link rel="shortcut icon" sizes="48x48" href="/assets/img/24_7_48x48.ico" type="image/x-icon">
