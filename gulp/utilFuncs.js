@@ -170,7 +170,6 @@ export function handleError(taskTypeError) {
 	 */
 	return function (err) {
 		console.error(taskTypeError, err.message);
-		//this.emit('end'); // halt the pipe gracefully
 	}
 }
 
@@ -238,26 +237,6 @@ export function processFile(file) {
 }
 
 /**
- * Escapes double quotes in a value for safe use inside HTML attribute values.
- *
- * Converts the input to a string and replaces all `"` characters with `&quot;`.
- *
- * @param {any} val - Any value to be escaped (will be coerced to string).
- * @returns {string} A string safe to use inside double-quoted HTML attributes.
- *
- * @example
- * escapeAttr('hello "world"');
- * // => 'hello &quot;world&quot;'
- *
- * @example
- * escapeAttr(123);
- * // => '123'
- */
-function escapeAttr(val) {
-	return `${val}`.replace(/"/g, "&quot;");
-}
-
-/**
  * Converts attributes object into HTML string.
  * Filters out invalid values and warns if any were removed.
  *
@@ -294,7 +273,7 @@ function stringifyAttrs(attrs) {
 				return key;
 			}
 
-			return `${key}="${escapeAttr(value)}"`;
+			return `${key}="${value}"`;
 		})
 		.join(" ");
 
@@ -360,9 +339,7 @@ function getMetaLinkTag(params) {
 
 	const attrStr = stringifyAttrs(restAttrs);
 	//could take URL data and string...
-	const safeSrc = escapeAttr(
-		dataSrc instanceof URL ? dataSrc.href : dataSrc
-	);
+	const safeSrc = dataSrc instanceof URL ? dataSrc.href : dataSrc;
 
 	// Generate <script> tag
 	if (tagType === "script") {
@@ -519,9 +496,6 @@ export function readJsonSafe(filePath) {
  * @property {object} head
  * @property {object} header
  * @property {object} main
- * @property {boolean} _hasData
- * @property {boolean} _hasCanonical
- * @property {boolean} _hasAlternate
  */
 
 /**
@@ -562,6 +536,7 @@ export function getPageData(
 	initialData,
 	lang
 ) {
+
 	try {
 		const headerDataSource = `header_${lang}`;
 
@@ -585,12 +560,16 @@ export function getPageData(
 		const mainDataJsonSource = entries[lang];
 		const headerDataJsonSource = entries[headerDataSource];
 
+		// ЛОГИРОВАНИЕ
+		console.log(`[getPageData] lang: ${lang}`);
+		//console.log(`[getPageData] mainDataJsonSource:`, mainDataJsonSource);
+		//console.log(`[getPageData] headerDataJsonSource:`, headerDataJsonSource);
+
 		const pagesData = readJsonSafe(mainDataJsonSource);
 		const headerData = readJsonSafe(headerDataJsonSource);
 
-		return Object.fromEntries(
+		const pageDataRes = Object.fromEntries(
 			Object.entries(pagesData).map(([pageName, pageData]) => {
-
 
 				const context/** @type {Context} */ = {
 					...initialData,
@@ -603,8 +582,7 @@ export function getPageData(
 			})
 		);
 
-		//return buildPagesData(entries[lang], initialData, lang);
-
+		return pageDataRes;
 	}
 	catch (error) {
 		//strict mode: tsconfig.json
@@ -639,6 +617,8 @@ function buildPageContent(pageData, context) {
 	const { headerData, ...headData } = context;
 	const { lang, languages } = headData;
 
+	//console.log("headData keys: ", Object.keys(headData).join(", "));
+
 	/**
 	 * @typedef {object} Handlers
 	 * @property {(value: object) => object} head
@@ -656,20 +636,16 @@ function buildPageContent(pageData, context) {
 			return {
 				...value,
 				...getInitialHeadData(headData),
-				_hasData: true,
-				_hasCanonical: !!headData.metaCanonical?.length,
-				_hasAlternate: headData.languages?.length > 1
 			}
 		},
 		/**
 		 *
 		 * @param {object} value
-		 * @return {*&{_hasData: boolean}}
+		 * @return {object}
 		 */
 		header: (value) => ({
 			...(value || {}),
 			...headerData,
-			_hasData: true,
 		}),
 
 		/**
@@ -680,8 +656,6 @@ function buildPageContent(pageData, context) {
 			...(value || {}),
 			lang,
 			languages,
-			_hasData: true,
-			_hasLang: !!(lang && lang.length > 0),
 		}),
 	}
 
@@ -864,7 +838,7 @@ function getInitialHeadData(context) {
 		 * @return {[string,string]}  - ["robots", `<meta name="robots" content=${robotsParams}>`]
 		 */
 		robotsParams: (robotsParams) => {
-			return ["robots", `<meta name="robots" content="${escapeAttr(robotsParams)}">`];
+			return ["robots", robotsParams];
 		},
 
 		/**

@@ -9,6 +9,11 @@ import BrowserSync from "./modules/BrowserSync.js";
 /////////////// END OF IMPORTS /////////////////////////
 const { series, parallel, watch } = gulp;
 
+/**
+ *
+ * @param {string} lang
+ * @return {BrowserSync}
+ */
 const initBs = (lang) => {
 	return new BrowserSync({
 		//first priority: "dist/html/", then "dist/" for assets/css or assets/img...
@@ -80,7 +85,7 @@ export function pipesBuild(cb) {
 }
 
 export function runDev(cb) {
-	const bs = initBs("ua");
+	const bs = initBs("uk");
 	series(
 		pipesDev,
 		bs.start,
@@ -89,7 +94,7 @@ export function runDev(cb) {
 }
 
 export function runBuild(cb) {
-	const bs = initBs("ua");
+	const bs = initBs("uk");
 	series(
 		pipesBuild,
 		bs.start,

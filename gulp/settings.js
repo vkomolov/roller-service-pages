@@ -64,31 +64,35 @@ const metaCanonical = getMatchedFromArray(jsonEntriesKeys, canonicalLanguages);
  * @return {{
  * prefix: string,
  * basepath: string,
- * context: {data: ({}|Record<string, Object>)}}}
+ * context: {data: ({}|Record<string, Object>)}
+ * }}
  */
 export const setFileIncludeSettings = lang => {
+	const pageData = (Object.keys(jsonEntries).length > 0)
+		? getPageData(
+			jsonEntries,
+			{
+				robotsParams,
+				metaStylesheetSources,
+				metaScriptSources,
+				rootUrl,
+				metaCanonical,
+				metaDefaultRel,
+				languages
+			},
+			lang
+		)
+		: {};
+
 	return {
 		prefix: '@@',
 		basepath: '@file',
 		context: {
-			data: (Object.keys(jsonEntries).length > 0)
-				? getPageData(
-					jsonEntries,
-					{
-						robotsParams,
-						metaStylesheetSources,
-						metaScriptSources,
-						rootUrl,
-						metaCanonical,
-						metaDefaultRel,
-						languages
-					},
-					lang
-				)
-				: {},
+			data: pageData
 		}
 	};
 };
+
 
 export const beautifySettings = {
 	html: {

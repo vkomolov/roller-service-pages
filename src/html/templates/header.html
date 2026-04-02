@@ -1,5 +1,5 @@
 <div class="header-layer">
-    @@if (page && data[page] && data[page]._hasData && data[page].header._hasData && data[page].main._hasData) {
+    @@if (page && data && data[page] && data[page].header && data[page].main) {
     <header class="header" role="banner">
         <h2 class="header__logo-heading">@@data[@@page].header.header__logo-heading</h2>
         <div class="header__contacts-wrapper" aria-label="@@data[@@page].header.header__contacts-wrapper_label">
