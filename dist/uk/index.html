@@ -1,7 +1,7 @@
 <!doctype html>
 <!-- checking data["pageName"].main data -->
 <html lang="uk">
-<!--sending params with the page name "page": "index", "anotherPage", -->
+<!-- including head -->
 
 <head>
 	<meta charset="UTF-8">
@@ -23,42 +23,96 @@
 
 <body data-type="index">
 	<div class="total-wrapper">
+		<!-- including header -->
 		<div class="header-layer">
+			<header class="header" role="banner">
+				<h2 class="header__logo-heading">Майстер-Сервіс</h2>
+				<div class="header__contacts-wrapper" aria-label="Опції зв'язку">
+					<div class="header__contacts-block">
+						<a href="tel:+380991019368" aria-label="Мобільний зв'язок із майстром" class="icon-link" tabindex="0">
+							<div class="icon-link__phone-icon">
+								<svg viewBox="0 0 24 25">
+									<title>phone icon</title>
+									<use xlink:href="/assets/img/svgIcons/sprite.mono.svg#phone"></use>
+								</svg>
+							</div>
+							<span class="icon-link__text icon-link__text--phone">+38 (099) 101 93 68</span>
+						</a>
+						<div class="social-icons-wrapper">
+							<a href="viber://chat?number=+380991019368" aria-label="Зв'язок через вайбер" class="social-icons-wrapper__social-icon" tabindex="0">
+								<svg viewBox="0 0 48 48">
+									<title>viber icon</title>
+									<use xlink:href="/assets/img/svgIcons/sprite.multi.svg#viber"></use>
+								</svg>
+							</a>
+							<a href="https://t.me/username" target="_blank" aria-label="Зв'язок через телеграм" rel="noopener noreferrer nofollow" class="social-icons-wrapper__social-icon" tabindex="0">
+								<svg viewBox="0 0 240 240">
+									<title>telegram icon</title>
+									<use xlink:href="/assets/img/svgIcons/sprite.multi.svg#telegram"></use>
+								</svg>
+							</a>
+							<div id="lang-switcher" role="combobox" aria-haspopup="listbox">
+								<div class="lang-switcher__lang-icon active" role="button" aria-expanded="false" aria-controls="lang-list" data-lang="uk">
+									<span>uk</span>
+								</div>
+								<div class="lang-switcher__lang-dropdown">
+									<ul id="lang-list" role="listbox"></ul>
+								</div>
+							</div>
+							<button class="burger_nav hidden" aria-label="Навігація вибору послуг" aria-expanded="false" tabindex="0">
+								<span></span>
+							</button>
+						</div>
+					</div>
+				</div>
+				<nav class="header__nav" aria-label="Навігація вибору послуг">
+					<ul class="header__nav-list">
+						<li><a href="./index.html" class="nav-link" aria-label="Про нас" tabindex="0" data-type="index"> Про нас </a></li>
+						<li><a href="./gates-installation-repair.html" class="nav-link" aria-label="Ворота" tabindex="0" data-type="gates"> Ворота </a></li>
+						<li><a href="./rollers-installation-repair.html" class="nav-link" aria-label="Ролети" tabindex="0" data-type="rollers"> Ролети </a></li>
+						<li><a href="./gates-rollers-automation.html" class="nav-link" aria-label="Автоматизація" tabindex="0" data-type="automation"> Автоматизація </a></li>
+						<li><a href="./barriers-installation-repair.html" class="nav-link" aria-label="Шлагбауми" tabindex="0" data-type="barriers"> Шлагбауми </a></li>
+						<li><a href="./awnings-installation-repair.html" class="nav-link" aria-label="Маркізи" tabindex="0" data-type="awnings"> Маркізи </a></li>
+						<li><a href="./window-settings-repair.html" class="nav-link" aria-label="Вікна та двері" tabindex="0" data-type="windows"> Вікна та двері </a></li>
+						<li><a href="./security-installation-maintenance.html" class="nav-link" aria-label="Відеонагляд" tabindex="0" data-type="security"> Відеонагляд </a></li>
+					</ul>
+				</nav>
+			</header>
 		</div>
 		<div id="scrolledNav">
 			<div class="scrolledNav__contacts-block">
-				<a href="@@data.index.header.header__contacts-block_mobile" aria-label="@@data.index.header.header__contacts-block_mobile_label" class="icon-link" tabindex="0">
+				<a href="tel:+380991019368" aria-label="Мобільний зв'язок із майстром" class="icon-link" tabindex="0">
 					<div class="icon-link__phone-icon">
 						<svg viewBox="0 0 24 25">
 							<title>phone icon</title>
 							<use xlink:href="/assets/img/svgIcons/sprite.mono.svg#phone"></use>
 						</svg>
 					</div>
-					<span class="icon-link__text icon-link__text--phone">@@data.index.header.header__contacts-block_mobile_span</span>
+					<span class="icon-link__text icon-link__text--phone">+38 (099) 101 93 68</span>
 				</a>
 				<div class="social-icons-wrapper">
-					<a href="@@data.index.header.header__contacts-block_viber" aria-label="@@data.index.header.header__contacts-block_viber_label" class="social-icons-wrapper__social-icon" tabindex="0">
+					<a href="viber://chat?number=+380991019368" aria-label="Зв'язок через вайбер" class="social-icons-wrapper__social-icon" tabindex="0">
 						<svg viewBox="0 0 48 48">
 							<title>viber icon</title>
 							<use xlink:href="/assets/img/svgIcons/sprite.multi.svg#viber"></use>
 						</svg>
 					</a>
-					<a href="@@data.index.header.header__contacts-block_telegram" target="_blank" aria-label="@@data.index.header.header__contacts-block_telegram_label" rel="noopener noreferrer nofollow" class="social-icons-wrapper__social-icon">
+					<a href="https://t.me/username" target="_blank" aria-label="Зв'язок через телеграм" rel="noopener noreferrer nofollow" class="social-icons-wrapper__social-icon">
 						<svg viewBox="0 0 240 240">
 							<title>telegram icon</title>
 							<use xlink:href="/assets/img/svgIcons/sprite.multi.svg#telegram"></use>
 						</svg>
 					</a>
-					<button class="burger_nav" aria-label="@@data.index.header.header__nav_label" aria-expanded="false" tabindex="0">
+					<button class="burger_nav" aria-label="Навігація вибору послуг" aria-expanded="false" tabindex="0">
 						<span></span>
 					</button>
 				</div>
 			</div>
 		</div>
-		<nav class="header__nav abs" aria-label="@@data.index.header.header__nav_label" aria-expanded="false">
+		<nav class="header__nav abs" aria-label="Навігація вибору послуг" aria-expanded="false">
 			<div class="header__nav-list-wrapper">
 				<ul class="header__nav-list">
-					<li><a href="./index.html" class="nav-link" aria-label="@@data.index.header.nav-link_main" tabindex="0" data-type="index"> Про нас </a></li>
+					<li><a href="./index.html" class="nav-link" aria-label="Про нас" tabindex="0" data-type="index"> Про нас </a></li>
 					<li><a href="./gates-installation-repair.html" class="nav-link" aria-label="Ворота" tabindex="0" data-type="gates"> Ворота </a></li>
 					<li><a href="./rollers-installation-repair.html" class="nav-link" aria-label="Ролети" tabindex="0" data-type="rollers"> Ролети </a></li>
 					<li><a href="./gates-rollers-automation.html" class="nav-link" aria-label="Автоматизація" tabindex="0" data-type="automation"> Автоматизація </a></li>
@@ -567,7 +621,7 @@
 									<li><a href="./rollers-installation-repair.html" class="nav-link nav-link--footer" aria-label="Go to 'Rollers' services" tabindex="0" data-type="rollers"> Ролети </a></li>
 									<li><a href="./gates-rollers-automation.html" class="nav-link nav-link--footer" aria-label="Go to 'Automation' services" tabindex="0" data-type="automation"> Автоматизація </a></li>
 									<li><a href="./barriers-installation-repair.html" class="nav-link nav-link--footer" aria-label="Go to 'Barriers' services" tabindex="0" data-type="barriers"> Шлагбауми </a></li>
-									<li><a href="./awnings-installation-repair.html" class="nav-link nav-link--footer" aria-label="Go to 'Awnings' services" tabindex="0" data-type="awnings"> @@data.index.header.nav-link_awnings </a></li>
+									<li><a href="./awnings-installation-repair.html" class="nav-link nav-link--footer" aria-label="Go to 'Awnings' services" tabindex="0" data-type="awnings"> Маркізи </a></li>
 									<li><a href="./window-settings-repair.html" class="nav-link nav-link--footer" aria-label="Go to 'Windows and Doors' services" tabindex="0" data-type="windows"> Вікна та двері </a></li>
 									<li><a href="./security-installation-maintenance.html" class="nav-link nav-link--footer" aria-label="Go to 'Video Surveillance' services" tabindex="0" data-type="security"> Відеонагляд </a></li>
 								</ul>

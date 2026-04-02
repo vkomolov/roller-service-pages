@@ -514,7 +514,6 @@ export function readJsonSafe(filePath) {
  * @typedef {InitialData & {
  *   lang: string,
  *   pageName: string,
- *   headerData: object
  *   [key: string]: any  // ← allowing other keys...
  * }} Context
  */
@@ -560,27 +559,30 @@ export function getPageData(
 		const mainDataJsonSource = entries[lang];
 		const headerDataJsonSource = entries[headerDataSource];
 
-		// ЛОГИРОВАНИЕ
-		console.log(`[getPageData] lang: ${lang}`);
-		//console.log(`[getPageData] mainDataJsonSource:`, mainDataJsonSource);
-		//console.log(`[getPageData] headerDataJsonSource:`, headerDataJsonSource);
-
 		const pagesData = readJsonSafe(mainDataJsonSource);
 		const headerData = readJsonSafe(headerDataJsonSource);
 
 		const pageDataRes = Object.fromEntries(
 			Object.entries(pagesData).map(([pageName, pageData]) => {
+				const pageDataCombi = {
+					...pageData,
+					header: {
+						...headerData
+					}
+				}
 
 				const context/** @type {Context} */ = {
 					...initialData,
 					lang,
 					pageName,
-					headerData,
 				};
 
-				return [pageName, buildPageContent(pageData, context)];
+				return [pageName, buildPageContent(pageDataCombi, context)];
 			})
 		);
+
+		//console.log("getPageData:");
+		//console.log(pageDataRes);
 
 		return pageDataRes;
 	}
@@ -604,20 +606,15 @@ export function getPageData(
  * @returns {PageContent}
  */
 function buildPageContent(pageData, context) {
-	// Проверка полей
+
+	// checking properties...
 	const requiredForHead = ['lang', 'pageName', 'rootUrl', 'languages'];
 	const missing = requiredForHead.filter(key => !(key in context));
 	if (missing.length) {
 		throw new Error(`[buildPageContent]: Missing head fields: ${missing.join(', ')}`);
 	}
 
-	/**
-	 *
-	 */
-	const { headerData, ...headData } = context;
-	const { lang, languages } = headData;
-
-	//console.log("headData keys: ", Object.keys(headData).join(", "));
+	const { lang, languages } = context;
 
 	/**
 	 * @typedef {object} Handlers
@@ -635,7 +632,7 @@ function buildPageContent(pageData, context) {
 		head: (value) => {
 			return {
 				...value,
-				...getInitialHeadData(headData),
+				...getInitialHeadData(context),
 			}
 		},
 		/**
@@ -643,10 +640,12 @@ function buildPageContent(pageData, context) {
 		 * @param {object} value
 		 * @return {object}
 		 */
-		header: (value) => ({
-			...(value || {}),
-			...headerData,
-		}),
+		header: (value) => {
+			return {
+				...(value || {}),
+				...context,
+			}
+		},
 
 		/**
 		 *
