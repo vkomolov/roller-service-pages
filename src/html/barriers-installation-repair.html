@@ -12,64 +12,7 @@
 
   <nav class="header__nav abs" aria-label="Navigation to services" aria-expanded="false">
     <div class="header__nav-list-wrapper">
-      <ul class="header__nav-list">
-        <li><a href="./index.html"
-               class="nav-link"
-               aria-label="Go to main page"
-               tabindex="0"
-               data-type="index">
-          @@data.barriers.main.nav-link_main
-        </a></li>
-        <li><a href="./gates-installation-repair.html"
-               class="nav-link"
-               aria-label="Go to 'Gates' services"
-               tabindex="0"
-               data-type="gates">
-          @@data.barriers.main.nav-link_gates
-        </a></li>
-        <li><a href="./rollers-installation-repair.html"
-               class="nav-link"
-               aria-label="Go to 'Rollers' services"
-               tabindex="0"
-               data-type="rollers">
-          @@data.barriers.main.nav-link_rollers
-        </a></li>
-        <li><a href="./gates-rollers-automation.html"
-               class="nav-link"
-               aria-label="Go to 'Automation' services"
-               tabindex="0"
-               data-type="automation">
-          @@data.barriers.main.nav-link_automation
-        </a></li>
-        <li><a href="./barriers-installation-repair.html"
-               class="nav-link"
-               aria-label="Go to 'Barriers' services"
-               tabindex="0"
-               data-type="barriers">
-          @@data.barriers.main.nav-link_barriers
-        </a></li>
-        <li><a href="./awnings-installation-repair.html"
-               class="nav-link"
-               aria-label="Go to 'Awnings' services"
-               tabindex="0"
-               data-type="awnings">
-          @@data.barriers.main.nav-link_awnings
-        </a></li>
-        <li><a href="./window-settings-repair.html"
-               class="nav-link"
-               aria-label="Go to 'Windows and Doors' services"
-               tabindex="0"
-               data-type="windows">
-          @@data.barriers.main.nav-link_windows
-        </a></li>
-        <li><a href="./security-installation-maintenance.html"
-               class="nav-link"
-               aria-label="Go to 'Video Surveillance' services"
-               tabindex="0"
-               data-type="security">
-          @@data.barriers.main.nav-link_security
-        </a></li>
-      </ul>
+      @@include("./templates/header__nav-list.html", {"page": "barriers"})
     </div>
   </nav>
 

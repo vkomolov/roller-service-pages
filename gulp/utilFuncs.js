@@ -562,7 +562,7 @@ export function getPageData(
 		const pagesData = readJsonSafe(mainDataJsonSource);
 		const headerData = readJsonSafe(headerDataJsonSource);
 
-		const pageDataRes = Object.fromEntries(
+		return Object.fromEntries(
 			Object.entries(pagesData).map(([pageName, pageData]) => {
 				const pageDataCombi = {
 					...pageData,
@@ -580,11 +580,6 @@ export function getPageData(
 				return [pageName, buildPageContent(pageDataCombi, context)];
 			})
 		);
-
-		//console.log("getPageData:");
-		//console.log(pageDataRes);
-
-		return pageDataRes;
 	}
 	catch (error) {
 		//strict mode: tsconfig.json
