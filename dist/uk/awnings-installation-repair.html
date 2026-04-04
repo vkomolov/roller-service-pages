@@ -23,6 +23,7 @@
 <body data-type="awnings">
 	<div class="total-wrapper">
 		<div class="header-layer">
+			<!--data is accessed from context.data of "gulp-file-include"-->
 			<header class="header" role="banner">
 				<h2 class="header__logo-heading">Майстер-Сервіс</h2>
 				<div class="header__contacts-wrapper" aria-label="Опції зв'язку">
@@ -65,14 +66,30 @@
 				</div>
 				<nav class="header__nav" aria-label="Навігація вибору послуг">
 					<ul class="header__nav-list">
-						<li><a href="./index.html" class="nav-link" aria-label="Про нас" tabindex="0" data-type="index"> Про нас </a></li>
-						<li><a href="./gates-installation-repair.html" class="nav-link" aria-label="Ворота" tabindex="0" data-type="gates"> Ворота </a></li>
-						<li><a href="./rollers-installation-repair.html" class="nav-link" aria-label="Ролети" tabindex="0" data-type="rollers"> Ролети </a></li>
-						<li><a href="./gates-rollers-automation.html" class="nav-link" aria-label="Автоматизація" tabindex="0" data-type="automation"> Автоматизація </a></li>
-						<li><a href="./barriers-installation-repair.html" class="nav-link" aria-label="Шлагбауми" tabindex="0" data-type="barriers"> Шлагбауми </a></li>
-						<li><a href="./awnings-installation-repair.html" class="nav-link" aria-label="Маркізи" tabindex="0" data-type="awnings"> Маркізи </a></li>
-						<li><a href="./window-settings-repair.html" class="nav-link" aria-label="Вікна та двері" tabindex="0" data-type="windows"> Вікна та двері </a></li>
-						<li><a href="./security-installation-maintenance.html" class="nav-link" aria-label="Відеонагляд" tabindex="0" data-type="security"> Відеонагляд </a></li>
+						<li>
+							<a href="./index.html" class="nav-link" aria-label="Про нас" tabindex="0" data-type="index"> Про нас </a>
+						</li>
+						<li>
+							<a href="./gates-installation-repair.html" class="nav-link" aria-label="Ворота" tabindex="0" data-type="gates"> Ворота </a>
+						</li>
+						<li>
+							<a href="./rollers-installation-repair.html" class="nav-link" aria-label="Ролети" tabindex="0" data-type="rollers"> Ролети </a>
+						</li>
+						<li>
+							<a href="./gates-rollers-automation.html" class="nav-link" aria-label="Автоматизація" tabindex="0" data-type="automation"> Автоматизація </a>
+						</li>
+						<li>
+							<a href="./barriers-installation-repair.html" class="nav-link" aria-label="Шлагбауми" tabindex="0" data-type="barriers"> Шлагбауми </a>
+						</li>
+						<li>
+							<a href="./awnings-installation-repair.html" class="nav-link" aria-label="Маркізи" tabindex="0" data-type="awnings"> Маркізи </a>
+						</li>
+						<li>
+							<a href="./window-settings-repair.html" class="nav-link" aria-label="Вікна та двері" tabindex="0" data-type="windows"> Вікна та двері </a>
+						</li>
+						<li>
+							<a href="./security-installation-maintenance.html" class="nav-link" aria-label="Відеонагляд" tabindex="0" data-type="security"> Відеонагляд </a>
+						</li>
 					</ul>
 				</nav>
 			</header>
@@ -110,18 +127,34 @@
 		<nav class="header__nav abs" aria-label="Navigation to services" aria-expanded="false">
 			<div class="header__nav-list-wrapper">
 				<ul class="header__nav-list">
-					<li><a href="./index.html" class="nav-link" aria-label="Про нас" tabindex="0" data-type="index"> Про нас </a></li>
-					<li><a href="./gates-installation-repair.html" class="nav-link" aria-label="Ворота" tabindex="0" data-type="gates"> Ворота </a></li>
-					<li><a href="./rollers-installation-repair.html" class="nav-link" aria-label="Ролети" tabindex="0" data-type="rollers"> Ролети </a></li>
-					<li><a href="./gates-rollers-automation.html" class="nav-link" aria-label="Автоматизація" tabindex="0" data-type="automation"> Автоматизація </a></li>
-					<li><a href="./barriers-installation-repair.html" class="nav-link" aria-label="Шлагбауми" tabindex="0" data-type="barriers"> Шлагбауми </a></li>
-					<li><a href="./awnings-installation-repair.html" class="nav-link" aria-label="Маркізи" tabindex="0" data-type="awnings"> Маркізи </a></li>
-					<li><a href="./window-settings-repair.html" class="nav-link" aria-label="Вікна та двері" tabindex="0" data-type="windows"> Вікна та двері </a></li>
-					<li><a href="./security-installation-maintenance.html" class="nav-link" aria-label="Відеонагляд" tabindex="0" data-type="security"> Відеонагляд </a></li>
+					<li>
+						<a href="./index.html" class="nav-link" aria-label="Про нас" tabindex="0" data-type="index"> Про нас </a>
+					</li>
+					<li>
+						<a href="./gates-installation-repair.html" class="nav-link" aria-label="Ворота" tabindex="0" data-type="gates"> Ворота </a>
+					</li>
+					<li>
+						<a href="./rollers-installation-repair.html" class="nav-link" aria-label="Ролети" tabindex="0" data-type="rollers"> Ролети </a>
+					</li>
+					<li>
+						<a href="./gates-rollers-automation.html" class="nav-link" aria-label="Автоматизація" tabindex="0" data-type="automation"> Автоматизація </a>
+					</li>
+					<li>
+						<a href="./barriers-installation-repair.html" class="nav-link" aria-label="Шлагбауми" tabindex="0" data-type="barriers"> Шлагбауми </a>
+					</li>
+					<li>
+						<a href="./awnings-installation-repair.html" class="nav-link" aria-label="Маркізи" tabindex="0" data-type="awnings"> Маркізи </a>
+					</li>
+					<li>
+						<a href="./window-settings-repair.html" class="nav-link" aria-label="Вікна та двері" tabindex="0" data-type="windows"> Вікна та двері </a>
+					</li>
+					<li>
+						<a href="./security-installation-maintenance.html" class="nav-link" aria-label="Відеонагляд" tabindex="0" data-type="security"> Відеонагляд </a>
+					</li>
 				</ul>
 			</div>
 		</nav>
-		<section class="section section--hero" aria-labelledby="awnings">
+		<section class="section section--hero" aria-label="Про послугу">
 			<!--Using <picture> for various image compositions with different aspect-ratio-->
 			<!--retina is omitted for the hero background-->
 			<picture class="hero-bg">
@@ -138,7 +171,7 @@
 			</picture>
 			<div class="section__content-layer section__content-layer--hero">
 				<div class="section__heading-block section__heading-block--hero">
-					<h1 id="awnings">
+					<h1>
 						<span class="accent">Встановлення маркіз</span>
 						<span class="rest-of-heading">ремонт та обслуговування</span>
 					</h1>
@@ -148,12 +181,12 @@
 						<p>Досвідчені фахівці виконують роботу будь-якої складності по встановленню, обслуговуванню і ремонту механічних або автоматичних маркіз та навесів.</p>
 					</div>
 					<div class="section__img-wrapper section__img-wrapper--hero">
-						<img src="/assets/img/heroSection/24_7.webp" alt="working hours 24 / 7" loading="lazy">
+						<img src="/assets/img/heroSection/24_7.webp" alt="working hours 24 / 7" width="250" height="250" fetchpriority="high">
 					</div>
 				</div>
 				<div class="section__bidding-block">
-					<p>Терміновий виїзд в Київі та Київській області</p>
-					<button class="button-request" data-type="general" onclick="window.location.href='tel:380991019368'" aria-label="Mobile communication with a specialist" tabindex="0"> Зв’язок із майстром </button>
+					<p>Терміновий виїзд по Київу та Київській області</p>
+					<button class="button-request" data-type="general" onclick="window.location.href='tel:380991019368'" aria-label="Зв’язок із майстром" tabindex="0"> Зв’язок із майстром </button>
 				</div>
 			</div>
 		</section>
@@ -661,7 +694,7 @@
 									<li><a href="./rollers-installation-repair.html" class="nav-link nav-link--footer" aria-label="Go to 'Rollers' services" tabindex="0" data-type="rollers"> Ролети </a></li>
 									<li><a href="./gates-rollers-automation.html" class="nav-link nav-link--footer" aria-label="Go to 'Automation' services" tabindex="0" data-type="automation"> Автоматизація </a></li>
 									<li><a href="./barriers-installation-repair.html" class="nav-link nav-link--footer" aria-label="Go to 'Barriers' services" tabindex="0" data-type="barriers"> Шлагбауми </a></li>
-									<li><a href="./awnings-installation-repair.html" class="nav-link nav-link--footer" aria-label="Go to 'Awnings' services" tabindex="0" data-type="awnings"> Маркізи </a></li>
+									<li><a href="./awnings-installation-repair.html" class="nav-link nav-link--footer" aria-label="Go to 'Awnings' services" tabindex="0" data-type="awnings"> @@data.awnings.header.nav-link_awnings </a></li>
 									<li><a href="./window-settings-repair.html" class="nav-link nav-link--footer" aria-label="Go to 'Windows and Doors' services" tabindex="0" data-type="windows"> Вікна та двері </a></li>
 									<li><a href="./security-installation-maintenance.html" class="nav-link nav-link--footer" aria-label="Go to 'Video Surveillance' services" tabindex="0" data-type="security"> Відеонагляд </a></li>
 								</ul>

@@ -1,0 +1,36 @@
+@@if (data && page && data[page] && data[page].main?.hero) {
+
+<div class="section__content-layer section__content-layer--hero">
+	<div class="section__heading-block section__heading-block--hero">
+		<h1>
+			<span class="accent">@@data.@@page.main.hero.accent</span>
+			<span class="rest-of-heading">@@data.@@page.main.hero.rest-of-heading</span>
+		</h1>
+	</div>
+	<div class="section__content-block section__content-block--hero section__content-block--row-left">
+		<div class="section__text-block section__text-block--hero">
+			<p>@@data.@@page.main.hero.text-block-p</p>
+		</div>
+		<div class="section__img-wrapper section__img-wrapper--hero">
+			<img src="/assets/img/heroSection/24_7.webp"
+			     alt="working hours 24 / 7"
+			     width="250"
+			     height="250"
+			     fetchpriority="high"
+			>
+		</div>
+	</div>
+	<div class="section__bidding-block">
+		<p>@@data.@@page.main.hero.bidding-block-p</p>
+		<button
+				class="button-request"
+				data-type="general"
+				onclick="window.location.href='tel:380991019368'"
+				aria-label="@@data.@@page.main.hero.button-request"
+				tabindex="0">
+			@@data.@@page.main.hero.button-request
+		</button>
+	</div>
+</div>
+
+}

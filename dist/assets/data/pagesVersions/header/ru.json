@@ -1,20 +1,50 @@
 {
   "header__logo-heading": "Мастер-Сервис",
   "header__contacts-wrapper_label": "Опции связи",
-  "header__contacts-block_mobile": "tel:+380991019368",
-  "header__contacts-block_mobile_span": "+38 (099) 101 93 68",
-  "header__contacts-block_mobile_label": "Мобильная связь с мастером",
-  "header__contacts-block_viber": "viber://chat?number=+380991019368",
-  "header__contacts-block_viber_label": "Связь через вайбер",
-  "header__contacts-block_telegram": "https://t.me/username",
-  "header__contacts-block_telegram_label": "Связь через телеграм",
   "header__nav_label": "Навигация выбора услуг",
-  "nav-link_main": "О нас",
-  "nav-link_gates": "Ворота",
-  "nav-link_rollers": "Роллеты",
-  "nav-link_automation": "Автоматизация",
-  "nav-link_barriers": "Шлагбаумы",
-  "nav-link_awnings": "Маркизы",
-  "nav-link_windows": "Окна и Двери",
-  "nav-link_security": "Видеокамеры"
+
+  "header__contacts-block": {
+    "mobile": "tel:+380991019368",
+    "mobile_span": "+38 (099) 101 93 68",
+    "mobile_label": "Мобильная связь с мастером",
+    "viber": "viber://chat?number=+380991019368",
+    "viber_label": "Связь через вайбер",
+    "telegram": "https://t.me/username",
+    "telegram_label": "Связь через телеграм"
+  },
+
+  "nav-link": {
+    "index": {
+      "label": "Про нас",
+      "href": "./index.html"
+    },
+    "gates": {
+      "label": "Ворота",
+      "href": "./gates-installation-repair.html"
+    },
+    "rollers": {
+      "label": "Роллеты",
+      "href": "./rollers-installation-repair.html"
+    },
+    "automation": {
+      "label": "Автоматизация",
+      "href": "./gates-rollers-automation.html"
+    },
+    "barriers": {
+      "label": "Шлагбаумы",
+      "href": "./barriers-installation-repair.html"
+    },
+    "awnings": {
+      "label": "Маркизы",
+      "href": "./awnings-installation-repair.html"
+    },
+    "windows": {
+      "label": "Окна и Двери",
+      "href": "./window-settings-repair.html"
+    },
+    "security": {
+      "label": "Видеокамеры",
+      "href": "./security-installation-maintenance.html"
+    }
+  }
 }

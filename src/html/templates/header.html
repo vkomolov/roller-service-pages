@@ -1,13 +1,13 @@
 <div class="header-layer">
-
+<!--data is accessed from context.data of "gulp-file-include"-->
     @@if (data && page && data[page].header) {
 
     <header class="header" role="banner">
         <h2 class="header__logo-heading">@@data.@@page.header.header__logo-heading</h2>
         <div class="header__contacts-wrapper" aria-label="@@data.@@page.header.header__contacts-wrapper_label">
             <div class="header__contacts-block">
-                <a href="@@data.@@page.header.header__contacts-block_mobile"
-                   aria-label="@@data.@@page.header.header__contacts-block_mobile_label"
+                <a href="@@data.@@page.header.header__contacts-block.mobile"
+                   aria-label="@@data.@@page.header.header__contacts-block.mobile_label"
                    class="icon-link"
                    tabindex="0"
                 >
@@ -17,11 +17,11 @@
                             <use xlink:href="/assets/img/svgIcons/sprite.mono.svg#phone"></use>
                         </svg>
                     </div>
-                    <span class="icon-link__text icon-link__text--phone">@@data.@@page.header.header__contacts-block_mobile_span</span>
+                    <span class="icon-link__text icon-link__text--phone">@@data.@@page.header.header__contacts-block.mobile_span</span>
                 </a>
                 <div class="social-icons-wrapper">
-                    <a href="@@data.@@page.header.header__contacts-block_viber"
-                       aria-label="@@data.@@page.header.header__contacts-block_viber_label"
+                    <a href="@@data.@@page.header.header__contacts-block.viber"
+                       aria-label="@@data.@@page.header.header__contacts-block.viber_label"
                        class="social-icons-wrapper__social-icon"
                        tabindex="0"
                     >
@@ -30,9 +30,9 @@
                             <use xlink:href="/assets/img/svgIcons/sprite.multi.svg#viber"></use>
                         </svg>
                     </a>
-                    <a href="@@data.@@page.header.header__contacts-block_telegram"
+                    <a href="@@data.@@page.header.header__contacts-block.telegram"
                        target="_blank"
-                       aria-label="@@data.@@page.header.header__contacts-block_telegram_label"
+                       aria-label="@@data.@@page.header.header__contacts-block.telegram_label"
                        rel="noopener noreferrer nofollow"
                        class="social-icons-wrapper__social-icon"
                        tabindex="0"
@@ -42,6 +42,7 @@
                             <use xlink:href="/assets/img/svgIcons/sprite.multi.svg#telegram"></use>
                         </svg>
                     </a>
+
                     <div id="lang-switcher" role="combobox" aria-haspopup="listbox">
                         <div class="lang-switcher__lang-icon active"
                              role="button"

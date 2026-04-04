@@ -1,0 +1,11 @@
+
+@@if (data && type && page && data[page].header) {
+
+<a href="@@data.@@page.header.nav-link.@@type.href"
+   class="nav-link"
+   aria-label="@@data.@@page.header.nav-link.@@type.label"
+   tabindex="0"
+   data-type="@@type">
+	@@data.@@page.header.nav-link.@@type.label
+</a>
+}

@@ -1,20 +1,50 @@
 {
   "header__logo-heading": "Майстер-Сервіс",
   "header__contacts-wrapper_label": "Опції зв'язку",
-  "header__contacts-block_mobile": "tel:+380991019368",
-  "header__contacts-block_mobile_span": "+38 (099) 101 93 68",
-  "header__contacts-block_mobile_label": "Мобільний зв'язок із майстром",
-  "header__contacts-block_viber": "viber://chat?number=+380991019368",
-  "header__contacts-block_viber_label": "Зв'язок через вайбер",
-  "header__contacts-block_telegram": "https://t.me/username",
-  "header__contacts-block_telegram_label": "Зв'язок через телеграм",
   "header__nav_label": "Навігація вибору послуг",
-  "nav-link_main": "Про нас",
-  "nav-link_gates": "Ворота",
-  "nav-link_rollers": "Ролети",
-  "nav-link_automation": "Автоматизація",
-  "nav-link_barriers": "Шлагбауми",
-  "nav-link_awnings": "Маркізи",
-  "nav-link_windows": "Вікна та двері",
-  "nav-link_security": "Відеонагляд"
+
+  "header__contacts-block": {
+    "mobile": "tel:+380991019368",
+    "mobile_span": "+38 (099) 101 93 68",
+    "mobile_label": "Мобільний зв'язок із майстром",
+    "viber": "viber://chat?number=+380991019368",
+    "viber_label": "Зв'язок через вайбер",
+    "telegram": "https://t.me/username",
+    "telegram_label": "Зв'язок через телеграм"
+  },
+
+  "nav-link": {
+    "index": {
+      "label": "Про нас",
+      "href": "./index.html"
+    },
+    "gates": {
+      "label": "Ворота",
+      "href": "./gates-installation-repair.html"
+    },
+    "rollers": {
+      "label": "Ролети",
+      "href": "./rollers-installation-repair.html"
+    },
+    "automation": {
+      "label": "Автоматизація",
+      "href": "./gates-rollers-automation.html"
+    },
+    "barriers": {
+      "label": "Шлагбауми",
+      "href": "./barriers-installation-repair.html"
+    },
+    "awnings": {
+      "label": "Маркізи",
+      "href": "./awnings-installation-repair.html"
+    },
+    "windows": {
+      "label": "Вікна та двері",
+      "href": "./window-settings-repair.html"
+    },
+    "security": {
+      "label": "Відеонагляд",
+      "href": "./security-installation-maintenance.html"
+    }
+  }
 }

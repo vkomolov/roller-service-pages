@@ -22,6 +22,7 @@
 <body data-type="barriers">
 	<div class="total-wrapper">
 		<div class="header-layer">
+			<!--data is accessed from context.data of "gulp-file-include"-->
 			<header class="header" role="banner">
 				<h2 class="header__logo-heading">Мастер-Сервис</h2>
 				<div class="header__contacts-wrapper" aria-label="Опции связи">
@@ -64,14 +65,30 @@
 				</div>
 				<nav class="header__nav" aria-label="Навигация выбора услуг">
 					<ul class="header__nav-list">
-						<li><a href="./index.html" class="nav-link" aria-label="О нас" tabindex="0" data-type="index"> О нас </a></li>
-						<li><a href="./gates-installation-repair.html" class="nav-link" aria-label="Ворота" tabindex="0" data-type="gates"> Ворота </a></li>
-						<li><a href="./rollers-installation-repair.html" class="nav-link" aria-label="Роллеты" tabindex="0" data-type="rollers"> Роллеты </a></li>
-						<li><a href="./gates-rollers-automation.html" class="nav-link" aria-label="Автоматизация" tabindex="0" data-type="automation"> Автоматизация </a></li>
-						<li><a href="./barriers-installation-repair.html" class="nav-link" aria-label="Шлагбаумы" tabindex="0" data-type="barriers"> Шлагбаумы </a></li>
-						<li><a href="./awnings-installation-repair.html" class="nav-link" aria-label="Маркизы" tabindex="0" data-type="awnings"> Маркизы </a></li>
-						<li><a href="./window-settings-repair.html" class="nav-link" aria-label="Окна и Двери" tabindex="0" data-type="windows"> Окна и Двери </a></li>
-						<li><a href="./security-installation-maintenance.html" class="nav-link" aria-label="Видеокамеры" tabindex="0" data-type="security"> Видеокамеры </a></li>
+						<li>
+							<a href="./index.html" class="nav-link" aria-label="Про нас" tabindex="0" data-type="index"> Про нас </a>
+						</li>
+						<li>
+							<a href="./gates-installation-repair.html" class="nav-link" aria-label="Ворота" tabindex="0" data-type="gates"> Ворота </a>
+						</li>
+						<li>
+							<a href="./rollers-installation-repair.html" class="nav-link" aria-label="Роллеты" tabindex="0" data-type="rollers"> Роллеты </a>
+						</li>
+						<li>
+							<a href="./gates-rollers-automation.html" class="nav-link" aria-label="Автоматизация" tabindex="0" data-type="automation"> Автоматизация </a>
+						</li>
+						<li>
+							<a href="./barriers-installation-repair.html" class="nav-link" aria-label="Шлагбаумы" tabindex="0" data-type="barriers"> Шлагбаумы </a>
+						</li>
+						<li>
+							<a href="./awnings-installation-repair.html" class="nav-link" aria-label="Маркизы" tabindex="0" data-type="awnings"> Маркизы </a>
+						</li>
+						<li>
+							<a href="./window-settings-repair.html" class="nav-link" aria-label="Окна и Двери" tabindex="0" data-type="windows"> Окна и Двери </a>
+						</li>
+						<li>
+							<a href="./security-installation-maintenance.html" class="nav-link" aria-label="Видеокамеры" tabindex="0" data-type="security"> Видеокамеры </a>
+						</li>
 					</ul>
 				</nav>
 			</header>
@@ -109,18 +126,34 @@
 		<nav class="header__nav abs" aria-label="Navigation to services" aria-expanded="false">
 			<div class="header__nav-list-wrapper">
 				<ul class="header__nav-list">
-					<li><a href="./index.html" class="nav-link" aria-label="О нас" tabindex="0" data-type="index"> О нас </a></li>
-					<li><a href="./gates-installation-repair.html" class="nav-link" aria-label="Ворота" tabindex="0" data-type="gates"> Ворота </a></li>
-					<li><a href="./rollers-installation-repair.html" class="nav-link" aria-label="Роллеты" tabindex="0" data-type="rollers"> Роллеты </a></li>
-					<li><a href="./gates-rollers-automation.html" class="nav-link" aria-label="Автоматизация" tabindex="0" data-type="automation"> Автоматизация </a></li>
-					<li><a href="./barriers-installation-repair.html" class="nav-link" aria-label="Шлагбаумы" tabindex="0" data-type="barriers"> Шлагбаумы </a></li>
-					<li><a href="./awnings-installation-repair.html" class="nav-link" aria-label="Маркизы" tabindex="0" data-type="awnings"> Маркизы </a></li>
-					<li><a href="./window-settings-repair.html" class="nav-link" aria-label="Окна и Двери" tabindex="0" data-type="windows"> Окна и Двери </a></li>
-					<li><a href="./security-installation-maintenance.html" class="nav-link" aria-label="Видеокамеры" tabindex="0" data-type="security"> Видеокамеры </a></li>
+					<li>
+						<a href="./index.html" class="nav-link" aria-label="Про нас" tabindex="0" data-type="index"> Про нас </a>
+					</li>
+					<li>
+						<a href="./gates-installation-repair.html" class="nav-link" aria-label="Ворота" tabindex="0" data-type="gates"> Ворота </a>
+					</li>
+					<li>
+						<a href="./rollers-installation-repair.html" class="nav-link" aria-label="Роллеты" tabindex="0" data-type="rollers"> Роллеты </a>
+					</li>
+					<li>
+						<a href="./gates-rollers-automation.html" class="nav-link" aria-label="Автоматизация" tabindex="0" data-type="automation"> Автоматизация </a>
+					</li>
+					<li>
+						<a href="./barriers-installation-repair.html" class="nav-link" aria-label="Шлагбаумы" tabindex="0" data-type="barriers"> Шлагбаумы </a>
+					</li>
+					<li>
+						<a href="./awnings-installation-repair.html" class="nav-link" aria-label="Маркизы" tabindex="0" data-type="awnings"> Маркизы </a>
+					</li>
+					<li>
+						<a href="./window-settings-repair.html" class="nav-link" aria-label="Окна и Двери" tabindex="0" data-type="windows"> Окна и Двери </a>
+					</li>
+					<li>
+						<a href="./security-installation-maintenance.html" class="nav-link" aria-label="Видеокамеры" tabindex="0" data-type="security"> Видеокамеры </a>
+					</li>
 				</ul>
 			</div>
 		</nav>
-		<section class="section section--hero" aria-labelledby="barriers">
+		<section class="section section--hero" aria-label="Об услуге">
 			<!--Using <picture> for various image compositions with different aspect-ratio-->
 			<!--retina is omitted for the hero background-->
 			<picture class="hero-bg">
@@ -137,7 +170,7 @@
 			</picture>
 			<div class="section__content-layer section__content-layer--hero">
 				<div class="section__heading-block section__heading-block--hero">
-					<h1 id=barriers">
+					<h1>
 						<span class="accent">Установка шлагбаумов</span>
 						<span class="rest-of-heading">оперативный ремонт и обслуживание</span>
 					</h1>
@@ -147,12 +180,12 @@
 						<p>Мы оперативно выполняем работы по ремонту шлагбаумов, а также осуществляем их техническое обслуживание и установку новых систем.</p>
 					</div>
 					<div class="section__img-wrapper section__img-wrapper--hero">
-						<img src="/assets/img/heroSection/24_7.webp" alt="working hours 24 / 7" loading="lazy">
+						<img src="/assets/img/heroSection/24_7.webp" alt="working hours 24 / 7" width="250" height="250" fetchpriority="high">
 					</div>
 				</div>
 				<div class="section__bidding-block">
 					<p>Срочный выезд по Киеву и Киевской области</p>
-					<button class="button-request" data-type="general" onclick="window.location.href='tel:380991019368'" aria-label="Mobile communication with a specialist" tabindex="0"> Связь с мастером </button>
+					<button class="button-request" data-type="general" onclick="window.location.href='tel:380991019368'" aria-label="Связь с мастером" tabindex="0"> Связь с мастером </button>
 				</div>
 			</div>
 		</section>
@@ -640,7 +673,7 @@
 									<li><a href="./rollers-installation-repair.html" class="nav-link nav-link--footer" aria-label="Go to 'Rollers' services" tabindex="0" data-type="rollers"> Роллеты </a></li>
 									<li><a href="./gates-rollers-automation.html" class="nav-link nav-link--footer" aria-label="Go to 'Automation' services" tabindex="0" data-type="automation"> Автоматизация </a></li>
 									<li><a href="./barriers-installation-repair.html" class="nav-link nav-link--footer" aria-label="Go to 'Barriers' services" tabindex="0" data-type="barriers"> Шлагбаумы </a></li>
-									<li><a href="./awnings-installation-repair.html" class="nav-link nav-link--footer" aria-label="Go to 'Awnings' services" tabindex="0" data-type="awnings"> Маркизы </a></li>
+									<li><a href="./awnings-installation-repair.html" class="nav-link nav-link--footer" aria-label="Go to 'Awnings' services" tabindex="0" data-type="awnings"> @@data.barriers.header.nav-link_awnings </a></li>
 									<li><a href="./window-settings-repair.html" class="nav-link nav-link--footer" aria-label="Go to 'Windows and Doors' services" tabindex="0" data-type="windows"> Окна и Двери </a></li>
 									<li><a href="./security-installation-maintenance.html" class="nav-link nav-link--footer" aria-label="Go to 'Video Surveillance' services" tabindex="0" data-type="security"> Видеонаблюдение </a></li>
 								</ul>
