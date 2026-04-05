@@ -780,10 +780,15 @@ export function initLangSwitcher(params = {}) {
 		iconLangSelector = '.lang-switcher__lang-icon',
 		langActiveSelector = '.active',
 		langListSelector = '#listbox',
-		langOptionArr = ['ua', 'ru'],
+		langOptionArr = ['uk', 'ru'],
 		dataSetParam = 'lang'
 	} = params;
 
+	/**
+	 *
+	 * @param {string} selector
+	 * @param {string} addition
+	 */
 	const notFoundError = (selector, addition = '') => {
 		console.error(
 			`at initLangSwitcher: the given selector: ${selector} is not found in DOM`,

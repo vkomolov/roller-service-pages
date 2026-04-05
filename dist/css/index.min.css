@@ -661,7 +661,7 @@ h2,h3,h4,h5{
   background-color:hsla(0,0%,100%,.5);
   display:block;
   left:0;
-  padding:0;
+  padding-top:4rem;
   position:fixed;
   top:-110%;
   width:100%;
@@ -674,7 +674,7 @@ h2,h3,h4,h5{
   justify-content:flex-end;
   margin:0 auto;
   max-width:1280px;
-  padding:4rem 2.2rem .5rem;
+  padding:.5rem 2.2rem;
   width:100%;
 }
 
@@ -791,6 +791,7 @@ h2,h3,h4,h5{
   backdrop-filter:blur(.2rem);
   background-color:hsla(0,0%,100%,.2);
   left:0;
+  padding-top:10px;
   position:fixed;
   top:-100px;
   width:100%;

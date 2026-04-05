@@ -11006,9 +11006,15 @@ function initLangSwitcher(params = {}) {
     iconLangSelector = '.lang-switcher__lang-icon',
     langActiveSelector = '.active',
     langListSelector = '#listbox',
-    langOptionArr = ['ua', 'ru'],
+    langOptionArr = ['uk', 'ru'],
     dataSetParam = 'lang'
   } = params;
+
+  /**
+   *
+   * @param {string} selector
+   * @param {string} addition
+   */
   const notFoundError = (selector, addition = '') => {
     console.error(`at initLangSwitcher: the given selector: ${selector} is not found in DOM`, addition);
   };
@@ -11801,7 +11807,8 @@ const burgerHidden = document.querySelector(i.burgerHidden);
 const burgerFixed = document.querySelector(i.burgerFixed);
 const burgerAll = document.querySelectorAll(i.burgerBase);
 const navMenuAnime = gsap__WEBPACK_IMPORTED_MODULE_1__.gsap.to(navMenuFixed, {
-  top: 0,
+  top: -20,
+  //to compensate animation top shift
   duration: .8,
   ease: "back.out(0.8)",
   paused: true
@@ -11854,13 +11861,13 @@ const getHeroAnimation = () => {
 };
 const initScrolledNavigation = () => {
   gsap__WEBPACK_IMPORTED_MODULE_1__.gsap.to(i.scrolledNav, {
-    top: 0,
-    duration: 1.2,
-    ease: "back.out(0.8)",
+    top: -10,
+    duration: .7,
+    ease: "back.out(1.5)",
     delay: 0.5,
     scrollTrigger: {
       trigger: i.benefitsSection,
-      start: "top 10%",
+      start: "top 5%",
       //end: "bottom 85%",
       toggleActions: "play none none reverse",
       //markers: true,
@@ -12298,12 +12305,13 @@ const langSwitchData = {
   iconLangSelector: ".lang-switcher__lang-icon",
   langActiveSelector: ".active",
   langListSelector: "#lang-list",
-  langOptionArr: ["ua", "ru"],
+  langOptionArr: ["uk", "ru"],
   dataSetParam: "lang"
 };
 const gallerySelector = "#gallery-work";
 const galleryThumbsFolderName = "thumbs";
 document.addEventListener("DOMContentLoaded", async () => {
+  /*** @type {string} */
   const pageType = document.body.dataset.type;
 
   /// Navigation ///

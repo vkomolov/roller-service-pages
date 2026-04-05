@@ -980,7 +980,7 @@ h2, h3, h4, h5 {
   display: block;
   position: fixed;
   width: 100%;
-  padding: 0;
+  padding-top: 4rem;
   top: -110%;
   left: 0;
   z-index: 40;
@@ -997,7 +997,7 @@ h2, h3, h4, h5 {
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 4rem 2.2rem 0.5rem;
+  padding: 0.5rem 2.2rem;
   display: flex;
   flex-flow: row wrap;
   justify-content: flex-end;
@@ -1158,6 +1158,7 @@ h2, h3, h4, h5 {
   top: -100px;
   left: 0;
   width: 100%;
+  padding-top: 10px;
   z-index: 50;
   background-color: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(0.2rem);

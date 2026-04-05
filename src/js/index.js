@@ -23,13 +23,14 @@ const langSwitchData = {
   iconLangSelector: ".lang-switcher__lang-icon",
   langActiveSelector: ".active",
   langListSelector: "#lang-list",
-  langOptionArr: ["ua", "ru"],
+  langOptionArr: ["uk", "ru"],
   dataSetParam: "lang"
 }
 const gallerySelector = "#gallery-work";
 const galleryThumbsFolderName = "thumbs";
 
 document.addEventListener("DOMContentLoaded", async () => {
+  /*** @type {string} */
   const pageType = document.body.dataset.type;
 
   /// Navigation ///

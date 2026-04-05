@@ -43,7 +43,7 @@ const burgerFixed = document.querySelector(i.burgerFixed);
 const burgerAll = document.querySelectorAll(i.burgerBase);
 
 const navMenuAnime = gsap.to(navMenuFixed, {
-  top: 0,
+  top: -20, //to compensate animation top shift
   duration: .8,
   ease: "back.out(0.8)",
   paused: true,
@@ -100,13 +100,13 @@ const getHeroAnimation = () => {
 
 const initScrolledNavigation = () => {
   gsap.to(i.scrolledNav, {
-    top: 0,
-    duration: 1.2,
-    ease: "back.out(0.8)",
+    top: -10,
+    duration: .7,
+    ease: "back.out(1.5)",
     delay: 0.5,
     scrollTrigger: {
       trigger: i.benefitsSection,
-      start: "top 10%",
+      start: "top 5%",
       //end: "bottom 85%",
       toggleActions: "play none none reverse",
       //markers: true,
