@@ -980,7 +980,7 @@ h2, h3, h4, h5 {
   display: block;
   position: fixed;
   width: 100%;
-  padding-top: 4rem;
+  padding-top: 4.7rem;
   top: -110%;
   left: 0;
   z-index: 40;
