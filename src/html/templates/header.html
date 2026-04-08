@@ -3,11 +3,11 @@
     @@if (data && page && data[page].header) {
 
     <header class="header" role="banner">
-        <h2 class="header__logo-heading">@@data.@@page.header.header__logo-heading</h2>
-        <div class="header__contacts-wrapper" aria-label="@@data.@@page.header.header__contacts-wrapper_label">
+        <h2 class="header__logo-heading">@@data.@@page.header.logo-heading</h2>
+        <div class="header__contacts-wrapper" aria-label="@@data.@@page.header.contacts-wrapper_label">
             <div class="header__contacts-block">
-                <a href="@@data.@@page.header.header__contacts-block.mobile"
-                   aria-label="@@data.@@page.header.header__contacts-block.mobile_label"
+                <a href="@@data.@@page.header.contacts-block.mobile"
+                   aria-label="@@data.@@page.header.contacts-block.mobile_label"
                    class="icon-link"
                    tabindex="0"
                 >
@@ -17,11 +17,11 @@
                             <use xlink:href="/assets/img/svgIcons/sprite.mono.svg#phone"></use>
                         </svg>
                     </div>
-                    <span class="icon-link__text icon-link__text--phone">@@data.@@page.header.header__contacts-block.mobile_span</span>
+                    <span class="icon-link__text icon-link__text--phone">@@data.@@page.header.contacts-block.mobile_span</span>
                 </a>
                 <div class="social-icons-wrapper">
-                    <a href="@@data.@@page.header.header__contacts-block.viber"
-                       aria-label="@@data.@@page.header.header__contacts-block.viber_label"
+                    <a href="@@data.@@page.header.contacts-block.viber"
+                       aria-label="@@data.@@page.header.contacts-block.viber_label"
                        class="social-icons-wrapper__social-icon"
                        tabindex="0"
                     >
@@ -30,9 +30,9 @@
                             <use xlink:href="/assets/img/svgIcons/sprite.multi.svg#viber"></use>
                         </svg>
                     </a>
-                    <a href="@@data.@@page.header.header__contacts-block.telegram"
+                    <a href="@@data.@@page.header.contacts-block.telegram"
                        target="_blank"
-                       aria-label="@@data.@@page.header.header__contacts-block.telegram_label"
+                       aria-label="@@data.@@page.header.contacts-block.telegram_label"
                        rel="noopener noreferrer nofollow"
                        class="social-icons-wrapper__social-icon"
                        tabindex="0"
@@ -58,7 +58,7 @@
 
                     <button
                         class="burger_nav hidden"
-                        aria-label="@@data.@@page.header.header__nav_label"
+                        aria-label="@@data.@@page.header.nav_label"
                         aria-expanded="false"
                         tabindex="0">
                         <span></span>
@@ -66,7 +66,7 @@
                 </div>
             </div>
         </div>
-        <nav class="header__nav" aria-label="@@data.@@page.header.header__nav_label">
+        <nav class="header__nav" aria-label="@@data.@@page.header.nav_label">
             @@include("./header__nav-list.html", {"page": "@@page"})
         </nav>
     </header>

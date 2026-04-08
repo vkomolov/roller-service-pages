@@ -10,12 +10,7 @@
 <div class="total-wrapper">
   @@include("templates/header.html", {"page": "gates"})
   @@include("templates/scrolled-nav-menu.html", {"page": "gates"})
-
-  <nav class="header__nav abs" aria-label="Navigation to services" aria-expanded="false">
-    <div class="header__nav-list-wrapper">
-      @@include("./templates/header__nav-list.html", {"page": "gates"})
-    </div>
-  </nav>
+  @@include("templates/header__nav_abs.html", {"page": "gates"})
 
   <section class="section section--hero" aria-label="@@data.gates.main.hero.aria-label">
     <!--Using <picture> for various image compositions with different aspect-ratio-->

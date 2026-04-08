@@ -9,12 +9,7 @@
 <div class="total-wrapper">
 	@@include("templates/header.html", {"page": "security"})
 	@@include("templates/scrolled-nav-menu.html", {"page": "security"})
-
-	<nav class="header__nav abs" aria-label="Navigation to services" aria-expanded="false">
-		<div class="header__nav-list-wrapper">
-			@@include("./templates/header__nav-list.html", {"page": "security"})
-		</div>
-	</nav>
+	@@include("templates/header__nav_abs.html", {"page": "security"})
 
 	<section class="section section--hero" aria-label="@@data.security.main.hero.aria-label">
 		<!--Using <picture> for various image compositions with different aspect-ratio-->
@@ -316,9 +311,7 @@
 	</section>
 
 	@@include("templates/section-services.html", {"page": "security"})
-
 	@@include("templates/partners-section.html", {"page": "security"})
-
 	@@include("templates/gallery-section.html", {"page": "security"})
 	}
 

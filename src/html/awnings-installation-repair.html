@@ -11,12 +11,7 @@
 <div class="total-wrapper">
   @@include("templates/header.html", {"page": "awnings"})
   @@include("templates/scrolled-nav-menu.html", {"page": "awnings"})
-
-  <nav class="header__nav abs" aria-label="Navigation to services" aria-expanded="false">
-    <div class="header__nav-list-wrapper">
-      @@include("./templates/header__nav-list.html", {"page": "awnings"})
-    </div>
-  </nav>
+  @@include("templates/header__nav_abs.html", {"page": "awnings"})
 
   <section class="section section--hero" aria-label="@@data.awnings.main.hero.aria-label">
     <!--Using <picture> for various image compositions with different aspect-ratio-->

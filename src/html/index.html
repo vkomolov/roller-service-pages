@@ -11,14 +11,9 @@
 <body data-type="index">
 <div class="total-wrapper">
 	<!-- including header -->
-	@@include("./templates/header.html", {"page": "index"})
-	@@include("./templates/scrolled-nav-menu.html", {"page": "index"})
-
-	<nav class="header__nav abs" aria-label="@@data.index.header.header__nav_label" aria-expanded="false">
-		<div class="header__nav-list-wrapper">
-			@@include("./templates/header__nav-list.html", {"page": "index"})
-		</div>
-	</nav>
+	@@include("templates/header.html", {"page": "index"})
+	@@include("templates/scrolled-nav-menu.html", {"page": "index"})
+	@@include("templates/header__nav_abs.html", {"page": "index"})
 
 	<section class="section section--hero" aria-label="@@data.index.main.hero.aria-label">
 		<!--Using <picture> for various image compositions with different aspect-ratio-->

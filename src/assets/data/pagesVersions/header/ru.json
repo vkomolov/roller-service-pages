@@ -1,9 +1,8 @@
 {
-  "header__logo-heading": "Мастер-Сервис",
-  "header__contacts-wrapper_label": "Опции связи",
-  "header__nav_label": "Навигация выбора услуг",
-
-  "header__contacts-block": {
+  "logo-heading": "Мастер-Сервис",
+  "contacts-wrapper_label": "Опции связи",
+  "nav_label": "Навигация выбора услуг",
+  "contacts-block": {
     "mobile": "tel:+380991019368",
     "mobile_span": "+38 (099) 101 93 68",
     "mobile_label": "Мобильная связь с мастером",
@@ -12,7 +11,6 @@
     "telegram": "https://t.me/username",
     "telegram_label": "Связь через телеграм"
   },
-
   "nav-link": {
     "index": {
       "label": "Про нас",
