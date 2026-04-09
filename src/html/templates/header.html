@@ -67,7 +67,9 @@
             </div>
         </div>
         <nav class="header__nav" aria-label="@@data.@@page.header.nav_label">
-            @@include("./header__nav-list.html", {"page": "@@page"})
+            <ul class="header__nav-list">
+                @@include("./nav-list.html", {"page": "@@page"})
+            </ul>
         </nav>
     </header>
     }

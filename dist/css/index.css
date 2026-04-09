@@ -467,7 +467,6 @@ h2,h3,h4,h5{
 }
 
 .footer__nav-heading{
-  font-size:1.1em;
   letter-spacing:.05em;
   padding-bottom:.4em;
   padding-top:.55em;
@@ -481,7 +480,6 @@ h2,h3,h4,h5{
 .footer__nav-list{
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
-  font-size:.75em;
   font-weight:600;
 }
 .footer__nav-list li+li{
@@ -490,10 +488,6 @@ h2,h3,h4,h5{
 
 .nav-link--footer{
   text-transform:uppercase;
-}
-
-.icon-link--footer{
-  font-size:.8em;
 }
 
 .header-layer{

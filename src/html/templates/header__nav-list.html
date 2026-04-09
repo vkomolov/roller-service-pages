@@ -1,30 +1,7 @@
 @@if (page) {
 
 <ul class="header__nav-list">
-	<li>
-		@@include("./header__nav-list-item.html", {"page": "@@page", type: "index"})
-	</li>
-	<li>
-		@@include("./header__nav-list-item.html", {"page": "@@page", type: "gates"})
-	</li>
-	<li>
-		@@include("./header__nav-list-item.html", {"page": "@@page", type: "rollers"})
-	</li>
-	<li>
-		@@include("./header__nav-list-item.html", {"page": "@@page", type: "automation"})
-	</li>
-	<li>
-		@@include("./header__nav-list-item.html", {"page": "@@page", type: "barriers"})
-	</li>
-	<li>
-		@@include("./header__nav-list-item.html", {"page": "@@page", type: "awnings"})
-	</li>
-	<li>
-		@@include("./header__nav-list-item.html", {"page": "@@page", type: "windows"})
-	</li>
-	<li>
-		@@include("./header__nav-list-item.html", {"page": "@@page", type: "security"})
-	</li>
+	@@include("./nav-list.html", {"page": "@@page"})
 </ul>
 
 }

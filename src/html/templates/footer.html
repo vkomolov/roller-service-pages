@@ -5,10 +5,11 @@
         data-type="fade-in-up"
     >
       @@if (page && data && data[page] && data[page].footer) {
+
       <div class="footer__contacts-block">
         <div class="footer__content-block-item">
-          <h2 class="footer__logo-heading">@@data.@@page.footer.footer__logo-heading</h2>
-          <p class="footer__logo-text">@@data.@@page.footer.footer__logo-text</p>
+          <h2 class="footer__logo-heading">@@data.page.footer.logo-heading</h2>
+          <p class="footer__logo-text">@@data.page.footer.logo-text</p>
         </div>
         <div class="footer__content-block-item" aria-label="Communication options">
           <a href="tel:380991019368"
