@@ -92,16 +92,7 @@
     "footer": {
       "logo-heading": "Мастер-Сервис",
       "logo-text": "Аварийный ремонт и установка роллет, ворот, маркиз, шлагбаумов в Киеве и Киевской области",
-      "nav-heading": "Услуги:",
-
-      "nav-link_main": "О нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Роллеты",
-      "nav-link_automation": "Автоматизация",
-      "nav-link_barriers": "Шлагбаумы",
-      "nav-link_awnings": "Маркизы",
-      "nav-link_windows": "Окна и Двери",
-      "nav-link_security": "Видеонаблюдение"
+      "nav-heading": "Услуги:"
     }
   },
   "gates": {
@@ -220,17 +211,9 @@
       }
     },
     "footer": {
-      "footer__logo-heading": "Мастер-Сервис",
-      "footer__logo-text": "Аварийный ремонт и установка роллет, ворот, маркиз, шлагбаумов в Киеве и Киевской области",
-      "footer__nav-heading": "Услуги:",
-      "nav-link_main": "О нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Роллеты",
-      "nav-link_automation": "Автоматизация",
-      "nav-link_barriers": "Шлагбаумы",
-      "nav-link_awnings": "Маркизы",
-      "nav-link_windows": "Окна и Двери",
-      "nav-link_security": "Видеонаблюдение"
+      "logo-heading": "Мастер-Сервис",
+      "logo-text": "Аварийный ремонт и установка роллет, ворот, маркиз, шлагбаумов в Киеве и Киевской области",
+      "nav-heading": "Услуги:"
     }
   },
   "rollers": {
@@ -343,17 +326,9 @@
       }
     },
     "footer": {
-      "footer__logo-heading": "Мастер-Сервис",
-      "footer__logo-text": "Аварийный ремонт и установка роллет, ворот, маркиз, шлагбаумов в Киеве и Киевской области",
-      "footer__nav-heading": "Услуги:",
-      "nav-link_main": "О нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Роллеты",
-      "nav-link_automation": "Автоматизация",
-      "nav-link_barriers": "Шлагбаумы",
-      "nav-link_awnings": "Маркизы",
-      "nav-link_windows": "Окна и Двери",
-      "nav-link_security": "Видеонаблюдение"
+      "logo-heading": "Мастер-Сервис",
+      "logo-text": "Аварийный ремонт и установка роллет, ворот, маркиз, шлагбаумов в Киеве и Киевской области",
+      "nav-heading": "Услуги:"
     }
   },
   "automation": {
@@ -457,17 +432,9 @@
       }
     },
     "footer": {
-      "footer__logo-heading": "Мастер-Сервис",
-      "footer__logo-text": "Аварийный ремонт и установка роллет, ворот, маркиз, шлагбаумов в Киеве и Киевской области",
-      "footer__nav-heading": "Услуги:",
-      "nav-link_main": "О нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Роллеты",
-      "nav-link_automation": "Автоматизация",
-      "nav-link_barriers": "Шлагбаумы",
-      "nav-link_awnings": "Маркизы",
-      "nav-link_windows": "Окна и Двери",
-      "nav-link_security": "Видеонаблюдение"
+      "logo-heading": "Мастер-Сервис",
+      "logo-text": "Аварийный ремонт и установка роллет, ворот, маркиз, шлагбаумов в Киеве и Киевской области",
+      "nav-heading": "Услуги:"
     }
   },
   "barriers": {
@@ -574,17 +541,9 @@
       }
     },
     "footer": {
-      "footer__logo-heading": "Мастер-Сервис",
-      "footer__logo-text": "Аварийный ремонт и установка роллет, ворот, маркиз, шлагбаумов в Киеве и Киевской области",
-      "footer__nav-heading": "Услуги:",
-      "nav-link_main": "О нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Роллеты",
-      "nav-link_automation": "Автоматизация",
-      "nav-link_barriers": "Шлагбаумы",
-      "nav-link_awnings": "Маркизы",
-      "nav-link_windows": "Окна и Двери",
-      "nav-link_security": "Видеонаблюдение"
+      "logo-heading": "Мастер-Сервис",
+      "logo-text": "Аварийный ремонт и установка роллет, ворот, маркиз, шлагбаумов в Киеве и Киевской области",
+      "nav-heading": "Услуги:"
     }
   },
   "awnings": {
@@ -700,17 +659,9 @@
       }
     },
     "footer": {
-      "footer__logo-heading": "Мастер-Сервис",
-      "footer__logo-text": "Аварийный ремонт и установка роллет, ворот, маркиз, шлагбаумов в Киеве и Киевской области",
-      "footer__nav-heading": "Услуги:",
-      "nav-link_main": "О нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Роллеты",
-      "nav-link_automation": "Автоматизация",
-      "nav-link_barriers": "Шлагбаумы",
-      "nav-link_awnings": "Маркизы",
-      "nav-link_windows": "Окна и Двери",
-      "nav-link_security": "Видеонаблюдение"
+      "logo-heading": "Мастер-Сервис",
+      "logo-text": "Аварийный ремонт и установка роллет, ворот, маркиз, шлагбаумов в Киеве и Киевской области",
+      "nav-heading": "Услуги:"
     }
   },
   "windows": {
@@ -825,17 +776,9 @@
       }
     },
     "footer": {
-      "footer__logo-heading": "Мастер-Сервис",
-      "footer__logo-text": "Аварийный ремонт и установка роллет, ворот, маркиз, шлагбаумов в Киеве и Киевской области",
-      "footer__nav-heading": "Услуги:",
-      "nav-link_main": "О нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Роллеты",
-      "nav-link_automation": "Автоматизация",
-      "nav-link_barriers": "Шлагбаумы",
-      "nav-link_awnings": "Маркизы",
-      "nav-link_windows": "Окна и Двери",
-      "nav-link_security": "Видеонаблюдение"
+      "logo-heading": "Мастер-Сервис",
+      "logo-text": "Аварийный ремонт и установка роллет, ворот, маркиз, шлагбаумов в Киеве и Киевской области",
+      "nav-heading": "Услуги:"
     }
   },
   "security": {
@@ -951,17 +894,9 @@
       }
     },
     "footer": {
-      "footer__logo-heading": "Мастер-Сервис",
-      "footer__logo-text": "Аварийный ремонт и установка роллет, ворот, маркиз, шлагбаумов в Киеве и Киевской области",
-      "footer__nav-heading": "Услуги:",
-      "nav-link_main": "О нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Роллеты",
-      "nav-link_automation": "Автоматизация",
-      "nav-link_barriers": "Шлагбаумы",
-      "nav-link_awnings": "Маркизы",
-      "nav-link_windows": "Окна и Двери",
-      "nav-link_security": "Видеонаблюдение"
+      "logo-heading": "Мастер-Сервис",
+      "logo-text": "Аварийный ремонт и установка роллет, ворот, маркиз, шлагбаумов в Киеве и Киевской области",
+      "nav-heading": "Услуги:"
     }
   }
 }

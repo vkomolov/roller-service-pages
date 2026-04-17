@@ -2,28 +2,116 @@
 @@if (page) {
 
 <li>
-	@@include("./header__nav-list-item.html", {"page": "@@page", type: "index"})
+	@@include("./nav-list-item.html", {
+	page: "@@page",
+	type: "index",
+
+	@@if (typeof addClass !== 'undefined' && addClass) {
+	addClass: "nav-link @@addClass"
+	}
+	@@if (typeof addClass === 'undefined' || !addClass) {
+	addClass: "nav-link"
+	}
+
+	})
 </li>
 <li>
-	@@include("./header__nav-list-item.html", {"page": "@@page", type: "gates"})
+	@@include("./nav-list-item.html", {
+	page: "@@page",
+	type: "gates",
+
+	@@if (typeof addClass !== 'undefined' && addClass) {
+	addClass: "nav-link @@addClass"
+	}
+	@@if (typeof addClass === 'undefined' || !addClass) {
+	addClass: "nav-link"
+	}
+
+	})
 </li>
 <li>
-	@@include("./header__nav-list-item.html", {"page": "@@page", type: "rollers"})
+	@@include("./nav-list-item.html", {
+	"page": "@@page",
+	type: "rollers",
+
+	@@if (typeof addClass !== 'undefined' && addClass) {
+	addClass: "nav-link @@addClass"
+	}
+	@@if (typeof addClass === 'undefined' || !addClass) {
+	addClass: "nav-link"
+	}
+
+	})
 </li>
 <li>
-	@@include("./header__nav-list-item.html", {"page": "@@page", type: "automation"})
+	@@include("./nav-list-item.html", {
+	"page": "@@page",
+	type: "automation",
+
+	@@if (typeof addClass !== 'undefined' && addClass) {
+	addClass: "nav-link @@addClass"
+	}
+	@@if (typeof addClass === 'undefined' || !addClass) {
+	addClass: "nav-link"
+	}
+
+	})
 </li>
 <li>
-	@@include("./header__nav-list-item.html", {"page": "@@page", type: "barriers"})
+	@@include("./nav-list-item.html", {
+	"page": "@@page",
+	type: "barriers",
+
+	@@if (typeof addClass !== 'undefined' && addClass) {
+	addClass: "nav-link @@addClass"
+	}
+	@@if (typeof addClass === 'undefined' || !addClass) {
+	addClass: "nav-link"
+	}
+
+	})
 </li>
 <li>
-	@@include("./header__nav-list-item.html", {"page": "@@page", type: "awnings"})
+	@@include("./nav-list-item.html", {
+	"page": "@@page",
+	type: "awnings",
+
+	@@if (typeof addClass !== 'undefined' && addClass) {
+	addClass: "nav-link @@addClass"
+	}
+	@@if (typeof addClass === 'undefined' || !addClass) {
+	addClass: "nav-link"
+	}
+
+	})
 </li>
 <li>
-	@@include("./header__nav-list-item.html", {"page": "@@page", type: "windows"})
+	@@include("./nav-list-item.html", {
+	"page": "@@page",
+	type: "windows",
+
+	@@if (typeof addClass !== 'undefined' && addClass) {
+	addClass: "nav-link @@addClass"
+	}
+	@@if (typeof addClass === 'undefined' || !addClass) {
+	addClass: "nav-link"
+	}
+
+	})
 </li>
 <li>
-	@@include("./header__nav-list-item.html", {"page": "@@page", type: "security"})
+	@@include("./nav-list-item.html", {
+	"page": "@@page",
+	type: "security",
+
+	@@if (typeof addClass !== 'undefined' && addClass) {
+	addClass: "nav-link @@addClass"
+	}
+	@@if (typeof addClass === 'undefined' || !addClass) {
+	addClass: "nav-link"
+	}
+
+	})
 </li>
 
 }

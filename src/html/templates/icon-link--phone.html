@@ -1,0 +1,18 @@
+
+@@if (data && page && data[page].header) {
+
+<a href="@@data.@@page.header.contacts-block.mobile"
+   aria-label="@@data.@@page.header.contacts-block.mobile_label"
+   class="icon-link"
+   tabindex="0"
+>
+	<div class="icon-link__phone-icon">
+		<svg viewBox="0 0 24 25">
+			<title>phone icon</title>
+			<use xlink:href="/assets/img/svgIcons/sprite.mono.svg#phone"></use>
+		</svg>
+	</div>
+	<span class="icon-link__text icon-link__text--phone">@@data.@@page.header.contacts-block.mobile_span</span>
+</a>
+
+}

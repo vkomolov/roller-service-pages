@@ -39,8 +39,6 @@
   color: rgba(220, 220, 220, .5);
   //color: $color-01;
 
-  @include mix.text-shadow(0.07em, 0.07em);
-
   /* tablet (portrait): (max-width: 1024px) */
   @include media.maxTabletPortrait {
     font-size: 1.5rem;
@@ -91,7 +89,7 @@
   }
 
   &__social-icon {
-    width: 1.375rem;
+    width: 1.375rem;  //fixed (rem) width and height of the social icons, not "em", connected by font-size
   }
 
   &__text {
@@ -107,11 +105,6 @@
 
     &.icon-link__text--social-icon {
       color: $white;
-
-      /* mobile (landscape): (max-width: 768px)*/
-      @include media.maxMobileLandscape {
-        font-size: 0.8rem;
-      }
     }
   }
 }
@@ -214,30 +207,19 @@
     background-color: rgba(255, 255, 255, .5);
     backdrop-filter: blur(.2rem);
 
-    /* mobile (landscape): (max-width: 768px)*/
-    @include media.maxMobileLandscape {
-      display: block;  //original header__nav with display: none;
-    }
-
-    .header__nav-list-wrapper {
+    .nav-list {
       width: 100%;
       max-width: $maxContentWidth;
       margin: 0 auto;
       padding: .5rem 2.2rem;
+      gap: 0.5rem .75rem;
+      list-style: none;
 
       @include mix.flex-box(row, flex-end, center, wrap);
 
-      /* mobile (portrait wide): (max-width: 640px) */
-      @include media.maxMobilePortraitWide {
-        justify-content: center;
-      }
-    }
-
-    .header__nav-list {
-
       /* mobile (landscape): (max-width: 768px)*/
       @include media.maxMobileLandscape {
-        max-width: 20rem;
+        //max-width: 20rem;
         padding-bottom: 1rem;
         padding-top: 1rem;
 
@@ -259,7 +241,7 @@
   }
 }
 
-.header__nav-list {
+.nav-list {
   font-family: "Roboto", "Roboto Fallback", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -269,6 +251,12 @@
 
   @include mix.flex-box(row, center, center, wrap);
   gap: 0.5rem .75rem;
+
+  &.nav-list--footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem .75rem;
+  }
 }
 
 .nav-link {

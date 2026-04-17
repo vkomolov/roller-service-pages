@@ -90,17 +90,9 @@
       }
     },
     "footer": {
-      "footer__logo-heading": "Майстер-Сервіс",
-      "footer__logo-text": "Аварійний ремонт та встановлення ролет, воріт, маркізів, шлагбаумів у Києві та Київській області",
-      "footer__nav-heading": "Послуги:",
-      "nav-link_main": "Про нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Ролети",
-      "nav-link_automation": "Автоматизація",
-      "nav-link_barriers": "Шлагбауми",
-      "nav-link_awnings": "Маркізи",
-      "nav-link_windows": "Вікна та двері",
-      "nav-link_security": "Відеонагляд"
+      "logo-heading": "Майстер-Сервіс",
+      "logo-text": "Аварійний ремонт та встановлення ролет, воріт, маркізів, шлагбаумів у Києві та Київській області",
+      "nav-heading": "Послуги:"
     }
   },
   "gates": {
@@ -218,17 +210,9 @@
       }
     },
     "footer": {
-      "footer__logo-heading": "Майстер-Сервіс",
-      "footer__logo-text": "Аварійний ремонт та встановлення ролет, воріт, маркіз, шлагбаумів у Києві та Київській області",
-      "footer__nav-heading": "Послуги:",
-      "nav-link_main": "Про нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Ролети",
-      "nav-link_automation": "Автоматизація",
-      "nav-link_barriers": "Шлагбауми",
-      "nav-link_awnings": "Маркізи",
-      "nav-link_windows": "Вікна та двері",
-      "nav-link_security": "Відеонагляд"
+      "logo-heading": "Майстер-Сервіс",
+      "logo-text": "Аварійний ремонт та встановлення ролет, воріт, маркіз, шлагбаумів у Києві та Київській області",
+      "nav-heading": "Послуги:"
     }
   },
   "rollers": {
@@ -340,17 +324,9 @@
       }
     },
     "footer": {
-      "footer__logo-heading": "Майстер-Сервіс",
-      "footer__logo-text": "Аварійний ремонт та встановлення ролет, воріт, маркіз, шлагбаумів у Києві та Київській області",
-      "footer__nav-heading": "Послуги:",
-      "nav-link_main": "Про нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Ролети",
-      "nav-link_automation": "Автоматизація",
-      "nav-link_barriers": "Шлагбауми",
-      "nav-link_awnings": "Маркізи",
-      "nav-link_windows": "Вікна та двері",
-      "nav-link_security": "Відеонагляд"
+      "logo-heading": "Майстер-Сервіс",
+      "logo-text": "Аварійний ремонт та встановлення ролет, воріт, маркіз, шлагбаумів у Києві та Київській області",
+      "nav-heading": "Послуги:"
     }
   },
   "automation": {
@@ -454,17 +430,9 @@
       }
     },
     "footer": {
-      "footer__logo-heading": "Майстер-Сервіс",
-      "footer__logo-text": "Аварійний ремонт та встановлення ролет, воріт, маркіз, шлагбаумів у Києві та Київській області",
-      "footer__nav-heading": "Послуги:",
-      "nav-link_main": "Про нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Ролети",
-      "nav-link_automation": "Автоматизація",
-      "nav-link_barriers": "Шлагбауми",
-      "nav-link_awnings": "Маркізи",
-      "nav-link_windows": "Вікна та двері",
-      "nav-link_security": "Відеонагляд"
+      "logo-heading": "Майстер-Сервіс",
+      "logo-text": "Аварійний ремонт та встановлення ролет, воріт, маркіз, шлагбаумів у Києві та Київській області",
+      "nav-heading": "Послуги:"
     }
   },
   "barriers": {
@@ -571,17 +539,9 @@
       }
     },
     "footer": {
-      "footer__logo-heading": "Майстер-Сервіс",
-      "footer__logo-text": "Аварійний ремонт та встановлення ролет, воріт, маркіз, шлагбаумів у Києві та Київській області",
-      "footer__nav-heading": "Послуги:",
-      "nav-link_main": "Про нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Ролети",
-      "nav-link_automation": "Автоматизація",
-      "nav-link_barriers": "Шлагбауми",
-      "nav-link_awnings": "Маркізи",
-      "nav-link_windows": "Вікна та двері",
-      "nav-link_security": "Відеонагляд"
+      "logo-heading": "Майстер-Сервіс",
+      "logo-text": "Аварійний ремонт та встановлення ролет, воріт, маркіз, шлагбаумів у Києві та Київській області",
+      "nav-heading": "Послуги:"
     }
   },
   "awnings": {
@@ -697,17 +657,9 @@
       }
     },
     "footer": {
-      "footer__logo-heading": "Майстер-Сервіс",
-      "footer__logo-text": "Аварійний ремонт та встановлення ролет, воріт, маркіз, шлагбаумів у Києві та Київській області",
-      "footer__nav-heading": "Послуги:",
-      "nav-link_main": "Про нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Ролети",
-      "nav-link_automation": "Автоматизація",
-      "nav-link_barriers": "Шлагбауми",
-      "nav-link_awnings": "Маркізи",
-      "nav-link_windows": "Вікна та двері",
-      "nav-link_security": "Відеонагляд"
+      "logo-heading": "Майстер-Сервіс",
+      "logo-text": "Аварійний ремонт та встановлення ролет, воріт, маркіз, шлагбаумів у Києві та Київській області",
+      "nav-heading": "Послуги:"
     }
   },
   "windows": {
@@ -821,17 +773,9 @@
       }
     },
     "footer": {
-      "footer__logo-heading": "Майстер-Сервіс",
-      "footer__logo-text": "Аварійний ремонт та встановлення ролет, воріт, маркіз, шлагбаумів у Києві та Київській області",
-      "footer__nav-heading": "Послуги:",
-      "nav-link_main": "Про нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Ролети",
-      "nav-link_automation": "Автоматизація",
-      "nav-link_barriers": "Шлагбауми",
-      "nav-link_awnings": "Маркізи",
-      "nav-link_windows": "Вікна та двері",
-      "nav-link_security": "Відеонагляд"
+      "logo-heading": "Майстер-Сервіс",
+      "logo-text": "Аварійний ремонт та встановлення ролет, воріт, маркіз, шлагбаумів у Києві та Київській області",
+      "nav-heading": "Послуги:"
     }
   },
   "security": {
@@ -947,17 +891,9 @@
       }
     },
     "footer": {
-      "footer__logo-heading": "Майстер-Сервіс",
-      "footer__logo-text": "Аварійний ремонт та встановлення ролет, воріт, маркіз, шлагбаумів у Києві та Київській області",
-      "footer__nav-heading": "Послуги:",
-      "nav-link_main": "Про нас",
-      "nav-link_gates": "Ворота",
-      "nav-link_rollers": "Ролети",
-      "nav-link_automation": "Автоматизація",
-      "nav-link_barriers": "Шлагбауми",
-      "nav-link_awnings": "Маркізи",
-      "nav-link_windows": "Вікна та двері",
-      "nav-link_security": "Відеонагляд"
+      "logo-heading": "Майстер-Сервіс",
+      "logo-text": "Аварійний ремонт та встановлення ролет, воріт, маркіз, шлагбаумів у Києві та Київській області",
+      "nav-heading": "Послуги:"
     }
   }
 }

@@ -1,0 +1,21 @@
+
+@@if (data && page && data[page].header) {
+
+<a href="@@data.@@page.header.contacts-block.viber"
+   target="_blank"
+   aria-label="@@data.@@page.header.contacts-block.viber_label"
+   class="social-icons-wrapper__social-icon"
+   tabindex="0"
+>
+	<svg viewBox="0 0 48 48">
+		<title>viber icon</title>
+		<use xlink:href="/assets/img/svgIcons/sprite.multi.svg#viber"></use>
+	</svg>
+
+@@if (innerSpan) {
+	<span class="icon-link__text">@@innerSpan</span>
+	}
+
+</a>
+
+}

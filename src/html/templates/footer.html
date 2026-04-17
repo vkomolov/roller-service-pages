@@ -1,15 +1,15 @@
 <footer class="section section--footer" >
   <div class="section__content-layer">
     <div
-        class="section__content-block section__content-block--row-right section__content-block--footer flex-gap-02-01"
+        class="section__content-block section__content-block--footer flex-gap-02-01"
         data-type="fade-in-up"
     >
       @@if (page && data && data[page] && data[page].footer) {
 
       <div class="footer__contacts-block">
         <div class="footer__content-block-item">
-          <h2 class="footer__logo-heading">@@data.page.footer.logo-heading</h2>
-          <p class="footer__logo-text">@@data.page.footer.logo-text</p>
+          <h2 class="footer__logo-heading">@@data.@@page.footer.logo-heading</h2>
+          <p class="footer__logo-text">@@data.@@page.footer.logo-text</p>
         </div>
         <div class="footer__content-block-item" aria-label="Communication options">
           <a href="tel:380991019368"
@@ -57,65 +57,9 @@
       </div>
       <div class="footer__content-block">
         <div class="footer__content-block-item">
-          <h3 class="footer__nav-heading">@@data.@@page.footer.footer__nav-heading</h3>
-          <nav class="footer__nav" aria-label="Navigation to services">
-            <ul class="footer__nav-list">
-              <li><a href="./index.html"
-                     class="nav-link nav-link--footer"
-                     aria-label="Go to main page"
-                     tabindex="0"
-                     data-type="index">
-                @@data.@@page.footer.nav-link_main
-              </a></li>
-              <li><a href="./gates-installation-repair.html"
-                     class="nav-link nav-link--footer"
-                     aria-label="Go to 'Gates' services"
-                     tabindex="0"
-                     data-type="gates">
-                @@data.@@page.footer.nav-link_gates
-              </a></li>
-              <li><a href="./rollers-installation-repair.html"
-                     class="nav-link nav-link--footer"
-                     aria-label="Go to 'Rollers' services"
-                     tabindex="0"
-                     data-type="rollers">
-                @@data.@@page.footer.nav-link_rollers
-              </a></li>
-              <li><a href="./gates-rollers-automation.html"
-                     class="nav-link nav-link--footer"
-                     aria-label="Go to 'Automation' services"
-                     tabindex="0"
-                     data-type="automation">
-                @@data.@@page.footer.nav-link_automation
-              </a></li>
-              <li><a href="./barriers-installation-repair.html"
-                     class="nav-link nav-link--footer"
-                     aria-label="Go to 'Barriers' services"
-                     tabindex="0"
-                     data-type="barriers">
-                @@data.@@page.footer.nav-link_barriers
-              </a></li>
-              <li><a href="./awnings-installation-repair.html"
-                     class="nav-link nav-link--footer"
-                     aria-label="Go to 'Awnings' services"
-                     tabindex="0"
-                     data-type="awnings">
-                @@data.@@page.header.nav-link_awnings
-              </a></li>
-              <li><a href="./window-settings-repair.html"
-                     class="nav-link nav-link--footer"
-                     aria-label="Go to 'Windows and Doors' services"
-                     tabindex="0"
-                     data-type="windows">
-                @@data.@@page.footer.nav-link_windows
-              </a></li>
-              <li><a href="./security-installation-maintenance.html"
-                     class="nav-link nav-link--footer"
-                     aria-label="Go to 'Video Surveillance' services"
-                     tabindex="0"
-                     data-type="security">
-                @@data.@@page.footer.nav-link_security
-              </a></li>
+          <nav class="footer__nav" aria-label="@@data.@@page.header.nav_label">
+            <ul class="nav-list nav-list--footer">
+              @@include("./nav-list.html", {"page": "@@page", "addClass": "nav-link--footer"})
             </ul>
           </nav>
         </div>
