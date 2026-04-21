@@ -26,7 +26,7 @@
   width: 100%;
 
   @extend %sectionWrapper;  //margin-top, margin-bottom calculations
-  @include root.flex-box(row, center, center, wrap);
+  @include root.flex-box(row, center, flex-start, wrap);
 }
 
 .button-request {
@@ -86,6 +86,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  z-index: 10;
 
   @extend %contentWrapper;  //padding calculations
 
@@ -104,6 +105,7 @@
 .section__content-block {
   width: 100%;
   display: flex;
+  align-items: flex-start;
 
   /* mobile (portrait wide): (max-width: 640px) */
   @include root.maxMobilePortraitWide {
@@ -557,10 +559,6 @@
   }
 }
 
-.section__content-layer--services {
-  z-index: 2;
-}
-
 ///////////////////// HEXAGON SERVICES WRAPPER /////////////////////////
 
 .hexagon-services-wrapper {
@@ -836,15 +834,34 @@
   color: root.$white;
 
   //each separate section would have its own particular min-height
-  min-height: 80svh;
+  min-height: 80dvh;
 
   &::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(to right, rgba(40, 32, 23, .5), rgba(40, 32, 23, .7));
+    background: linear-gradient(to right, rgba(40, 32, 23, .9), rgba(40, 32, 23, .1));
     z-index: 1;
     pointer-events: none;
+
+    /*** mobile (portrait wide): (max-width: 640px) ***/
+    @include root.maxMobilePortraitWide {
+      background: linear-gradient(to right, rgba(40, 32, 23, .9), rgba(40, 32, 23, .5));
+    }
+  }
+
+  &.section--footer {
+    min-height: 33.75rem; //540px
+
+    /*** tablet (portrait): (max-width: 1024px) ***/
+    @include root.maxTabletPortrait {
+      min-height: 31.85rem;
+    }
+
+    /*** mobile (landscape): (max-width: 768px) ***/
+    @include root.maxMobileLandscape {
+      min-height: 25rem;
+    }
   }
 }
 
@@ -863,6 +880,10 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  &--height-origin {
+    height: 100%; //no up-down parallax reserved height
   }
 }
 

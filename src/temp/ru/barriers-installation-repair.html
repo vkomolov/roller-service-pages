@@ -64,6 +64,7 @@
                     <span class="icon-link__text icon-link__text--phone">+38 (099) 101 93 68</span>
                 </a>
                 <div class="social-icons-wrapper">
+
                     <a href="viber://chat?number=+380991019368"
                        aria-label="Связь через вайбер"
                        class="social-icons-wrapper__social-icon"
@@ -810,7 +811,7 @@
 		>
 	</picture>
 
-	<div class="section__content-layer section__content-layer--services">
+	<div class="section__content-layer">
 		<div class="section__heading-block section__heading-block--separation" data-anime="fade-in-left">
 			<h2 id="services-group">Наши Услуги</h2>
 			<hr>
@@ -1611,20 +1612,53 @@
 
 
 
-  <footer class="section section--footer" >
-  <div class="section__content-layer">
+  <footer class="section section--footer section-parallax-layer" >
+  <!--Using <picture> for various image compositions with different aspect-ratio-->
+  <!--retina is omitted for the hero background-->
+  <picture class="section-parallax__bg section-parallax__bg--height-origin" data-anime="footer">
+    <!-- mobile (portrait wide): (max-width: 640px) (vertical composition)-->
+    <source
+        media="(max-width: 640px)"
+        srcset="/assets/img/footerSection/professional_640x524.webp"
+    >
+
+    <!-- tablet (portrait): (max-width: 1024px) (horizontal composition)-->
+    <source
+        media="(max-width: 1024px)"
+        srcset="/assets/img/footerSection/professional_1024x524.webp"
+    >
+
+    <!-- tablet (portrait): (min-width: 1025px) and wider (horizontal composition)-->
+    <source
+        srcset="/assets/img/footerSection/professional_1440x524.webp"
+    >
+    <!-- fallback with img -->
+    <img
+        src="/assets/img/footerSection/professional_1440x524.webp"
+        loading="lazy"
+        decoding="async"
+        fetchpriority="low"
+        width="1440"
+        height="524"
+        alt="Window Roller Shutters"
+    >
+  </picture>
+
+  <div class="section__content-layer" >
+    
+
+    <h2 class="footer__logo-heading">Мастер-Сервис</h2>
     <div
         class="section__content-block section__content-block--footer flex-gap-02-01"
         data-type="fade-in-up"
     >
-      
-
-      <div class="footer__contacts-block">
+      <div class="footer__contacts-block" >
         <div class="footer__content-block-item">
-          <h2 class="footer__logo-heading">Мастер-Сервис</h2>
+
           <p class="footer__logo-text">Аварийный ремонт и установка роллет, ворот, маркиз, шлагбаумов в Киеве и Киевской области</p>
         </div>
         <div class="footer__content-block-item" aria-label="Communication options">
+
           <a href="tel:380991019368"
              aria-label="Mobile connection with the master"
              class="icon-link icon-link--footer"
@@ -1666,6 +1700,7 @@
             </div>
             <span class="icon-link__text icon-link__text--social-icon">+38 (099) 101 93 68</span>
           </a>
+
         </div>
       </div>
       <div class="footer__content-block">

@@ -5,74 +5,6 @@
 
 /////// STYLES ///////
 
-.section--footer {
-  padding-top: 10em;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: 80%;
-  background-attachment: fixed;
-
-  /* tablet (portrait): (min-width: 1025px) */
-  @include media.minTabletPortrait {
-    background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .5), rgba(40, 32, 23, .8) 60%),
-      image-set(
-          url("/assets/img/footerSection/professional_1440.webp") 1x,
-          url("/assets/img/footerSection/professional_1440.jpg") 1x
-      );
-
-    //retina can be included
-    /*    @include media.mediaRetina2x {
-          background-image:
-            linear-gradient(to right, rgba(40, 32, 23, .7) 35%, rgba(40, 32, 23, 0) 85%),
-            image-set(
-                url("/assets/img/footerSection/professional_1440@2x.webp") 2x,
-                url("/assets/img/footerSection/professional_1440@2x.jpg") 2x
-            );
-        }*/
-  }
-
-  /* tablet (portrait): (max-width: 1024px) */
-  @include media.maxTabletPortrait {
-    background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .5), rgba(40, 32, 23, .8) 60%),
-      image-set(
-          url("/assets/img/footerSection/professional_1024.webp") 1x,
-          url("/assets/img/footerSection/professional_1024.jpg") 1x
-      );
-
-    //retina can be included
-    /*    @include media.mediaRetina2x {
-          background-image:
-            linear-gradient(to right, rgba(40, 32, 23, .7) 35%, rgba(40, 32, 23, 0) 85%),
-            image-set(
-              url("/assets/img/footerSection/professional_1024@2x.webp") 2x,
-              url("/assets/img/footerSection/professional_1024@2x.jpg") 2x
-          );
-        }*/
-  }
-
-  /* mobile (portrait wide): (max-width: 640px) */
-  @include media.maxMobilePortraitWide {
-    background-image:
-      linear-gradient(to right, rgba(40, 32, 23, .5), rgba(40, 32, 23, .8) 60%),
-      image-set(
-          url("/assets/img/footerSection/professional_640.webp") 1x,
-          url("/assets/img/footerSection/professional_640.jpg") 1x
-      );
-
-    //retina can be included
-    /*    @include media.mediaRetina2x {
-          background-image:
-            linear-gradient(to right, rgba(40, 32, 23, .7), rgba(40, 32, 23, .7)),
-            image-set(
-              url("/assets/img/footerSection/professional_640@2x.webp") 2x,
-              url("/assets/img/footerSection/professional_640@2x.jpg") 2x
-          );
-        }*/
-  }
-}
-
 .section__content-block--footer {
   color: $white;
 
@@ -85,16 +17,17 @@
 .footer__logo-heading {
   color: rgba(220, 220, 220, .8);
   font-size: var(--range_48-32_1280-641);
+  margin-bottom: 0.5em;
 }
 
 .footer__logo-text {
   color: $white;
-  font-size: var(--range_18-16_1280-641);
+  //font-size: var(--range_18-16_1280-641);
 }
 
 .footer__contacts-block {
   font-size: var(--range_20-18_1280-641);
-  max-width: 19em;
+  max-width: 18em;
 
   @include mix.flex-box(column, center, flex-start);
 
@@ -130,8 +63,4 @@
 
 .nav-link--footer {
   text-transform: uppercase;
-}
-
-.icon-link.icon-link--footer {
-  font-size: var(--range_18-16_1280-641);
 }
