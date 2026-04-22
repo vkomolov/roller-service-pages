@@ -39,64 +39,19 @@
         data-type="fade-in-up"
     >
       <div class="footer__contacts-block" >
-        <div class="footer__content-block-item">
+        <p class="footer__logo-text">@@data.@@page.footer.logo-text</p>
 
-          <p class="footer__logo-text">@@data.@@page.footer.logo-text</p>
-        </div>
-        <div class="footer__content-block-item" aria-label="Communication options">
+        @@include("./icon-link--phone.html", {"page": "@@page"})
+        @@include("./icon-link--viber.html", {"page": "@@page", "innerSpan": "@@data.@@page.header.contacts-block.mobile_span"})
+        @@include("./icon-link--telegram.html", {"page": "@@page", "innerSpan": "@@data.@@page.header.contacts-block.mobile_span"})
 
-          <a href="tel:380991019368"
-             aria-label="Mobile connection with the master"
-             class="icon-link icon-link--footer"
-             tabindex="0"
-          >
-            <div class="icon-link__phone-icon">
-              <svg viewBox="0 0 24 25">
-                <title>phone icon</title>
-                <use xlink:href="/assets/img/svgIcons/sprite.mono.svg#phone"></use>
-              </svg>
-            </div>
-            <span class="icon-link__text icon-link__text--phone">+38 (099) 101 93 68</span>
-          </a>
-          <a href="viber://chat?number=+380991019368"
-             aria-label="Contact the master via Viber"
-             class="icon-link icon-link--footer"
-             tabindex="0"
-          >
-            <div class="icon-link__social-icon">
-              <svg viewBox="0 0 48 48">
-                <title>viber icon</title>
-                <use xlink:href="/assets/img/svgIcons/sprite.multi.svg#viber"></use>
-              </svg>
-            </div>
-            <span class="icon-link__text icon-link__text--social-icon">+38 (099) 101 93 68</span>
-          </a>
-          <a href="https://t.me/username"
-             target="_blank"
-             aria-label="Contact the master via Telegram"
-             rel="noopener noreferrer nofollow"
-             class="icon-link icon-link--footer"
-             tabindex="0"
-          >
-            <div class="icon-link__social-icon">
-              <svg viewBox="0 0 240 240">
-                <title>telegram icon</title>
-                <use xlink:href="/assets/img/svgIcons/sprite.multi.svg#telegram"></use>
-              </svg>
-            </div>
-            <span class="icon-link__text icon-link__text--social-icon">+38 (099) 101 93 68</span>
-          </a>
-
-        </div>
       </div>
       <div class="footer__content-block">
-        <div class="footer__content-block-item">
-          <nav class="footer__nav" aria-label="@@data.@@page.header.nav_label">
-            <ul class="nav-list nav-list--footer">
-              @@include("./nav-list.html", {"page": "@@page", "addClass": "nav-link--footer"})
-            </ul>
-          </nav>
-        </div>
+        <nav class="footer__nav" aria-label="@@data.@@page.header.nav_label">
+          <ul class="nav-list nav-list--footer">
+            @@include("./nav-list.html", {"page": "@@page", "addClass": "nav-link--footer"})
+          </ul>
+        </nav>
       </div>
       }
     </div>

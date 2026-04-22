@@ -71,36 +71,54 @@
 .icon-link {
   font-size: var(--range_24-18_1280-641);
   text-decoration: none;
-  transform-origin: 100% 50%;
-  transition: transform 0.15s ease-in-out, text-shadow 0.15s ease-in-out;
+  transition: transform 0.15s ease-in-out;
 
   @include mix.flex-box(row, center, center, nowrap);
   gap: 4px;
 
+  //for icons without inner text (header navigation)
   &:hover {
-    transform: translateX(-0.3rem);
-
-    @include mix.text-shadow(0, 0.5rem, rgba(255, 255, 255, 1));
+    transform: scale(1.1);
   }
 
+  //for footer links with inner text
+  &--with-span {
+    transform-origin: 100% 50%;
+    transition: transform 0.15s ease-in-out, text-shadow 0.15s ease-in-out;
+
+    &:hover {
+      transform: translateX(-0.3rem);
+
+      @include mix.text-shadow(0, 0.5rem, rgba(255, 255, 255, 1));
+    }
+    // inside .icon-link--with-span
+    .icon-link__social-icon {
+      padding: 0; //icons become smaller to the size of the text
+      width: 1em; //the width depends on the font-size of the text
+    }
+
+  }
+
+  //icons
   &__phone-icon {
-    width: 0.75rem;
+    width: 0.8em; //it changes with font-size (em) as it is used with the text (phone number)
     fill: $color-01;
   }
 
   &__social-icon {
-    width: 1.375rem;  //fixed (rem) width and height of the social icons, not "em", connected by font-size
+    width: 2.75rem;
+    padding: 6px;
   }
 
   &__text {
     font-family: "Roboto", "Roboto Fallback", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-weight: 700;
     //line-height: 1;
 
     &.icon-link__text--phone {
       color: $color_01;
-      font-weight: 700;
     }
 
     &.icon-link__text--social-icon {
@@ -114,16 +132,6 @@
   gap: 8px;
 }
 
-.social-icons-wrapper__social-icon {
-  width: 2.75rem;
-  padding: 6px;
-
-  @include mix.transition(transform);
-
-  &:hover {
-    transform: scale(1.1);
-  }
-}
 
 #lang-switcher {
   position: relative;
@@ -250,12 +258,11 @@
   font-weight: 700;
 
   @include mix.flex-box(row, center, center, wrap);
-  gap: 0.5rem .75rem;
+  gap: 0.5em .75em;
 
   &.nav-list--footer {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.5rem .75rem;
   }
 }
 

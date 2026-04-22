@@ -855,7 +855,7 @@
 
     /*** tablet (portrait): (max-width: 1024px) ***/
     @include root.maxTabletPortrait {
-      min-height: 31.85rem;
+      min-height: 30rem;
     }
 
     /*** mobile (landscape): (max-width: 768px) ***/

@@ -2,40 +2,14 @@
 @@if (data && page && data[page].header) {
 <div id="scrolledNav">
 	<div class="scrolledNav__contacts-block">
-		<a href="@@data.@@page.header.contacts-block.mobile"
-		   aria-label="@@data.@@page.header.contacts-block.mobile_label"
-		   class="icon-link"
-		   tabindex="0"
-		>
-			<div class="icon-link__phone-icon">
-				<svg viewBox="0 0 24 25">
-					<title>phone icon</title>
-					<use xlink:href="/assets/img/svgIcons/sprite.mono.svg#phone"></use>
-				</svg>
-			</div>
-			<span class="icon-link__text icon-link__text--phone">@@data.@@page.header.contacts-block.mobile_span</span>
-		</a>
+
+		@@include("./icon-link--phone.html", {"page": "@@page"})
+
 		<div class="social-icons-wrapper">
-			<a href="@@data.@@page.header.contacts-block.viber"
-			   aria-label="@@data.@@page.header.contacts-block.viber_label"
-			   class="social-icons-wrapper__social-icon"
-			   tabindex="0">
-				<svg viewBox="0 0 48 48">
-					<title>viber icon</title>
-					<use xlink:href="/assets/img/svgIcons/sprite.multi.svg#viber"></use>
-				</svg>
-			</a>
-			<a href="@@data.@@page.header.contacts-block.telegram"
-			   target="_blank"
-			   aria-label="@@data.@@page.header.contacts-block.telegram_label"
-			   rel="noopener noreferrer nofollow"
-			   class="social-icons-wrapper__social-icon"
-			>
-				<svg viewBox="0 0 240 240">
-					<title>telegram icon</title>
-					<use xlink:href="/assets/img/svgIcons/sprite.multi.svg#telegram"></use>
-				</svg>
-			</a>
+			@@include("./icon-link--viber.html", {"page": "@@page"})
+
+			@@include("./icon-link--telegram.html", {"page": "@@page"})
+
 			<button
 					class="burger_nav"
 					aria-label="@@data.@@page.header.nav_label"

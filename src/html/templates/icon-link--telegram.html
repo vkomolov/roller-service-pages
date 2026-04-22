@@ -1,20 +1,35 @@
-
 @@if (data && page && data[page].header) {
 
+@@if (typeof innerSpan !== 'undefined' && innerSpan) {
 <a href="@@data.@@page.header.contacts-block.telegram"
    target="_blank"
    aria-label="@@data.@@page.header.contacts-block.telegram_label"
    rel="noopener noreferrer nofollow"
-   class="social-icons-wrapper__social-icon"
-   tabindex="0"
->
-	<svg viewBox="0 0 240 240">
-		<title>telegram icon</title>
-		<use xlink:href="/assets/img/svgIcons/sprite.multi.svg#telegram"></use>
-	</svg>
-	@@if (innerSpan) {
+   class="icon-link icon-link--with-span"
+   tabindex="0">
+	<div class="icon-link__social-icon">
+		<svg viewBox="0 0 240 240">
+			<title>telegram icon</title>
+			<use xlink:href="/assets/img/svgIcons/sprite.multi.svg#telegram"></use>
+		</svg>
+	</div>
 	<span class="icon-link__text icon-link__text--phone">@@innerSpan</span>
-	}
 </a>
+}
 
+@@if (typeof innerSpan === 'undefined' || !innerSpan) {
+<a href="@@data.@@page.header.contacts-block.telegram"
+   target="_blank"
+   aria-label="@@data.@@page.header.contacts-block.telegram_label"
+   rel="noopener noreferrer nofollow"
+   class="icon-link"
+   tabindex="0">
+	<div class="icon-link__social-icon">
+		<svg viewBox="0 0 240 240">
+			<title>telegram icon</title>
+			<use xlink:href="/assets/img/svgIcons/sprite.multi.svg#telegram"></use>
+		</svg>
+	</div>
+</a>
+}
 }

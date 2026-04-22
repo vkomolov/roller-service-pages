@@ -22,16 +22,16 @@
 
 .footer__logo-text {
   color: $white;
-  //font-size: var(--range_18-16_1280-641);
+  margin-bottom: 1em;
 }
 
 .footer__contacts-block {
-  font-size: var(--range_20-18_1280-641);
-  max-width: 18em;
+  font-size: var(--range_18-16_1280-641);
+  max-width: 18em;  //max-width from local font-size (em)
 
   @include mix.flex-box(column, center, flex-start);
 
-  gap: 1.75em 1.2em;
+  gap: 0.5em;
 }
 
 .footer__content-block {
@@ -43,21 +43,6 @@
   /* mobile (portrait wide): (max-width: 640px) */
   @include media.maxMobilePortraitWide {
     display: none;
-  }
-}
-
-.footer__content-block-item {
-  @include mix.flex-box(column, center, flex-start);
-  gap: 0.5rem;
-}
-
-.footer__nav-list {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-weight: 600;
-
-  li + li {
-    margin-top: 0.3em;
   }
 }
 
