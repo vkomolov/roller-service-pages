@@ -1,0 +1,34 @@
+# robots.txt — file for controlling search engine crawlers (bots)
+# Placed in the root of the site: https://your-domain.com/robots.txt
+
+# Applies rules to all crawlers (Googlebot, Bingbot, etc.)
+User-agent: *
+
+# Allow crawling of all pages on the site
+# This means bots are permitted to access any URL
+Allow: /
+
+# IMPORTANT:
+# This file ONLY controls crawling (access), NOT indexing.
+# Even if a page is allowed here, it can still be excluded from search results
+# using <meta name="robots" content="noindex"> in the HTML.
+
+# For staging/development environments:
+# It is common to allow crawling but prevent indexing via meta robots.
+# This lets bots see the page but not include it in search results.
+
+# In production, you typically also add a sitemap reference:
+# Sitemap: https://your-domain.com/sitemap.xml
+
+# Example of blocking specific sections (not used here):
+# Disallow: /admin/
+# Disallow: /api/
+
+# WARNING:
+# Do NOT use "Disallow: /" unless you intentionally want to block all crawling.
+# If you block crawling, bots will not see meta tags like "noindex",
+# and pages might still remain indexed based on external signals.
+
+# Summary:
+# - Allow: / → full crawl access
+# - Indexing is controlled separately via meta robots or HTTP headers

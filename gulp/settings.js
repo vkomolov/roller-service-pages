@@ -19,10 +19,11 @@ export const modes = {
 	dev: 'dev',
 	build: 'build'
 };
-const robotsParams = 'noindex';
+const robotsParams = 'noindex, nofollow';
+//const robotsParams = 'index, follow';
 
 //base root url at the server... example: "https://example.com"
-const rootUrl = 'https://example.com';
+const rootUrl = 'https://roller-service.pages.dev/';
 //! json pages` data could have more language versions... setting target languages to use...
 const alternateLanguages = ["uk", "ru"];
 // canonical languages could be multiple for crawler indexation
