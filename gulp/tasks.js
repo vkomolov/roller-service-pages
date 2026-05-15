@@ -73,6 +73,19 @@ const filterFiles = filter(/** @param {VinylFile} file */ (file) => !file.isDire
 const imgRegex = /<img(?:.|\n|\r)*?>/g;
 
 /**
+ * Converts a gulp stream into a Promise
+ * @param {NodeJS.ReadableStream} stream
+ * @returns {Promise<void>}
+ */
+function streamToPromise(stream) {
+  return new Promise((resolve, reject) => {
+    stream.on('finish', resolve);
+    //stream.on('end', resolve);  // на всякий случай
+    stream.on('error', reject);
+  });
+}
+
+/**
  * TASKS:
  *
  * ///// pipeHtml: /////
@@ -112,6 +125,26 @@ const tasks = {
       return Promise.all(languages.map(lang => {
         const tempHtmlPath = path.join(pathData.tempPath, lang);
 
+        const stream = src(pathData.src.html)
+          .pipe(plumber({ errorHandler: handleError("Error at pipeHtml...") }))
+          .pipe(fileInclude(setFileIncludeSettings(lang)))
+          .pipe(changed(tempHtmlPath, { hasChanged: compareContents }))
+          .pipe(debug({ title: "*.html has been changed or new:" }))
+          .pipe(dest(tempHtmlPath))
+          .pipe(replace(imgRegex, function (match) {
+            return match.replace(/\r?\n|\r/g, "").replace(/\s{2,}/g, " ");
+          }))
+          .pipe(new CustomGulpWebpHtml(pathData.distPath, "2x"))
+          .pipe(beautify.html(beautifySettings.html))
+          .pipe(dest(path.join(pathData.build.html, lang)));
+
+        return streamToPromise(stream);
+      }));
+    },
+    /*pipeHtml() {
+      return Promise.all(languages.map(lang => {
+        const tempHtmlPath = path.join(pathData.tempPath, lang);
+
         return src(pathData.src.html)
           .pipe(plumber({
             errorHandler: handleError("Error at pipeHtml...")
@@ -122,7 +155,7 @@ const tasks = {
           .pipe(dest(tempHtmlPath))
           .pipe(
             //removes extra spaces and line breaks inside a tag <img>
-            replace(imgRegex, /** @type {(match: string) => string} */ function (match) {
+            replace(imgRegex, /!** @type {(match: string) => string} *!/ function (match) {
               return match.replace(/\r?\n|\r/g, "").replace(/\s{2,}/g, " ");
             })
           )
@@ -130,7 +163,7 @@ const tasks = {
           .pipe(beautify.html(beautifySettings.html))
           .pipe(dest(path.join(pathData.build.html, lang)));
       }));
-    },
+    },*/
     pipeStyles() {
       return src(pathData.src.styles, { sourcemaps: true })
         .pipe(plumber({
@@ -220,6 +253,21 @@ const tasks = {
   [modes.build]: {
     pipeHtml() {
       return Promise.all(languages.map(lang => {
+        const stream = src(pathData.src.html)
+          .pipe(plumber({ errorHandler: handleError("Error at pipeHtml...") }))
+          .pipe(fileInclude(setFileIncludeSettings(lang)))
+          .pipe(replace(imgRegex, (match) => {
+            return match.replace(/\r?\n|\r/g, "").replace(/\s{2,}/g, " ");
+          }))
+          .pipe(new CustomGulpWebpHtml(pathData.distPath, "2x"))
+          .pipe(htmlClean())
+          .pipe(dest(path.join(pathData.build.html, lang)));
+
+        return streamToPromise(stream);
+      }));
+    },
+    /*pipeHtml() {
+      return Promise.all(languages.map(lang => {
         return src(pathData.src.html)
           .pipe(plumber({
             errorHandler: handleError("Error at pipeHtml...")
@@ -227,7 +275,7 @@ const tasks = {
           .pipe(fileInclude(setFileIncludeSettings(lang)))
           .pipe(
             //removes extra spaces and line breaks inside a tag <img>
-            replace(imgRegex, (/** @type {string} */ match) => {
+            replace(imgRegex, (/!** @type {string} *!/ match) => {
               return match.replace(/\r?\n|\r/g, "").replace(/\s{2,}/g, " ");
             })
           )
@@ -235,7 +283,7 @@ const tasks = {
           .pipe(htmlClean())
           .pipe(dest(path.join(pathData.build.html, lang)));
       }));
-    },
+    },*/
     pipeStyles() {
       return src(pathData.src.styles)
         .pipe(plumber({

@@ -60,9 +60,9 @@ export default class BrowserSync {
      * Starting BrowserSync
      * @returns {Promise<void>}
      */
-    async start() {
+    /*async start() {
         if (!this.hasStarted) {
-            await this.browserSync.init({
+            await this.browserSync.init({ // ← init НЕ возвращает Promise!
                 server: {
                     baseDir: this.baseDir,
                 },
@@ -76,27 +76,74 @@ export default class BrowserSync {
             });
             this.hasStarted = true;
         }
+    }*/
+
+    /**
+     * Starting BrowserSync
+     * @returns {Promise<void>}
+     */
+    start() {
+        return new Promise((resolve, reject) => {
+            if (this.hasStarted) {
+                resolve();
+                return;
+            }
+
+            this.browserSync.init({
+                server: {
+                    baseDir: this.baseDir,
+                },
+                startPath: this.startPath,
+                middleware: this.middleware,
+                open: this.open,
+                notify: this.notify,
+                injectChanges: this.injectChanges, // Inject CSS/JS changes
+                reloadOnRestart: this.reloadOnRestart, // Reload page after restart
+                ui: this.ui, // Disable BrowserSync UI
+            }, (err, bsInstance) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                this.hasStarted = true;
+                resolve();
+            });
+        });
     }
 
     /**
      * Обновление страницы с перезагрузкой
-     * @returns {Promise<void>}
+     * @param {Function} [done] - Gulp callback
      */
-    async reload() {
+    reload(done) {
         if (!this.hasStarted) {
-            await this.start();
+            this.start().then(() => {
+                this.browserSync.reload();
+                if (done) done();
+            }).catch((err) => {
+                if (done) done(err);
+            });
+            return;
         }
         this.browserSync.reload();
+        if (done) done();
     }
 
     /**
      * Обновление страницы без перезагрузки (live reload)
-     * @returns {Promise<void>}
+     * @param {Function} [done] - Gulp callback
      */
-    async stream() {
+    stream(done) {
         if (!this.hasStarted) {
-            await this.start();
+            this.start().then(() => {
+                this.browserSync.stream();
+                if (done) done();
+            }).catch((err) => {
+                if (done) done(err);
+            });
+            return;
         }
         this.browserSync.stream();
+        if (done) done();
     }
 }

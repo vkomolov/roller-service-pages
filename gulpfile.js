@@ -18,7 +18,7 @@ const initBs = (lang) => {
 	return new BrowserSync({
 		baseDir: pathData.distPath,
 		startPath: `/${ lang }/index.html`,
-		open: false,  //not open browser immediately
+		open: true,  //open browser immediately
 		notify: false,
 		noCacheHeaders: true,
 		injectChanges: true,  // Enabling change injection
@@ -82,28 +82,59 @@ export async function distClean() {
 	await cleanDist(pathData.clean);
 }
 
+/**
+ *
+ * @param { function } cb - callback
+ */
 export function pipesDev(cb) {
 	runPipes(modes.dev, cb);
 }
 
+/**
+ *
+ * @param { function } cb - callback
+ */
 export function pipesBuild(cb) {
 	runPipes(modes.build, cb);
 }
 
+/**
+ *
+ * @param { function } cb - callback
+ */
 export function runDev(cb) {
 	const bs = initBs("uk");
 
-	series(
-		pipesDev,
-		bs.start,
-		() => watchFiles(bs)
-	)(cb);
+	pipesDev((err) => {
+		if (err) {
+			cb(err);
+			return;
+		}
+
+		bs.start()
+			.then(() => {
+				watchFiles(bs);
+				cb();  // ← сигнализируем gulp о завершении
+			})
+			.catch(cb);
+	});
 }
 
+/**
+ *
+ * @param { function } cb - callback
+ */
 export function runBuild(cb) {
 	const bs = initBs("uk");
-	series(
-		pipesBuild,
-		bs.start,
-	)(cb);
+
+	pipesBuild((err) => {
+		if (err) {
+			cb(err);
+			return;
+		}
+
+		bs.start()
+			.then(() => cb())
+			.catch(cb);
+	});
 }
