@@ -29,8 +29,8 @@ export const pathData = {
 		js: path.join(srcPath, "js", "*.js"),
 		img: [
 			path.join(srcPath, "assets", "img", "**", "*.{jpg,jpeg,png,svg,gif,webp,avif,ico}"),
-			`!${ path.join(srcPath, "assets", "img", "svgIcons", "mono", "**", "*") }`,
-			`!${ path.join(srcPath, "assets", "img", "svgIcons", "multi", "**", "*") }`
+			`!${path.join(srcPath, "assets", "img", "svgIcons", "mono", "**", "*")}`,
+			`!${path.join(srcPath, "assets", "img", "svgIcons", "multi", "**", "*")}`
 		],
 		svgIconsMono: [
 			path.join(srcPath, "assets", "img", "svgIcons", "mono", "**", "*.svg")
@@ -57,29 +57,29 @@ export const pathData = {
 	},
 	watch: {
 		htmlNested: [
-			`${ srcPath }/html/**/*.html`,
+			`${srcPath}/html/**/*.html`,
 		],
 		stylesNested: [
-			`${ srcPath }/scss/**/*.scss`,
-			`${ srcPath }/js/modulesPack/**/scss/*.scss`,
+			`${srcPath}/scss/**/*.scss`,
+			`${srcPath}/js/modulesPack/**/scss/*.scss`,
 		],
 		jsNested: [
-			`${ srcPath }/js/**/*.js`,
-			`${ srcPath }/js/modulesPack/**/*.js`,
+			`${srcPath}/js/**/*.js`,
+			`${srcPath}/js/modulesPack/**/*.js`,
 		],
 		img: [
-			`${ srcPath }/assets/img/**/*.{jpg,jpeg,png,svg,gif,webp,avif,ico}`,
-			`!${ srcPath }/assets/img/svgIcons/mono/**/*`,
-			`!${ srcPath }/assets/img/svgIcons/multi/**/*`
+			`${srcPath}/assets/img/**/*.{jpg,jpeg,png,svg,gif,webp,avif,ico}`,
+			`!${srcPath}/assets/img/svgIcons/mono/**/*`,
+			`!${srcPath}/assets/img/svgIcons/multi/**/*`
 		],
 		svgIconsMono: [
-			`${ srcPath }/assets/img/svgIcons/mono/**/*.svg`
+			`${srcPath}/assets/img/svgIcons/mono/**/*.svg`
 		],
 		svgIconsMulti: [
-			`${ srcPath }/assets/img/svgIcons/multi/**/*.svg`
+			`${srcPath}/assets/img/svgIcons/multi/**/*.svg`
 		],
-		fonts: `${ srcPath }/assets/fonts/**/*.{eot,woff,woff2,ttf,otf}`,
-		data: `${ srcPath }/assets/data/**/*.{json, pdf, xml}`,
+		fonts: `${srcPath}/assets/fonts/**/*.{eot,woff,woff2,ttf,otf}`,
+		data: `${srcPath}/assets/data/**/*.{json, pdf, xml}`,
 	},
 	clean: [
 		distPath,
@@ -94,17 +94,28 @@ export const pathData = {
  * @type {string} commonStyleSource
  * ! if some page needs separate css files, it could be added separately to fileEntries.stylesheetTagSource...
  */
-const commonStyleSource = "/css/index.min.css";
+const commonStyleSource = "/css/index.min.css";  // relative for HTML
+const criticalStyleSource = "/css/critical.min.css";
+const totalStyleSource = [
+	{
+		href: criticalStyleSource,
+		inline: true  //optional... can be undefined
+	},
+	{
+		href: commonStyleSource,
+		defer: true //optional... can be undefined
+	}
+];
 
 const metaStylesheetSources = {
-	index: [commonStyleSource],
-	gates: [commonStyleSource],
-	rollers: [commonStyleSource],
-	automation: [commonStyleSource],
-	barriers: [commonStyleSource],
-	awnings: [commonStyleSource],
-	windows: [commonStyleSource],
-	security: [commonStyleSource],
+	index: totalStyleSource,
+	gates: totalStyleSource,
+	rollers: totalStyleSource,
+	automation: totalStyleSource,
+	barriers: totalStyleSource,
+	awnings: totalStyleSource,
+	windows: totalStyleSource,
+	security: totalStyleSource,
 }
 
 /**
@@ -171,7 +182,7 @@ export const pagesDataJsonFolder = "assets/data/pagesVersions";
  * @type {{
  *   jsEntries: Record<string, string>,
  *   jsonPaths: Record<string, string>,  // paths to JSON files
- *   metaStylesheetSources: Record<string, string[]>,
+ *   metaStylesheetSources: Record<string, object[]>,
  *   metaScriptSources: Record<string, object[]>
  * }}
  */
@@ -179,7 +190,7 @@ export const fileEntries = {
 	jsEntries: getFilesEntries(path.join(pathData.srcPath, "js"), "js"),
 	//getting all **/*.json
 	jsonPaths: getFilesEntries(
-		path.join(pathData.srcPath,pagesDataJsonFolder),
+		path.join(pathData.srcPath, pagesDataJsonFolder),
 		"json",
 		true,
 		"_"

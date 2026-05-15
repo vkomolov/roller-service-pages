@@ -5,6 +5,7 @@
 import fs, { constants } from 'fs';
 import path from "path";
 import { rimraf } from 'rimraf';
+import { logger } from "browser-sync/dist/logger.js";
 
 /**
  * It checks the path for existence
@@ -297,6 +298,8 @@ function stringifyAttrs(attrs) {
  * @param {{
  *  tagType: string,
  *  dataSrc: string|URL,
+ *  inline?: boolean,
+ *  defer?: boolean,
  *  [key: string]: any
  * }} params - Configuration object
  *
@@ -306,7 +309,17 @@ function stringifyAttrs(attrs) {
  * // Generate stylesheet link
  * getMetaLinkTag({
  *   tagType: "stylesheet",
- *   dataSrc: "/styles.css"
+ *   dataSrc: "/styles.css",
+ *   inline: true
+ * });
+ * // => <link rel="stylesheet" href="/styles.css">
+ *
+ *   @example
+ * // Generate deferred stylesheet link
+ * getMetaLinkTag({
+ *   tagType: "stylesheet",
+ *   dataSrc: "/styles.css",
+ *   defer: true
  * });
  * // => <link rel="stylesheet" href="/styles.css">
  *
@@ -329,7 +342,7 @@ function stringifyAttrs(attrs) {
  * // => <script src="/app.js" defer></script>
  */
 function getMetaLinkTag(params) {
-	const { tagType, dataSrc, ...restAttrs } = params;
+	const { tagType, dataSrc, inline, defer, ...restAttrs } = params;
 
 	if (!tagType || !dataSrc) {
 		throw new Error(
@@ -344,6 +357,40 @@ function getMetaLinkTag(params) {
 	// Generate <script> tag
 	if (tagType === "script") {
 		return `<script src="${safeSrc}"${attrStr ? " " + attrStr : ""}></script>`;
+	}
+
+	// Generate inline styles
+	if (inline) {
+		try {
+			const absolutePath = path.join(process.cwd(), "dist", safeSrc.replace(/^\//, ""));
+
+			if (!fs.existsSync(absolutePath)) {
+				throw new Error(`File not found: ${absolutePath}. Ensure pipeStyles runs before pipeHtml.`);
+			}
+
+			const criticalCss = fs.readFileSync(absolutePath, "utf-8");
+
+			// Cleaning sourcemap comments
+			const cleanCss = criticalCss.replace(/\/\*# sourceMappingURL=.* \*\//, '');
+			return `<style>${cleanCss}</style>`;
+		}
+		catch (e) {
+			console.error(`[getMetaLinkTag]: Failed to inline ${safeSrc}, falling back to link`);
+			console.error(e);
+
+			return getMetaLinkTag({
+				tagType: "stylesheet",
+				dataSrc: safeSrc,
+				inline: false,
+				defer: false,
+			});
+		}
+	}
+
+	// Generate deferred styles
+	if (defer) {
+		return `<link rel="preload" href="${safeSrc}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="${safeSrc}"></noscript>`;
 	}
 
 	// Generate <link> tag
@@ -504,7 +551,7 @@ export function readJsonSafe(filePath) {
  * @property {string} rootUrl
  * !optional:
  * @property {string} [robotsParams]
- * @property {Record<string, string[]>} [metaStylesheetSources]
+ * @property {Record<string, object[]>} [metaStylesheetSources]
  * @property {Record<string, object[]>} [metaScriptSources]
  * @property {string[]} [metaCanonical]
  * @property {string} [metaDefaultRel]
@@ -670,7 +717,7 @@ function buildPageContent(pageData, context) {
  * Validates input configuration.
 
  * @param {Record<string, string>} jsonEntries
- * @param {object} initialData
+ * @param {InitialData} initialData
  *
  * @throws {Error}
  */
@@ -730,56 +777,42 @@ function isStringArray(v) {
 }
 
 /**
- * @param {{
- *   lang: string,
- *   languages: string[],
- *   [key: string]: any   // pageName and rootUrl are here...
- * }} context
+ * @typedef {object} TPageStyleSheetItem
+ * @property {string} href
+ * @property {boolean} inline
+ * @property {boolean} defer
  */
-function getInitialHeadData(context) {
-	const { rootUrl, lang, pageName } = context;
 
-	/**
-	 * Generates a full URL object for a specific language version of the page.
-	 *
-	 * Ensures the base URL has a trailing slash and safely constructs
-	 * a normalized absolute URL using the URL constructor.
-	 *
-	 * @param {string} language - Language code (e.g., "en", "ru", "uk").
-	 * @returns {URL} A URL object pointing to the language-specific page.
-	 *
-	 * @example
-	 * getUrlLangVersion("en")
-	 * // => https://example.com/en/pageName.html
-	 *
-	 * @example
-	 * getUrlLangVersion("ru")
-	 * // => https://example.com/ru/pageName.html
-	 */
-	const getUrlLangVersion = (language) => {
-		const base = rootUrl.endsWith("/") ? rootUrl : rootUrl + "/";
-		return new URL(`${language.trim()}/${pageName}.html`, base);
-	}
-
-	/**
-	 * Handlers to process head initialData properties
-	 * @type {Record<string, function(any): [string, string]>}
-	 */
-	const handlers = {
+/**
+ * @return {{
+ *   languages: (languages: string[], context: Context) => [string,string],
+ *   metaCanonical: (metaCanonical: string[], context: Context) => [string,string],
+ *   metaDefaultRel: (metaDefaultRel: string, context: Context) => [string, string],
+ *   robotsParams: (robotsParams: string) => [string, string],
+ *   metaStylesheetSources: (metaStylesheetSources: Record<string, TPageStyleSheetItem[]>, context: Context) => [string, string],
+ *   metaScriptSources: (metaScriptSources: Record<string, Record<string, string>[]>, context: Context) => [string, string]
+ * }}
+ */
+function getHeadDataHandlers() {
+	return {
 		/**
 		 * It creates alternate links of the pages..
 		 * @sample <link rel="alternate" href="https://example.com/ru/pageName.html" hreflang="ru">
 		 * @sample <link rel="alternate" href="https://example.com/uk/pageName.html" hreflang="uk">
 		 * @param {string[]} languages
+		 * @param {Context} context
+		 *
 		 * @return {[string,string]}
 		 */
-		languages: (languages) => {
+		languages: (languages, context) => {
+			const {rootUrl, pageName} = context;
+
 			const alternateLinks = languages
 				.map(language => {
 					const langTrimmed = language.trim();
 					return getMetaLinkTag({
 						tagType: "alternate",
-						dataSrc: getUrlLangVersion(langTrimmed).href,
+						dataSrc: getUrlLangVersion(langTrimmed, rootUrl, pageName).href,
 						hreflang: langTrimmed,
 					})
 				})
@@ -794,14 +827,17 @@ function getInitialHeadData(context) {
 		 *
 		 * if multilanguage site has two canonical languages, then to use canonical for the active page language
 		 * @param {string[]} metaCanonical - optional languages for links rel="canonical"
+		 * @param {Context} context
+		 *
 		 * @return {[string,string]}
 		 */
-		metaCanonical: (metaCanonical) => {
+		metaCanonical: (metaCanonical, context) => {
+			const { lang, rootUrl, pageName } = context;
 			//if active lang is in metaCanonical language options then to create canonical link with active language
 			const canonicalLang = (metaCanonical.includes(lang)) ? lang : metaCanonical[0];
 			const metaCanonicalStr = getMetaLinkTag({
 				tagType: "canonical",
-				dataSrc: getUrlLangVersion(canonicalLang).href,
+				dataSrc: getUrlLangVersion(canonicalLang, rootUrl, pageName).href,
 			})
 
 			return ["canonical", metaCanonicalStr];
@@ -811,14 +847,18 @@ function getInitialHeadData(context) {
 		 * Creates default language version of the page
 		 * @sample <link rel="alternate" href="https://example.com/uk/pageName.html" hreflang="x-default">
 		 * @param {string} metaDefaultRel
+		 * @param {Context} context
+		 *
 		 * @return {[string,string]}
 		 */
-		metaDefaultRel: (metaDefaultRel) => {
+		metaDefaultRel: (metaDefaultRel, context) => {
+			const { rootUrl, pageName } = context;
+
 			const metaDefaultTrimmed = metaDefaultRel.trim();
 			const metaDefaultTag = metaDefaultTrimmed.length > 1
 				? getMetaLinkTag({
 					tagType: "alternate",
-					dataSrc: getUrlLangVersion(metaDefaultTrimmed).href,
+					dataSrc: getUrlLangVersion(metaDefaultTrimmed, rootUrl, pageName).href,
 					hreflang: "x-default"
 				})
 				: "";
@@ -829,6 +869,7 @@ function getInitialHeadData(context) {
 		/**
 		 * creates robotsParams
 		 * @param {string} robotsParams
+		 *
 		 * @return {[string,string]}  - ["robots", `<meta name="robots" content=${robotsParams}>`]
 		 */
 		robotsParams: (robotsParams) => {
@@ -838,22 +879,25 @@ function getInitialHeadData(context) {
 		/**
 		 * creates *.css links for the <head>
 		 * @sample <link rel="stylesheet" href="" >
-		 * @param {Record<string, string[]>} metaStylesheetSources
+		 * @param {Record<string, TPageStyleSheetItem[]>} metaStylesheetSources
+		 * @param {Context} context
+		 *
 		 * @return {[string,string]}
 		 */
-		metaStylesheetSources: (metaStylesheetSources) => {
+		metaStylesheetSources: (metaStylesheetSources, context) => {
+			const { pageName } = context;
+
+			/**
+			 * @type {TPageStyleSheetItem[]}
+			 */
 			const pageStyleSheetLinks = metaStylesheetSources[pageName];
-			if (!pageStyleSheetLinks?.length) {
+
+			if (!pageStyleSheetLinks || !pageStyleSheetLinks?.length) {
 				console.warn(`[getInitialHeadData]: No stylesheet links found for page: ${pageName}`);
 				return ["stylesheet", ""];
 			}
 
-			const stylesheetLinks = pageStyleSheetLinks.map(href => {
-				return getMetaLinkTag({
-					tagType: "stylesheet",
-					dataSrc: href
-				});
-			}).join('\n');
+			const stylesheetLinks = pageStyleSheetLinks.map(itemHandle).join('\n');
 
 			return ["stylesheet", stylesheetLinks];
 		},
@@ -862,9 +906,13 @@ function getInitialHeadData(context) {
 		 * creates links for scripts in <head>
 		 * @sample <script src="/js/*.js" defer></script>
 		 * @param {Record<string, Record<string, string>[]>} metaScriptSources
+		 * @param {Context} context
+		 *
 		 * @return {[string, string]}
 		 */
-		metaScriptSources: (metaScriptSources) => {
+		metaScriptSources: (metaScriptSources, context) => {
+			const { pageName } = context;
+
 			const pageScripts = metaScriptSources?.[pageName];
 			const scriptSource = pageScripts?.length > 0
 				? pageScripts.map((scriptSrc) => {
@@ -882,11 +930,62 @@ function getInitialHeadData(context) {
 			return ["scriptSource", scriptSource];
 		}
 	}
+}
+
+/**
+ *
+ * @param {TPageStyleSheetItem} item
+ * @return {string}
+ */
+function itemHandle (item) {
+	const {href, inline, defer} = item;
+
+	return getMetaLinkTag({
+		tagType: "stylesheet",
+		dataSrc: href,
+		inline: inline || false,
+		defer: defer || false,
+	});
+
+}
+
+/**
+ * Generates a full URL object for a specific language version of the page.
+ *
+ * Ensures the base URL has a trailing slash and safely constructs
+ * a normalized absolute URL using the URL constructor.
+ *
+ * @param {string} language - Language code (e.g., "en", "ru", "uk").
+ * @param {string} rootUrl
+ * @param {string} pageName
+ * @returns {URL} A URL object pointing to the language-specific page.
+ *
+ * @example
+ * getUrlLangVersion("en", 'https://example.com/', "about")
+ * // => https://example.com/en/about.html
+ *
+ * @example
+ * getUrlLangVersion("ru", 'https://example.com/', "about")
+ * // => https://example.com/ru/about.html
+ */
+function getUrlLangVersion(language, rootUrl, pageName){
+	const base = rootUrl.endsWith("/") ? rootUrl : rootUrl + "/";
+	return new URL(`${language.trim()}/${pageName}.html`, base);
+}
+
+
+
+/**
+ * @param {Context} context
+ */
+function getInitialHeadData(context) {
+	const handlers = getHeadDataHandlers();
 
 	return Object.fromEntries(
 		Object.entries(context).map(([key, val]) => {
+
 			if (key in handlers) {
-				return handlers[key](val);
+				return handlers[key](val, context);
 			}
 			return [key, val];
 		})

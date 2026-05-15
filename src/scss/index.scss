@@ -1,77 +1,13 @@
 @use "./global_styles/root" as root;
 @use "../js/modulesPack/gallery-thumbs/scss/gallery-thumbs.scss";
 @use "./partials/footer";
-@use "./partials/header";
+
 
 /////// STYLES ////////
-
-.total-wrapper {
-  box-sizing: border-box;
-  position: relative;
-
-  font-size: 1rem;
-
-  max-width: root.$maxViewWidth; //1440px;
-  //min-width: $minViewWidth; //320px;
-  margin: 0 auto;
-  background-color: root.$white;
-  color: root.$color-04;
-}
-
-.section {
-  position: relative;
-  overflow: hidden; /* fallback */
-  overflow: clip; //cheaper than hidden...
-  //font-size: 1rem;
-  width: 100%;
-
-  @extend %sectionWrapper;  //margin-top, margin-bottom calculations
-  @include root.flex-box(row, center, flex-start, wrap);
-}
-
-.button-request {
-  font-family: "Open Sans", "Open Sans Fallback", Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-size: var(--range_20-16_1280-641);
-  font-weight: 600;
-  padding: 1em 1.6em;
-  background-color: root.$color-01;
-  border: none;
-  color: root.$white;
-  border-radius: 0.5em;
-  box-shadow: 0.1em 0.15em 0.2em rgba(0, 0, 0, 0.8);
-
-  @include root.transition();
-
-  &:hover {
-    transform: translateY(-0.18em);
-    background-color: root.$color-01-darken;
-    box-shadow: 0.12em 0.25em 0.3em rgba(0, 0, 0, 0.8);
-  }
-
-  &:active {
-    background-color: root.$color-01-darkest;
-    box-shadow: 0.06em 0.125em 0.125em rgba(0, 0, 0, 0.8);
-    transform: translateY(0);
-  }
-}
+/*** critical styles are written inline ***/
 
 .bg-darker {
   background-color: root.$color-13;
-}
-
-.screen-reader-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  border: 0;
-  white-space: nowrap;
 }
 
 .foxy-on-hover {
@@ -81,50 +17,10 @@
   }
 }
 
-.section__content-layer {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  z-index: 10;
-
-  @extend %contentWrapper;  //padding calculations
-
-  /* mobile (portrait wide): (max-width: 640px) */
-  @include root.maxMobilePortraitWide {
-    align-items: center;
-  }
-}
-
-.section__heading-block {
-  h1, h2 {
-    text-transform: uppercase;
-  }
-}
-
-.section__content-block {
-  width: 100%;
-  display: flex;
-  align-items: flex-start;
-
-  /* mobile (portrait wide): (max-width: 640px) */
-  @include root.maxMobilePortraitWide {
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-  }
-}
-
 .section__content-block--row-center {
   flex-direction: row;
   align-items: flex-start;
   justify-content: center;
-}
-
-.section__content-block--row-left {
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: flex-start;
 }
 
 .section__content-block--row-right {
@@ -145,20 +41,6 @@
 
 .flex-gap-02-01 {
   gap: 2rem 1rem;
-}
-
-.section__text-block {
-  p {
-    overflow-wrap: break-word;
-  }
-
-  p + p {
-    margin-top: 0.5em;
-  }
-
-  .button-request {
-    margin-top: 1.4em;
-  }
 }
 
 .section__text-separ {
@@ -182,22 +64,6 @@
 .section__text-list {
   list-style: inside;
   margin-bottom: 0.5em;
-}
-
-.section__img-wrapper {
-  width: 100%; //default
-//! .section__img-wrapper must be used in combination with an added class with necessary width.
-//! As the added class has only width, the browser will have to know the height from the image for
-//! creating necessary space...
-//! This simplifies the work by allowing to specify only the width of the container and to get
-//! the height directly from the image using aspect ratio, calculated by browser...
-//! For lazy loading the image MUST have inline width and height, for browser to calculate aspect ratio
-//! beforehand, without preliminary loading of the image. Otherwise loading="lazy" will no work...
-  img, svg {
-    width: 100%;
-    height: auto;
-    display: block; //removes the strange gap under the image
-  }
 }
 
 .section__heading-block--separation {
@@ -239,133 +105,7 @@
   transform-origin: 50% 100%;
 }
 
-/////////// SECTION hero //////////
-.section--hero {
-  min-height: var(--range_630-480_1280-641);
-
-  /* mobile (portrait wide): (max-width: 640px) */
-  @include root.maxMobilePortraitWide {
-    min-height: var(--range_670-780_640-320);
-  }
-
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to right, rgba(40, 32, 23, .7) 40%, rgba(40, 32, 23, 0.15) 85%);
-    z-index: 1;
-    pointer-events: none;
-
-    /*** mobile (portrait wide): (max-width: 640px) ***/
-  @include root.maxMobilePortraitWide {
-    //background: linear-gradient(to right, rgba(40, 32, 23, .7) 40%, rgba(40, 32, 23, 0) 85%);
-    //background: rgba(40, 32, 23, .7);
-    background: linear-gradient(
-            rgba(40, 32, 23, 0.75),
-            rgba(40, 32, 23, 0.55)
-    );
-  }
-  }
-}
-
-.hero-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  display: block;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-}
-
-.section__content-layer--hero {
-  position: relative;
-  color: root.$white;
-  z-index: 2;
-}
-
-.section__heading-block--hero {
-  font-size: var(--range_48-32_1280-641);
-  max-width: 45rem;
-  margin-bottom: .584em;
-  text-shadow: 0.08em 0.08em 0.1em rgba(0, 0, 0, 0.8);
-
-  /* mobile (portrait wide): (max-width: 640px) */
-  @include root.maxMobilePortraitWide {
-    text-align: center;
-  }
-
-  .accent {
-    display: inline-block;
-    font-size: 1em;
-
-    //////// GSAP:
-    opacity: 0;
-
-    /* mobile (portrait narrow): (max-width: 480px)*/
-    @include root.maxMobilePortraitNarrow {
-      margin-bottom: 0.15em;
-    }
-  }
-
-  .rest-of-heading {
-    display: block;
-    font-size: max(0.543em, 18px);
-
-    //////// GSAP:
-    opacity: 0;
-  }
-}
-
-.section__content-block--hero {
-  font-size: var(--range_20-18_1280-641);
-  gap: 3em;
-}
-
-.section__text-block--hero {
-  max-width: 20em;
-
-  ////////// GSAP:
-  opacity: 0;
-}
-
-.section__img-wrapper--hero {
-  width: 7em;
-
-  ////////// GSAP:
-  transform: scale(0);
-}
-
-.section__bidding-block {
-  font-size: var(--range_20-18_1280-641);
-  margin-top: 1.4em;
-
-  ///////// GSAP:
-  opacity: 0;
-
-  @include root.flex-box(column, center, flex-start);
-
-  /* mobile (portrait wide): (max-width: 640px) */
-  @include root.maxMobilePortraitWide {
-    //margin-top: 1.4em;
-    align-items: center;
-    text-align: center;
-    margin-top: 2em;
-  }
-
-  p {
-    max-width: 14em;
-  }
-
-  .button-request {
-    margin-top: 1.4em;
-  }
-}
+/// !!! HERO in critical.scss
 
 ////////// SECTION pair  ///////////
 

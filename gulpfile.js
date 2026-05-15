@@ -16,11 +16,9 @@ const { series, parallel, watch } = gulp;
  */
 const initBs = (lang) => {
 	return new BrowserSync({
-		//first priority: "dist/html/", then "dist/" for assets/css or assets/img...
-		//baseDir: [path.resolve(pathData.distPath, "html"), pathData.distPath],
 		baseDir: pathData.distPath,
 		startPath: `/${ lang }/index.html`,
-		open: true,
+		open: false,  //not open browser immediately
 		notify: false,
 		noCacheHeaders: true,
 		injectChanges: true,  // Enabling change injection
@@ -29,7 +27,10 @@ const initBs = (lang) => {
 	});
 };
 
-
+/**
+ *
+ * @param {object} bs
+ */
 function watchFiles(bs) {
 	const pipesDev = tasks[modes.dev];
 	watch(pathData.watch.htmlNested, series(pipesDev.pipeHtml, bs.reload));
@@ -54,17 +55,22 @@ function runPipes(mode, cb) {
 
 		series(
 			distClean,
-			task.pipeImages,
-			task.pipeHtml,  //it needs images with alternative *.webp for tag <picture>
+			// Stage 1: collecting all static assets...
 			parallel(
-				task.pipeStyles,
-				task.pipeJs,
+				task.pipeImages,
 				task.pipeFonts,
 				task.pipeSvgSpriteMono,
 				task.pipeSvgSpriteMulti,
 				task.pipeData,
 				task.pipeUtils,
 			),
+			// Stage 2: compiling styles and scripts...
+			parallel(
+				task.pipeStyles,
+				task.pipeJs,
+			),
+			// Stage 3: HTML is compiled finally — it could inline CSS and add webp to HTML
+			task.pipeHtml,
 		)(cb);
 	}
 	else {
@@ -86,6 +92,7 @@ export function pipesBuild(cb) {
 
 export function runDev(cb) {
 	const bs = initBs("uk");
+
 	series(
 		pipesDev,
 		bs.start,
