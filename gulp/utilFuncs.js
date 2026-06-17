@@ -4,8 +4,121 @@
 
 import fs, { constants } from 'fs';
 import path from "path";
-import { rimraf } from 'rimraf';
-import { logger } from "browser-sync/dist/logger.js";
+import { rm } from 'node:fs/promises';
+
+//import { rimraf } from 'rimraf';
+
+/// TYPE DEFINITIONS ///
+
+/**
+ * @typedef {object} SearchResult
+ * @property {boolean} found - Whether file was found
+ * @property {string} [path] - Full path if found
+ */
+
+/**
+ * @typedef {{
+ *   isDirectory: ()=>boolean,  //Returns true if file is a directory
+ *   isNull: ()=>boolean, //Returns true if file has null contents
+ *   isStream: ()=>boolean, //Returns true if file is a stream
+ *   contents: Buffer|null|NodeJS.ReadableStream, //File contents
+ *   path: string,  //File path
+ *   base: string,  //Base directory
+ *   baseName?: string, //Base name of the file
+ * }} VinylFile
+ */
+
+/**
+ * Metadata configuration for HTML resource tags.
+ *
+ * Currently supports:
+ * - script
+ * - stylesheet
+ * - link
+ *
+ * Can be extended with additional tag types.
+ *
+ * @typedef {{
+ *   tagType: "script"|"stylesheet"|"link",
+ *   dataSrc: string | URL,
+ *   inline?: boolean,
+ *   deferredLoad?: boolean,
+ *   defer?: boolean,
+ *   type?: string,
+ *   hreflang?: string,
+ *   rel?: string,
+ *   sizes?: string,
+ *   as?: string,
+ *   crossorigin?: boolean,
+ * }} TPageMetaItem
+ */
+
+/**
+ * @typedef {{
+ *   safeSrc: string,
+ *   inline?: boolean,
+ *   deferredLoad?: boolean,
+ *   attrs: Record<string, unknown>,
+ * }} TPageMetaStyleSheetItem
+ */
+
+/**
+ * @typedef {{
+ *   languages: (languages: string[], context: Context) => [string,string],
+ *   metaCanonical: (metaCanonical: string[], context: Context) => [string,string],
+ *   metaDefaultRel: (metaDefaultRel: string, context: Context) => [string, string],
+ *   robotsParams: (robotsParams: string) => [string, string],
+ *   metaStylesheetSources: (metaStylesheetSources: Record<string, TPageMetaItem[]>, context: Context) => [string, string],
+ *   metaScriptSources: (metaScriptSources: Record<string, TPageMetaItem[]>, context: Context) => [string, string],
+ *   metaShortCutIconSources: (metaShortCutIconSources: Record<string, TPageMetaItem[]>, context: Context) => [string, string],
+ *   metaPreloadSources: (metaPreloadSources: Record<string, TPageMetaItem[]>, context: Context) => [string, string]
+ * }} TMetaHeadDataHandlers
+ *
+ */
+
+/**
+ * @typedef {{
+ *   head: object,
+ *   header: object,
+ *   main: object
+ * }} PageContent
+ */
+
+/**
+ * @typedef {{
+ *   languages: string[],
+ *   rootUrl: string,
+ *   robotsParams?: string,
+ *   metaStylesheetSources?: Record<string, TPageMetaItem[]>,
+ *   metaScriptSources?: Record<string, TPageMetaItem[]>,
+ *   metaShortCutIconSources?: Record<string, TPageMetaItem[]>,
+ *   metaCanonical?: string[],
+ *   metaDefaultRel?: string,
+ *   metaPreloadSources?: Record<string, TPageMetaItem[]>
+ * }} InitialData
+ */
+
+/**
+ * @typedef {InitialData & {
+ *   lang: string,
+ *   pageName: string,
+ *   [key: string]: any  // ← allowing other keys...
+ * }} Context
+ */
+
+/**
+ * @typedef {Record<string, PageContent>} PagesData
+ */
+
+/**
+ * @typedef {{
+ *   head: (value: object) => object,
+ *   header: (value: object) => object
+ *   main: (value: object) => object
+ * }} TPageDataHandlers
+ */
+
+/// END OF TYPE DEFINITIONS ///
 
 /**
  * It checks the path for existence
@@ -52,19 +165,12 @@ async function searchInDirectory(dir, fileName, mode) {
 		const isMatch = await isMatchingFile(fullPath, fileName, mode);
 
 		if (isMatch) {
-			return createResult(true, fullPath);
+			return createSearchResult(true, fullPath);
 		}
 	}
 
-	return createResult(false);
+	return createSearchResult(false);
 }
-
-
-/**
- * @typedef {object} SearchResult
- * @property {boolean} found - Whether file was found
- * @property {string} [path] - Full path if found
- */
 
 /**
  * Creates a search result object
@@ -72,7 +178,7 @@ async function searchInDirectory(dir, fileName, mode) {
  * @param {string} [fullPath]
  * @returns {SearchResult}
  */
-const createResult = (found, fullPath) => ({
+const createSearchResult = (found, fullPath) => ({
 	found,
 	...(fullPath && { path: fullPath })
 });
@@ -89,7 +195,6 @@ async function getSubdirectories(dir) {
 		.filter(item => item.isDirectory())
 		.map(item => path.join(dir, item.name));
 }
-
 
 /**
  * Recursively searches directories for a file
@@ -112,7 +217,7 @@ async function searchRecursively(directories, fileName, mode) {
 		directories.push(...subdirs);
 	}
 
-	return createResult(false);
+	return createSearchResult(false);
 }
 
 /**
@@ -140,7 +245,11 @@ export async function checkFileInDir(
 		return returnPath && result.path ? result.path : result.found;
 	}
 	catch (error) {
-		console.error(`Error in checkFileInDir: ${error instanceof Error ? error.message : String(error)}`);
+		console.error(
+			`Error in checkFileInDir: ${
+				error instanceof Error ? error.message : JSON.stringify(error)
+			}`
+		);
 		return false;
 	}
 }
@@ -152,13 +261,15 @@ export async function checkFileInDir(
  */
 export async function cleanDist(targetPaths) {
 	const pathArr = Array.isArray(targetPaths) ? targetPaths : [targetPaths];
-	const deletePromises = pathArr.map(async pathStr => {
-		const pathExists = await checkAccess(pathStr);
-		if (pathExists) {
-			await rimraf(pathStr);
-		}
-	});
-	await Promise.all(deletePromises);
+
+	await Promise.all(
+		pathArr.map(pathStr =>
+			rm(pathStr, {
+				recursive: true,
+				force: true,  //if folder not exist then omit error (analog checkAccess())
+			})
+		)
+	);
 }
 
 /**
@@ -175,38 +286,17 @@ export function handleError(taskTypeError) {
 }
 
 /**
- * Combine paths into a single array of strings.
- * @param {(string | string[])[]} paths - Strings or arrays of strings to combine.
- * @returns {string[]} - Combined array of strings.
+ * The structural type representing a single page metadata item.
+ * @param {string[]} pageNameList - An array of unique page identifiers/names.
+ * @param {TPageMetaItem[]} commonData - The shared array of metadata items to assign to each page.
+ * returns an object where keys are page names and values are the shared metadata array.
+ * @return {Record<string, TPageMetaItem[]>}
  */
-export const combinePaths = (...paths) => {
-	/** @type {string[]} */
-	const initial = [];
-	return paths.reduce(
-		/** @param {string[]} acc
-		 * @param {string | string[]} path
-		 *
-		 * @returns {string[]} */
-		(acc, path) => {
-			if (Array.isArray(path)) {
-				return [...acc, ...path];
-			}
-			return [...acc, path];
-		},
-		initial
+export function makeCommonDataForPages(pageNameList, commonData) {
+	return Object.fromEntries(
+		pageNameList.map((pageName) => [pageName, commonData])
 	);
 }
-
-/**
- * @typedef {object} VinylFile
- * @property {Function} isDirectory - Returns true if file is a directory
- * @property {Function} isNull - Returns true if file has null contents
- * @property {Function} isStream - Returns true if file is a stream
- * @property {Buffer|null|NodeJS.ReadableStream} contents - File contents
- * @property {string} path - File path
- * @property {string} base - Base directory
- * @property {string} [baseName] - Base name of the file
- */
 
 /**
  * Processes file to ensure its contents are in buffer format, handles null and stream files.
@@ -238,35 +328,69 @@ export function processFile(file) {
 }
 
 /**
- * Converts attributes object into HTML string.
- * Filters out invalid values and warns if any were removed.
+ * Escapes a value for safe insertion into an HTML attribute.
+ *
+ * Converts special HTML characters into their corresponding entities:
+ * - &  → &amp;
+ * - "  → &quot;
+ * - <  → &lt;
+ * - >  → &gt;
+ *
+ * This helps prevent malformed HTML and reduces the risk of
+ * attribute injection when attribute values contain special characters.
+ *
+ * @param {unknown} value - Value to escape.
+ * @returns {string} Escaped string safe for use inside HTML attributes.
+ *
+ * @example
+ * escapeAttr('hello "world"');
+ * // => hello &quot;world&quot;
+ *
+ * @example
+ * escapeAttr('<script>');
+ * // => &lt;script&gt;
+ */
+function escapeAttr(value) {
+	return String(value)
+		.replace(/&/g, "&amp;")
+		.replace(/"/g, "&quot;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;");
+}
+
+/**
+ * Converts an attributes object into an HTML attribute string.
  *
  * Rules:
- * - undefined / null / false → removed
- * - true → boolean attribute (no value)
- * - string/number → key="value"
+ * - undefined / null / false → omitted
+ * - true → rendered as a boolean attribute
+ * - string / number / other values → rendered as key="value"
  *
- * @param {object} attrs
- * @returns {string}
+ * Attribute values are automatically HTML-escaped via {@link escapeAttr}.
+ *
+ * @param {Record<string, unknown>} attrs - Attributes to convert.
+ * @returns {string} HTML attribute string.
+ *
+ * @example
+ * stringifyAttrs({
+ *   defer: true,
+ *   type: "module"
+ * });
+ * // => 'defer type="module"'
+ *
+ * @example
+ * stringifyAttrs({
+ *   title: 'Hello "world"',
+ *   hidden: false
+ * });
+ * // => 'title="Hello &quot;world&quot;"'
  */
 function stringifyAttrs(attrs) {
-	/**
-	 * @type {string[]} removedKeys
-	 */
-	const removedKeys = [];
-
-	const result = Object.entries(attrs)
-		.filter(([key, value]) => {
-			const isValid =
-				value !== undefined &&
-				value !== null &&
-				value !== false;
-
-			if (!isValid) {
-				removedKeys.push(key);
-			}
-
-			return isValid;
+	return Object.entries(attrs)
+		.filter(([, value]) => {
+			return value !== undefined
+				&& value !== null
+				&& value !== false;
 		})
 		.map(([key, value]) => {
 			// Boolean attribute (e.g. defer, async)
@@ -274,18 +398,78 @@ function stringifyAttrs(attrs) {
 				return key;
 			}
 
-			return `${key}="${value}"`;
+			return `${key}="${escapeAttr(value)}"`;
 		})
 		.join(" ");
+}
 
-	// Warn if any attributes were removed
-	if (removedKeys.length) {
-		console.warn(
-			`[getMetaTag]: removed invalid attributes → ${removedKeys.join(", ")}`
+/**
+ * Generates HTML for stylesheet resources.
+ *
+ * Supports:
+ * - inline CSS
+ * - deferred loading via preload
+ * - standard stylesheet links
+ *
+ * @param {TPageMetaStyleSheetItem} pageMetaStyleSheetItem
+ * @returns {string}
+ */
+function handleStyleSheetItem(pageMetaStyleSheetItem) {
+	const { safeSrc, inline, deferredLoad, attrs } = pageMetaStyleSheetItem;
+
+	// Inline CSS
+	if (inline) {
+		const absolutePath = path.join(
+			process.cwd(),
+			"dist",
+			safeSrc.replace(/^\//, "")
 		);
+
+		if (!fs.existsSync(absolutePath)) {
+			console.error(
+				`[getMetaLinkTag]: File not found: ${absolutePath}`
+			);
+			//fallback...
+			return getMetaLinkTag({
+				tagType: "stylesheet",
+				dataSrc: safeSrc,
+			});
+		}
+
+		try {
+			const criticalCss = fs.readFileSync(absolutePath, "utf-8");
+
+			const cleanCss = criticalCss.replace(
+				/\/\*# sourceMappingURL=.*?\*\/\s*/g,
+				""
+			);
+
+			return `<style>${cleanCss}</style>`;
+		}
+		catch (error) {
+			console.error(error);
+
+			//fallback...
+			return getMetaLinkTag({
+				tagType: "stylesheet",
+				dataSrc: safeSrc,
+			});
+		}
 	}
 
-	return result;
+	const escapedSrc = escapeAttr(safeSrc);
+	const attrStr = stringifyAttrs(attrs);
+
+	// Deferred stylesheet
+	if (deferredLoad) {
+		return `<link rel="preload" href="${escapedSrc}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+	<link rel="stylesheet" href="${escapedSrc}"${attrStr ? ` ${attrStr}` : ""}>
+</noscript>`;
+	}
+
+	// Standard stylesheet
+	return `<link rel="stylesheet" href="${escapedSrc}"${attrStr ? ` ${attrStr}` : ""}>`;
 }
 
 /**
@@ -295,13 +479,7 @@ function stringifyAttrs(attrs) {
  *! any other tagType → generates <link rel="...">
  * params.dataSrc - URL for the resource (href or src)
  *! Additional properties will be converted into HTML attributes.
- * @param {{
- *  tagType: string,
- *  dataSrc: string|URL,
- *  inline?: boolean,
- *  defer?: boolean,
- *  [key: string]: any
- * }} params - Configuration object
+ * @param {TPageMetaItem} params - Configuration object
  *
  * @returns {string} Generated HTML string
  *
@@ -319,7 +497,7 @@ function stringifyAttrs(attrs) {
  * getMetaLinkTag({
  *   tagType: "stylesheet",
  *   dataSrc: "/styles.css",
- *   defer: true
+ *   deferredLoad: true
  * });
  * // => <link rel="stylesheet" href="/styles.css">
  *
@@ -342,7 +520,7 @@ function stringifyAttrs(attrs) {
  * // => <script src="/app.js" defer></script>
  */
 function getMetaLinkTag(params) {
-	const { tagType, dataSrc, inline, defer, ...restAttrs } = params;
+	const { tagType, dataSrc, inline, deferredLoad, rel, ...restAttrs } = params;
 
 	if (!tagType || !dataSrc) {
 		throw new Error(
@@ -350,51 +528,30 @@ function getMetaLinkTag(params) {
 		);
 	}
 
-	const attrStr = stringifyAttrs(restAttrs);
-	//could take URL data and string...
+	// Normalize URL instance to string
 	const safeSrc = dataSrc instanceof URL ? dataSrc.href : dataSrc;
+	const attrStr = stringifyAttrs(restAttrs);
+	const escapedSrc = escapeAttr(safeSrc);
 
-	// Generate <script> tag
+	if (tagType === "stylesheet") {
+		return handleStyleSheetItem({
+			safeSrc,
+			inline,
+			deferredLoad,
+			attrs: restAttrs,
+		});
+	}
+
 	if (tagType === "script") {
-		return `<script src="${safeSrc}"${attrStr ? " " + attrStr : ""}></script>`;
+		return `<script src="${escapedSrc}"${attrStr ? ` ${attrStr}` : ""}></script>`;
 	}
 
-	// Generate inline styles
-	if (inline) {
-		try {
-			const absolutePath = path.join(process.cwd(), "dist", safeSrc.replace(/^\//, ""));
-
-			if (!fs.existsSync(absolutePath)) {
-				throw new Error(`File not found: ${absolutePath}. Ensure pipeStyles runs before pipeHtml.`);
-			}
-
-			const criticalCss = fs.readFileSync(absolutePath, "utf-8");
-
-			// Cleaning sourcemap comments
-			const cleanCss = criticalCss.replace(/\/\*# sourceMappingURL=.* \*\//, '');
-			return `<style>${cleanCss}</style>`;
-		}
-		catch (e) {
-			console.error(`[getMetaLinkTag]: Failed to inline ${safeSrc}, falling back to link`);
-			console.error(e);
-
-			return getMetaLinkTag({
-				tagType: "stylesheet",
-				dataSrc: safeSrc,
-				inline: false,
-				defer: false,
-			});
-		}
+	if (tagType === "link" && rel) {
+		return `<link rel="${rel}" href="${escapedSrc}"${attrStr ? ` ${attrStr}` : ""}>`;
 	}
 
-	// Generate deferred styles
-	if (defer) {
-		return `<link rel="preload" href="${safeSrc}" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="${safeSrc}"></noscript>`;
-	}
-
-	// Generate <link> tag
-	return `<link rel="${tagType}" href="${safeSrc}"${attrStr ? " " + attrStr : ""}>`;
+	console.error("[getMetaLinkTag]: tagType is not known: ", tagType);
+	return "";
 }
 
 /**
@@ -539,37 +696,6 @@ export function readJsonSafe(filePath) {
 }
 
 /**
- * @typedef {object} PageContent
- * @property {object} head
- * @property {object} header
- * @property {object} main
- */
-
-/**
- * @typedef {object} InitialData
- * @property {string[]} languages
- * @property {string} rootUrl
- * !optional:
- * @property {string} [robotsParams]
- * @property {Record<string, object[]>} [metaStylesheetSources]
- * @property {Record<string, object[]>} [metaScriptSources]
- * @property {string[]} [metaCanonical]
- * @property {string} [metaDefaultRel]
- */
-
-/**
- * @typedef {InitialData & {
- *   lang: string,
- *   pageName: string,
- *   [key: string]: any  // ← allowing other keys...
- * }} Context
- */
-
-/**
- * @typedef {Record<string, PageContent>} PagesData
- */
-
-/**
  *
  * @param {Record<string, string>} jsonEntries
  * @param {InitialData} initialData - Global configuration
@@ -582,7 +708,6 @@ export function getPageData(
 	initialData,
 	lang
 ) {
-
 	try {
 		const headerDataSource = `header_${lang}`;
 
@@ -601,7 +726,8 @@ export function getPageData(
 		validateInput(jsonEntries, initialData);
 
 		//to avoid type {} of jsonEntries (tsconfig.json - "allowJs": true)
-		const entries = /** @type {Record<string, string>} */ (jsonEntries);
+		/** @type {Record<string, string>} */
+		const entries = (jsonEntries);
 
 		const mainDataJsonSource = entries[lang];
 		const headerDataJsonSource = entries[headerDataSource];
@@ -617,8 +743,8 @@ export function getPageData(
 						...headerData
 					}
 				}
-
-				const context/** @type {Context} */ = {
+				/** @type {Context} */
+				const context= {
 					...initialData,
 					lang,
 					pageName,
@@ -640,7 +766,6 @@ export function getPageData(
 	}
 }
 
-
 /**
  * @param {object} pageData  // ← not PagesData! It is the data for the single page...
  * @param {Context} context
@@ -659,13 +784,8 @@ function buildPageContent(pageData, context) {
 	const { lang, languages } = context;
 
 	/**
-	 * @typedef {object} Handlers
-	 * @property {(value: object) => object} head
-	 * @property {(value: object) => object} header
-	 * @property {(value: object) => object} main
-	 */
-
-	/** @type {Handlers & Record<string, (value: any) => any>} */
+	 * @type {TPageDataHandlers}
+	 * */
 	const handlers = {
 		/**
 		 * @param {object} value
@@ -702,16 +822,14 @@ function buildPageContent(pageData, context) {
 
 	return /** @type {PageContent} */ (Object.fromEntries(
 		Object.entries(pageData).map(([key, value]) => {
-			const handler = handlers[key];
-			if (handler) {
-				return [key, handler(value)];
+			if (key in handlers) {
+				return [key, handlers[key](value)];
 			}
+
 			return [key, value];
 		})
 	));
-
 }
-
 
 /**
  * Validates input configuration.
@@ -738,6 +856,7 @@ function validateInput(jsonEntries, initialData) {
 		robotsParams: isString,
 		metaStylesheetSources: isObject,
 		metaScriptSources: isObject,
+		metaShortCutIconSources: isObject,
 		metaCanonical: isStringArray,
 		metaDefaultRel: isString,
 		rootUrl: isString,
@@ -761,37 +880,23 @@ function validateInput(jsonEntries, initialData) {
 }
 
 /* ---------- Helpers ---------- */
-/** @param {any} v */
+/** @param {unknown} v */
 function isObject(v) {
 	return v !== null && typeof v === "object" && !Array.isArray(v);
 }
 
-/** @param {any} v */
+/** @param {unknown} v */
 function isString(v) {
 	return typeof v === "string";
 }
 
-/** @param {any} v */
+/** @param {unknown} v */
 function isStringArray(v) {
 	return Array.isArray(v) && v.every(isString);
 }
 
 /**
- * @typedef {object} TPageStyleSheetItem
- * @property {string} href
- * @property {boolean} inline
- * @property {boolean} defer
- */
-
-/**
- * @return {{
- *   languages: (languages: string[], context: Context) => [string,string],
- *   metaCanonical: (metaCanonical: string[], context: Context) => [string,string],
- *   metaDefaultRel: (metaDefaultRel: string, context: Context) => [string, string],
- *   robotsParams: (robotsParams: string) => [string, string],
- *   metaStylesheetSources: (metaStylesheetSources: Record<string, TPageStyleSheetItem[]>, context: Context) => [string, string],
- *   metaScriptSources: (metaScriptSources: Record<string, Record<string, string>[]>, context: Context) => [string, string]
- * }}
+ * @return {TMetaHeadDataHandlers}
  */
 function getHeadDataHandlers() {
 	return {
@@ -805,13 +910,15 @@ function getHeadDataHandlers() {
 		 * @return {[string,string]}
 		 */
 		languages: (languages, context) => {
-			const {rootUrl, pageName} = context;
+			const { rootUrl, pageName } = context;
 
 			const alternateLinks = languages
 				.map(language => {
 					const langTrimmed = language.trim();
+
 					return getMetaLinkTag({
-						tagType: "alternate",
+						tagType: "link",
+						rel: "alternate",
 						dataSrc: getUrlLangVersion(langTrimmed, rootUrl, pageName).href,
 						hreflang: langTrimmed,
 					})
@@ -836,7 +943,8 @@ function getHeadDataHandlers() {
 			//if active lang is in metaCanonical language options then to create canonical link with active language
 			const canonicalLang = (metaCanonical.includes(lang)) ? lang : metaCanonical[0];
 			const metaCanonicalStr = getMetaLinkTag({
-				tagType: "canonical",
+				tagType: "link",
+				rel: "canonical",
 				dataSrc: getUrlLangVersion(canonicalLang, rootUrl, pageName).href,
 			})
 
@@ -857,7 +965,8 @@ function getHeadDataHandlers() {
 			const metaDefaultTrimmed = metaDefaultRel.trim();
 			const metaDefaultTag = metaDefaultTrimmed.length > 1
 				? getMetaLinkTag({
-					tagType: "alternate",
+					tagType: "link",
+					rel: "alternate",
 					dataSrc: getUrlLangVersion(metaDefaultTrimmed, rootUrl, pageName).href,
 					hreflang: "x-default"
 				})
@@ -879,7 +988,7 @@ function getHeadDataHandlers() {
 		/**
 		 * creates *.css links for the <head>
 		 * @sample <link rel="stylesheet" href="" >
-		 * @param {Record<string, TPageStyleSheetItem[]>} metaStylesheetSources
+		 * @param {Record<string, TPageMetaItem[]>} metaStylesheetSources
 		 * @param {Context} context
 		 *
 		 * @return {[string,string]}
@@ -887,17 +996,14 @@ function getHeadDataHandlers() {
 		metaStylesheetSources: (metaStylesheetSources, context) => {
 			const { pageName } = context;
 
-			/**
-			 * @type {TPageStyleSheetItem[]}
-			 */
-			const pageStyleSheetLinks = metaStylesheetSources[pageName];
+			const pageStyleSheetLinks = metaStylesheetSources?.[pageName];
 
 			if (!pageStyleSheetLinks || !pageStyleSheetLinks?.length) {
 				console.warn(`[getInitialHeadData]: No stylesheet links found for page: ${pageName}`);
 				return ["stylesheet", ""];
 			}
 
-			const stylesheetLinks = pageStyleSheetLinks.map(itemHandle).join('\n');
+			const stylesheetLinks = pageStyleSheetLinks.map(getMetaLinkTag).join('\n');
 
 			return ["stylesheet", stylesheetLinks];
 		},
@@ -905,7 +1011,7 @@ function getHeadDataHandlers() {
 		/**
 		 * creates links for scripts in <head>
 		 * @sample <script src="/js/*.js" defer></script>
-		 * @param {Record<string, Record<string, string>[]>} metaScriptSources
+		 * @param {Record<string, TPageMetaItem[]>} metaScriptSources
 		 * @param {Context} context
 		 *
 		 * @return {[string, string]}
@@ -914,39 +1020,77 @@ function getHeadDataHandlers() {
 			const { pageName } = context;
 
 			const pageScripts = metaScriptSources?.[pageName];
+
 			const scriptSource = pageScripts?.length > 0
 				? pageScripts.map((scriptSrc) => {
-					const { src, ...restAttr } = scriptSrc;
+					const { tagType, dataSrc, ...restAttr } = scriptSrc;
 
 					return getMetaLinkTag({
-						tagType: "script",
-						dataSrc: src,
+						tagType,
+						dataSrc,
 						...restAttr,
 					});
 				}).join('\n')
 				: "";
 
+			return ["script", scriptSource];
+		},
 
-			return ["scriptSource", scriptSource];
-		}
+		/**
+		 * creates links for shortcut icons in <head>
+		 * @sample <link rel="shortcut icon" sizes="48x48" href="/assets/img/24_7_48x48.ico" type="image/x-icon" >
+		 * @param {Record<string, TPageMetaItem[]>} metaShortCutIconSources
+		 * @param {Context} context
+		 *
+		 * @return {[string, string]}
+		 */
+		metaShortCutIconSources: (metaShortCutIconSources, context) => {
+			const { pageName } = context;
+
+			const shortCutIcons = metaShortCutIconSources?.[pageName];
+			const shortCutIconSource = shortCutIcons?.length > 0
+				? shortCutIcons.map((shortCutIconSrc) => {
+					const { tagType, dataSrc, ...restAttr } = shortCutIconSrc;
+
+					return getMetaLinkTag({
+						tagType,
+						dataSrc,
+						...restAttr,
+					});
+				}).join('\n')
+				: "";
+
+			return ["shortCutIcon", shortCutIconSource];
+		},
+
+		/**
+		 * creates preload links in <head>
+		 * @sample <link rel="preload" href="/assets/fonts/Roboto/Roboto-Bold.woff2" as="font" type="font/woff2" crossorigin >
+		 * @param {Record<string, TPageMetaItem[]>} metaPreloadSources
+		 * @param {Context} context
+		 *
+		 * @return {[string, string]}
+		 */
+		metaPreloadSources: (metaPreloadSources, context) => {
+			const { pageName } = context;
+
+			const preloadSources = metaPreloadSources?.[pageName];
+
+			const preloadSource = preloadSources?.length > 0
+				? preloadSources.map((preloadSrc) => {
+					const { tagType, dataSrc, ...restAttr } = preloadSrc;
+
+					return getMetaLinkTag({
+						tagType,
+						dataSrc,
+						...restAttr,
+					});
+				}).join('\n')
+				: "";
+
+			return ["preload", preloadSource];
+		},
 	}
-}
-
-/**
- *
- * @param {TPageStyleSheetItem} item
- * @return {string}
- */
-function itemHandle (item) {
-	const {href, inline, defer} = item;
-
-	return getMetaLinkTag({
-		tagType: "stylesheet",
-		dataSrc: href,
-		inline: inline || false,
-		defer: defer || false,
-	});
-
 }
 
 /**
@@ -968,12 +1112,15 @@ function itemHandle (item) {
  * getUrlLangVersion("ru", 'https://example.com/', "about")
  * // => https://example.com/ru/about.html
  */
-function getUrlLangVersion(language, rootUrl, pageName){
+function getUrlLangVersion(language, rootUrl, pageName) {
 	const base = rootUrl.endsWith("/") ? rootUrl : rootUrl + "/";
-	return new URL(`${language.trim()}/${pageName}.html`, base);
+
+	// Validation: Make sure pageName doesn't contain malicious characters
+	// (although the URL constructor partially does this)
+	const sanitizedPageName = pageName.replace(/[<>\"']/g, '');
+
+	return new URL(`${language.trim()}/${sanitizedPageName}.html`, base);
 }
-
-
 
 /**
  * @param {Context} context

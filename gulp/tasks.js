@@ -131,7 +131,11 @@ const tasks = {
           .pipe(changed(tempHtmlPath, { hasChanged: compareContents }))
           .pipe(debug({ title: "*.html has been changed or new:" }))
           .pipe(dest(tempHtmlPath))
-          .pipe(replace(imgRegex, function (match) {
+          .pipe(replace(
+            imgRegex,
+
+            /** @param {string} match */
+            function (match) {
             return match.replace(/\r?\n|\r/g, "").replace(/\s{2,}/g, " ");
           }))
           .pipe(new CustomGulpWebpHtml(pathData.distPath, "2x"))
@@ -141,29 +145,6 @@ const tasks = {
         return streamToPromise(stream);
       }));
     },
-    /*pipeHtml() {
-      return Promise.all(languages.map(lang => {
-        const tempHtmlPath = path.join(pathData.tempPath, lang);
-
-        return src(pathData.src.html)
-          .pipe(plumber({
-            errorHandler: handleError("Error at pipeHtml...")
-          }))
-          .pipe(fileInclude(setFileIncludeSettings(lang)))
-          .pipe(changed(tempHtmlPath, { hasChanged: compareContents }))
-          .pipe(debug({ title: "*.html has been changed or new:" }))
-          .pipe(dest(tempHtmlPath))
-          .pipe(
-            //removes extra spaces and line breaks inside a tag <img>
-            replace(imgRegex, /!** @type {(match: string) => string} *!/ function (match) {
-              return match.replace(/\r?\n|\r/g, "").replace(/\s{2,}/g, " ");
-            })
-          )
-          .pipe(new CustomGulpWebpHtml(pathData.distPath, "2x"))
-          .pipe(beautify.html(beautifySettings.html))
-          .pipe(dest(path.join(pathData.build.html, lang)));
-      }));
-    },*/
     pipeStyles() {
       return src(pathData.src.styles, { sourcemaps: true })
         .pipe(plumber({
@@ -256,7 +237,11 @@ const tasks = {
         const stream = src(pathData.src.html)
           .pipe(plumber({ errorHandler: handleError("Error at pipeHtml...") }))
           .pipe(fileInclude(setFileIncludeSettings(lang)))
-          .pipe(replace(imgRegex, (match) => {
+          .pipe(replace(
+            imgRegex,
+
+            /** @param {string} match */
+            function(match) {
             return match.replace(/\r?\n|\r/g, "").replace(/\s{2,}/g, " ");
           }))
           .pipe(new CustomGulpWebpHtml(pathData.distPath, "2x"))
@@ -266,24 +251,6 @@ const tasks = {
         return streamToPromise(stream);
       }));
     },
-    /*pipeHtml() {
-      return Promise.all(languages.map(lang => {
-        return src(pathData.src.html)
-          .pipe(plumber({
-            errorHandler: handleError("Error at pipeHtml...")
-          }))
-          .pipe(fileInclude(setFileIncludeSettings(lang)))
-          .pipe(
-            //removes extra spaces and line breaks inside a tag <img>
-            replace(imgRegex, (/!** @type {string} *!/ match) => {
-              return match.replace(/\r?\n|\r/g, "").replace(/\s{2,}/g, " ");
-            })
-          )
-          .pipe(new CustomGulpWebpHtml(pathData.distPath, "2x"))
-          .pipe(htmlClean())
-          .pipe(dest(path.join(pathData.build.html, lang)));
-      }));
-    },*/
     pipeStyles() {
       return src(pathData.src.styles)
         .pipe(plumber({

@@ -41,6 +41,8 @@ const jsonEntries = fileEntries.jsonPaths;
 const jsEntries = fileEntries.jsEntries;
 const metaStylesheetSources = fileEntries.metaStylesheetSources;
 const metaScriptSources = fileEntries.metaScriptSources;
+const metaShortCutIconSources = fileEntries.metaShortCutIconSources;
+const metaPreloadSources = fileEntries.metaPreloadSources;
 
 const jsonEntriesKeys = Object.keys(jsonEntries);
 
@@ -76,10 +78,12 @@ export const setFileIncludeSettings = lang => {
 				robotsParams,
 				metaStylesheetSources,
 				metaScriptSources,
+				metaShortCutIconSources,
 				rootUrl,
 				metaCanonical,
 				metaDefaultRel,
-				languages
+				languages,
+				metaPreloadSources
 			},
 			lang
 		)
@@ -144,6 +148,19 @@ export const webpackConfigJs = {
 			filename: '[name].bundle.js'
 			//path: pathData.build.js,  //will be piped to gulp.dest with the path: pathData.build.js
 		},
+		optimization: {
+			splitChunks: {
+				cacheGroups: {
+					// Moves GSAP and other node_modules to vendor.bundle.js
+					vendor: {
+						test: /[\\/]node_modules[\\/]/,
+						name: 'vendor',
+						chunks: 'all',
+						enforce: true
+					}
+				}
+			},
+		},
 		module: {
 			rules: [
 				{
@@ -190,7 +207,18 @@ export const webpackConfigJs = {
 					},
 					extractComments: false
 				})
-			]
+			],
+			splitChunks: {
+				cacheGroups: {
+					// Moves GSAP and other node_modules to vendor.bundle.js
+					vendor: {
+						test: /[\\/]node_modules[\\/]/,
+						name: 'vendor',
+						chunks: 'all',
+						enforce: true
+					}
+				}
+			}
 		},
 		module: {
 			rules: [

@@ -1140,9 +1140,11 @@
 	<noscript>
 		<link rel="stylesheet" href="/css/index.min.css">
 	</noscript>
-	<link rel="shortcut icon" sizes="24x24" href="/assets/img/24_7_24x24.ico" type="image/x-icon">
-	<link rel="shortcut icon" sizes="32x32" href="/assets/img/24_7_32x32.ico" type="image/x-icon">
-	<link rel="shortcut icon" sizes="48x48" href="/assets/img/24_7_48x48.ico" type="image/x-icon">
+	<script src="/js/index.bundle.js" type="module" defer></script>
+	<script src="/js/vendor.bundle.js" type="module" defer></script>
+	<link rel="shortcut icon" href="/assets/img/24_7_24x24.ico" sizes="24x24" type="image/x-icon">
+	<link rel="shortcut icon" href="/assets/img/24_7_32x32.ico" sizes="32x32" type="image/x-icon">
+	<link rel="shortcut icon" href="/assets/img/24_7_48x48.ico" sizes="48x48" type="image/x-icon">
 	<link rel="preload" href="/assets/fonts/Roboto/Roboto-Bold.woff2" as="font" type="font/woff2" crossorigin>
 </head>
 
@@ -1818,7 +1820,7 @@
 		</footer>
 	</div>
 	<!-- SCRIPTS -->
-	<script type="module" src="/js/index.bundle.js"></script>
+	<!--<script type="module" src="/js/index.bundle.js" defer ></script>-->
 </body>
 
 </html>
