@@ -99,5 +99,23 @@ export function setLocalStorage( name="localData", data ) {
   localStorage.setItem(name, JSON.stringify( dataWithDate ));
 }
 
-
+/**
+ * Type guard that checks if a key exists in an object.
+ * Narrows the key type to keyof T, allowing safe indexed access.
+ *
+ * @template {Record<PropertyKey, unknown>} T
+ * @param {T} obj - The object to check the key against.
+ * @param {PropertyKey} key - The key to check.
+ * @returns {key is keyof T} True if key exists in the object.
+ *
+ * @example
+ * const handlers = { head: (v) => v, main: (v) => v };
+ * const key = "head";
+ * if (isKeyOf(handlers, key)) {
+ *   handlers[key](value); // TS knows key is "head" | "main"
+ * }
+ */
+export function isKeyOf(obj, key) {
+  return key in obj;
+}
 

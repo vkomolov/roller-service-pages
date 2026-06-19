@@ -822,10 +822,9 @@ function buildPageContent(pageData, context) {
 
 	return /** @type {PageContent} */ (Object.fromEntries(
 		Object.entries(pageData).map(([key, value]) => {
-			if (key in handlers) {
+			if (isKeyOf(handlers, key)) {
 				return [key, handlers[key](value)];
 			}
-
 			return [key, value];
 		})
 	));
@@ -893,6 +892,26 @@ function isString(v) {
 /** @param {unknown} v */
 function isStringArray(v) {
 	return Array.isArray(v) && v.every(isString);
+}
+
+/**
+ * Type guard that checks if a key exists in an object.
+ * Narrows the key type to keyof T, allowing safe indexed access.
+ *
+ * @template {Record<PropertyKey, unknown>} T
+ * @param {T} obj - The object to check the key against.
+ * @param {PropertyKey} key - The key to check.
+ * @returns {key is keyof T} True if key exists in the object.
+ *
+ * @example
+ * const handlers = { head: (v) => v, main: (v) => v };
+ * const key = "head";
+ * if (isKeyOf(handlers, key)) {
+ *   handlers[key](value); // TS knows key is "head" | "main"
+ * }
+ */
+export function isKeyOf(obj, key) {
+	return key in obj;
 }
 
 /**
@@ -1131,7 +1150,7 @@ function getInitialHeadData(context) {
 	return Object.fromEntries(
 		Object.entries(context).map(([key, val]) => {
 
-			if (key in handlers) {
+			if (isKeyOf(handlers, key)) {
 				return handlers[key](val, context);
 			}
 			return [key, val];
