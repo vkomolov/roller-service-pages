@@ -8,8 +8,7 @@ import discardUnused from 'postcss-discard-unused';
 import normalizeWhitespace from 'postcss-normalize-whitespace';
 import sortMediaQueries from 'postcss-sort-media-queries';
 import TerserPlugin from 'terser-webpack-plugin';
-import { getMatchedFromArray } from '../src/js/helpers/funcs.js';
-import { fileEntries } from './paths.js';
+import { fileEntries, robotsParams } from './paths.js';
 import { getPageData} from './utilFuncs.js';
 
 /////////////// END OF IMPORTS /////////////////////////
@@ -19,17 +18,11 @@ export const modes = {
 	dev: 'dev',
 	build: 'build'
 };
-const robotsParams = 'noindex, nofollow';
-//const robotsParams = 'index, follow';
+
 
 //base root url at the server... example: "https://example.com"
 const rootUrl = 'https://roller-service.pages.dev/';
-//! json pages` data could have more language versions... setting target languages to use...
-const alternateLanguages = ["uk", "ru"];
-// canonical languages could be multiple for crawler indexation
-const canonicalLanguages = ["uk", "ru"];
-// default language for <link rel="alternate" href="..." hreflang="x-default" />
-const metaDefaultRel = "uk";
+
 
 /**
  * getting the file entries for all *.json with the pages` content.
@@ -43,21 +36,9 @@ const metaStylesheetSources = fileEntries.metaStylesheetSources;
 const metaScriptSources = fileEntries.metaScriptSources;
 const metaShortCutIconSources = fileEntries.metaShortCutIconSources;
 const metaPreloadSources = fileEntries.metaPreloadSources;
-
-const jsonEntriesKeys = Object.keys(jsonEntries);
-
-/**
- * alternate languages to be used from json files at "assets/data/pagesVersions": ["ru", "uk"]
- * @type {string[]}
- * checking the given languages to be in jsonEntries... could be also [] if not contained...
- */
-export const languages = getMatchedFromArray(jsonEntriesKeys, alternateLanguages);
-
-/**
- * The array of canonical languages to be used
- * @type {string[]}
- */
-const metaCanonical = getMatchedFromArray(jsonEntriesKeys, canonicalLanguages);
+const metaAlternateSources = fileEntries.metaAlternateSources;
+const metaCanonicalSources = fileEntries.metaCanonicalSources;
+const metaDefaultSources = fileEntries.metaDefaultSources;
 
 ////////////// END OF INITIAL SETTINGS ///////////////////////
 
@@ -75,15 +56,16 @@ export const setFileIncludeSettings = lang => {
 		? getPageData(
 			jsonEntries,
 			{
+				rootUrl,
 				robotsParams,
 				metaStylesheetSources,
 				metaScriptSources,
 				metaShortCutIconSources,
-				rootUrl,
-				metaCanonical,
-				metaDefaultRel,
-				languages,
-				metaPreloadSources
+				metaPreloadSources,
+				metaAlternateSources,
+				metaCanonicalSources,
+				metaDefaultSources,
+
 			},
 			lang
 		)

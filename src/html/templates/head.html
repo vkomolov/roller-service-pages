@@ -1,11 +1,14 @@
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">-->
+  <!--<meta http-equiv="X-UA-Compatible" content="ie=edge">-->
 
   @@if (data && page && data[page].head) {
   <meta name="description" content="@@data.@@page.head.description">
   <meta name="robots" content="@@data.@@page.head.robots">
+
+  <title>@@data.@@page.head.title</title>
 
   @@if (data[page].head.canonical) {
   @@data.@@page.head.canonical
@@ -18,8 +21,6 @@
   @@if (data[page].head.default) {
   @@data.@@page.head.default
   }
-
-  <title>@@data.@@page.head.title</title>
 
   @@if (data[page].head.stylesheet) {
   @@data.@@page.head.stylesheet

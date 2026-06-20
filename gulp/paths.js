@@ -35,9 +35,12 @@ import { getFilesEntries, makeCommonDataForPages } from "./utilFuncs.js";
  *   jsEntries: Record<string, string>,
  *   jsonPaths: Record<string, string>,  // paths to JSON files
  *   metaStylesheetSources: Record<string, TPageMetaItem[]>,
- *   metaScriptSources: Record<string, TPageMetaItem[]>
- *   metaShortCutIconSources: Record<string, TPageMetaItem[]>
- *   metaPreloadSources: Record<string, TPageMetaItem[]>
+ *   metaScriptSources: Record<string, TPageMetaItem[]>,
+ *   metaShortCutIconSources: Record<string, TPageMetaItem[]>,
+ *   metaPreloadSources: Record<string, TPageMetaItem[]>,
+ *   metaAlternateSources: Record<string, TPageMetaItem[]>,
+ *   metaCanonicalSources: Record<string, TPageMetaItem[]>,
+ *   metaDefaultSources: Record<string, TPageMetaItem[]>
  * }} TFileEntries
  */
 
@@ -148,6 +151,19 @@ const shortcutIconSource_24 = "/assets/img/24_7_24x24.ico";
 const shortcutIconSource_32 = "/assets/img/24_7_32x32.ico";
 const shortcutIconSource_48 = "/assets/img/24_7_48x48.ico";
 const preloadFontSource = "/assets/fonts/Roboto/Roboto-Bold.woff2";
+//! json pages` data could have more language versions... setting target languages to use...
+//! also exported to tasks.js as languages option
+export const alternateLanguages = ["uk", "ru"];
+
+// canonical languages could be multiple for crawler indexation
+const canonicalLanguages = ["uk", "ru"];
+
+// default language for <link rel="alternate" href="..." hreflang="x-default" />
+export const metaDefaultRel = "uk";
+
+export const robotsParams = 'noindex, nofollow';
+//const robotsParams = 'index, follow';
+
 
 /**
  * data for writing in <head>:
@@ -302,6 +318,40 @@ const metaPreloadSources = makeCommonDataForPages(
 	preloadMetaData
 );
 
+/**
+ * Prepared TPageMetaItem[] for alternate links.
+ * dataSrc will be filled dynamically in handler through getUrlLangVersion.
+ * @type {TPageMetaItem[]}
+ */
+export const totalAlternateLinks = alternateLanguages.map(lang => ({
+	tagType: "link",
+	rel: "alternate",
+	dataSrc: "", // placeholder, will be filled dynamically in getHeadDataHandlers
+	hreflang: lang,
+}));
+
+/**
+ * Preparing TPageMetaItem[] for canonical.
+ * dataSrc will be filled dynamically.
+ * @type {TPageMetaItem[]}
+ */
+export const totalCanonicalLinks = canonicalLanguages.map(lang => ({
+	tagType: "link",
+	rel: "canonical",
+	dataSrc: "", // placeholder, populated in getHeadDataHandlers
+}));
+
+/**
+ * Prepared TPageMetaItem[] for x-default.
+ * @type {TPageMetaItem[]}
+ */
+export const totalDefaultLinks = [{
+	tagType: "link",
+	rel: "alternate",
+	dataSrc: "", // placeholder, populated in getHeadDataHandlers
+	hreflang: "x-default",
+}];
+
 //source folder for the pages` data json files:
 export const pagesDataJsonFolder = "assets/data/pagesVersions";
 
@@ -320,5 +370,9 @@ export const fileEntries = {
 	metaStylesheetSources,
 	metaScriptSources,
 	metaShortCutIconSources,
-	metaPreloadSources
+	metaPreloadSources,
+
+	metaAlternateSources: makeCommonDataForPages(pageNamesList, totalAlternateLinks),
+	metaCanonicalSources: makeCommonDataForPages(pageNamesList, totalCanonicalLinks),
+	metaDefaultSources: makeCommonDataForPages(pageNamesList, totalDefaultLinks),
 }

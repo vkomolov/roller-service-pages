@@ -5,6 +5,7 @@
 import fs, { constants } from 'fs';
 import path from "path";
 import { rm } from 'node:fs/promises';
+import { metaDefaultRel } from './paths.js';
 
 //import { rimraf } from 'rimraf';
 
@@ -64,14 +65,14 @@ import { rm } from 'node:fs/promises';
 
 /**
  * @typedef {{
- *   languages: (languages: string[], context: Context) => [string,string],
- *   metaCanonical: (metaCanonical: string[], context: Context) => [string,string],
- *   metaDefaultRel: (metaDefaultRel: string, context: Context) => [string, string],
+ *   metaAlternateSources: (sources: Record<string, TPageMetaItem[]>, context: Context) => [string,string],
+ *   metaCanonicalSources: (sources: Record<string, TPageMetaItem[]>, context: Context) => [string,string],
+ *   metaDefaultSources: (sources: Record<string, TPageMetaItem[]>, context: Context) => [string, string],
  *   robotsParams: (robotsParams: string) => [string, string],
- *   metaStylesheetSources: (metaStylesheetSources: Record<string, TPageMetaItem[]>, context: Context) => [string, string],
- *   metaScriptSources: (metaScriptSources: Record<string, TPageMetaItem[]>, context: Context) => [string, string],
- *   metaShortCutIconSources: (metaShortCutIconSources: Record<string, TPageMetaItem[]>, context: Context) => [string, string],
- *   metaPreloadSources: (metaPreloadSources: Record<string, TPageMetaItem[]>, context: Context) => [string, string]
+ *   metaStylesheetSources: (sources: Record<string, TPageMetaItem[]>, context: Context) => [string, string],
+ *   metaScriptSources: (sources: Record<string, TPageMetaItem[]>, context: Context) => [string, string],
+ *   metaShortCutIconSources: (sources: Record<string, TPageMetaItem[]>, context: Context) => [string, string],
+ *   metaPreloadSources: (sources: Record<string, TPageMetaItem[]>, context: Context) => [string, string]
  * }} TMetaHeadDataHandlers
  *
  */
@@ -86,15 +87,15 @@ import { rm } from 'node:fs/promises';
 
 /**
  * @typedef {{
- *   languages: string[],
  *   rootUrl: string,
  *   robotsParams?: string,
  *   metaStylesheetSources?: Record<string, TPageMetaItem[]>,
  *   metaScriptSources?: Record<string, TPageMetaItem[]>,
  *   metaShortCutIconSources?: Record<string, TPageMetaItem[]>,
- *   metaCanonical?: string[],
- *   metaDefaultRel?: string,
- *   metaPreloadSources?: Record<string, TPageMetaItem[]>
+ *   metaPreloadSources?: Record<string, TPageMetaItem[]>,
+ *   metaAlternateSources?: Record<string, TPageMetaItem[]>,
+ *   metaCanonicalSources?: Record<string, TPageMetaItem[]>,
+ *   metaDefaultSources?: Record<string, TPageMetaItem[]>
  * }} InitialData
  */
 
@@ -462,10 +463,16 @@ function handleStyleSheetItem(pageMetaStyleSheetItem) {
 
 	// Deferred stylesheet
 	if (deferredLoad) {
-		return `<link rel="preload" href="${escapedSrc}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+
+		return `<link rel="stylesheet" href="${escapedSrc}" media="print" onload="this.media='all'">
 <noscript>
 	<link rel="stylesheet" href="${escapedSrc}"${attrStr ? ` ${attrStr}` : ""}>
 </noscript>`;
+
+		/*		return `<link rel="preload" href="${escapedSrc}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+		<noscript>
+			<link rel="stylesheet" href="${escapedSrc}"${attrStr ? ` ${attrStr}` : ""}>
+		</noscript>`;*/
 	}
 
 	// Standard stylesheet
@@ -774,14 +781,7 @@ export function getPageData(
  */
 function buildPageContent(pageData, context) {
 
-	// checking properties...
-	const requiredForHead = ['lang', 'pageName', 'rootUrl', 'languages'];
-	const missing = requiredForHead.filter(key => !(key in context));
-	if (missing.length) {
-		throw new Error(`[buildPageContent]: Missing head fields: ${missing.join(', ')}`);
-	}
-
-	const { lang, languages } = context;
+	const { lang } = context;
 
 	/**
 	 * @type {TPageDataHandlers}
@@ -816,7 +816,6 @@ function buildPageContent(pageData, context) {
 		main: (value) => ({
 			...(value || {}),
 			lang,
-			languages,
 		}),
 	}
 
@@ -832,7 +831,7 @@ function buildPageContent(pageData, context) {
 
 /**
  * Validates input configuration.
-
+ *
  * @param {Record<string, string>} jsonEntries
  * @param {InitialData} initialData
  *
@@ -851,13 +850,14 @@ function validateInput(jsonEntries, initialData) {
 
 	/** @type {Record<string, (v: any) => boolean>} */
 	const schema = {
-		languages: isStringArray,
 		robotsParams: isString,
 		metaStylesheetSources: isObject,
 		metaScriptSources: isObject,
 		metaShortCutIconSources: isObject,
-		metaCanonical: isStringArray,
-		metaDefaultRel: isString,
+		metaPreloadSources: isObject,
+		metaAlternateSources: isObject,
+		metaCanonicalSources: isObject,
+		metaDefaultSources: isObject,
 		rootUrl: isString,
 	};
 
@@ -915,201 +915,113 @@ export function isKeyOf(obj, key) {
 }
 
 /**
+ * Factory for TPageMetaItem[] handlers with optional post-processing transform.
+ * Produces a handler that extracts page-specific items from a Record<string, TPageMetaItem[]>,
+ * optionally transforms them, and renders them to an HTML string via getMetaLinkTag.
+ *
+ * @param {string} returnKey - The key returned in the resulting tuple (e.g., "stylesheet", "script").
+ * @param {(items: TPageMetaItem[], context: Context) => TPageMetaItem[]} [transform] - Optional transform
+ *        applied to page items before rendering. Use when dataSrc or other fields need dynamic population.
+ * @returns {(sources: Record<string, TPageMetaItem[]>, context: Context) => [string, string]}
+ *
+ * @example
+ * // Static items — direct render
+ * metaScriptSources: createMetaSourceHandler("script")
+ *
+ * @example
+ * // Dynamic dataSrc — transform before render
+ * metaAlternateSources: createMetaSourceHandler("alternate", (items, context) =>
+ *   items.map(item => ({
+ *     ...item,
+ *     dataSrc: getUrlLangVersion(item.hreflang, context.rootUrl, context.pageName).href,
+ *   }))
+ * )
+ */
+function createMetaSourceHandler(returnKey, transform) {
+	return (sources, context) => {
+		const pageItems = sources?.[context.pageName];
+		if (!pageItems?.length) return [returnKey, ""];
+
+		const finalItems = transform ? transform(pageItems, context) : pageItems;
+		return [returnKey, finalItems.map(getMetaLinkTag).join('\n')];
+	};
+}
+
+/**
  * @return {TMetaHeadDataHandlers}
  */
 function getHeadDataHandlers() {
 	return {
 		/**
-		 * It creates alternate links of the pages..
-		 * @sample <link rel="alternate" href="https://example.com/ru/pageName.html" hreflang="ru">
-		 * @sample <link rel="alternate" href="https://example.com/uk/pageName.html" hreflang="uk">
-		 * @param {string[]} languages
-		 * @param {Context} context
-		 *
-		 * @return {[string,string]}
+		 * Alternate language links.
+		 * Transforms placeholder dataSrc using hreflang and getUrlLangVersion.
 		 */
-		languages: (languages, context) => {
-			const { rootUrl, pageName } = context;
-
-			const alternateLinks = languages
-				.map(language => {
-					const langTrimmed = language.trim();
-
-					return getMetaLinkTag({
-						tagType: "link",
-						rel: "alternate",
-						dataSrc: getUrlLangVersion(langTrimmed, rootUrl, pageName).href,
-						hreflang: langTrimmed,
-					})
-				})
-				.join("\n");
-
-			return ["alternate", alternateLinks];
-		},
-
-		/**
-		 * Creates canonical link of the site`s page
-		 * @sample <link rel="canonical" href="https://example.com/uk/pageName.html" hreflang="uk">
-		 *
-		 * if multilanguage site has two canonical languages, then to use canonical for the active page language
-		 * @param {string[]} metaCanonical - optional languages for links rel="canonical"
-		 * @param {Context} context
-		 *
-		 * @return {[string,string]}
-		 */
-		metaCanonical: (metaCanonical, context) => {
-			const { lang, rootUrl, pageName } = context;
-			//if active lang is in metaCanonical language options then to create canonical link with active language
-			const canonicalLang = (metaCanonical.includes(lang)) ? lang : metaCanonical[0];
-			const metaCanonicalStr = getMetaLinkTag({
-				tagType: "link",
-				rel: "canonical",
-				dataSrc: getUrlLangVersion(canonicalLang, rootUrl, pageName).href,
+		metaAlternateSources: createMetaSourceHandler("alternate", (items, context) =>
+			items.map(/** @param {TPageMetaItem} item */ (item) => {
+				const hreflang = item.hreflang;
+				if (!hreflang) {
+					console.warn("[metaAlternateSources]: item missing hreflang, skipping");
+					return item;
+				}
+				return {
+					...item,
+					dataSrc: getUrlLangVersion(hreflang, context.rootUrl, context.pageName).href,
+				};
 			})
-
-			return ["canonical", metaCanonicalStr];
-		},
+		),
 
 		/**
-		 * Creates default language version of the page
-		 * @sample <link rel="alternate" href="https://example.com/uk/pageName.html" hreflang="x-default">
-		 * @param {string} metaDefaultRel
-		 * @param {Context} context
-		 *
-		 * @return {[string,string]}
+		 * Canonical link.
+		 * Picks the active language if present in canonical sources, otherwise falls back to the first item.
 		 */
-		metaDefaultRel: (metaDefaultRel, context) => {
-			const { rootUrl, pageName } = context;
+		metaCanonicalSources: createMetaSourceHandler("canonical", (items, context) => {
+			const { lang, rootUrl, pageName } = context;
+			// canonicalLanguages stored as array, need to find matching lang
+			const canonicalLang = items.length > 0 ? lang : null; // or your logic
 
-			const metaDefaultTrimmed = metaDefaultRel.trim();
-			const metaDefaultTag = metaDefaultTrimmed.length > 1
-				? getMetaLinkTag({
-					tagType: "link",
-					rel: "alternate",
-					dataSrc: getUrlLangVersion(metaDefaultTrimmed, rootUrl, pageName).href,
-					hreflang: "x-default"
-				})
-				: "";
-
-			return ["default", metaDefaultTag]
-		},
+			return [{
+				...items[0],
+				dataSrc: getUrlLangVersion(canonicalLang || lang, rootUrl, pageName).href,
+			}];
+		}),
 
 		/**
-		 * creates robotsParams
-		 * @param {string} robotsParams
-		 *
-		 * @return {[string,string]}  - ["robots", `<meta name="robots" content=${robotsParams}>`]
+		 * X-default alternate link.
+		 * Uses the globally configured metaDefaultRel as the target language.
 		 */
-		robotsParams: (robotsParams) => {
-			return ["robots", robotsParams];
-		},
+		metaDefaultSources: createMetaSourceHandler("default", (items, context) =>
+			items.map(/** @param {TPageMetaItem} item */ (item) => ({
+				...item,
+				dataSrc: getUrlLangVersion(metaDefaultRel, context.rootUrl, context.pageName).href,
+			}))
+		),
 
 		/**
-		 * creates *.css links for the <head>
-		 * @sample <link rel="stylesheet" href="" >
-		 * @param {Record<string, TPageMetaItem[]>} metaStylesheetSources
-		 * @param {Context} context
-		 *
-		 * @return {[string,string]}
+		 * Robots meta directive.
+		 * Returns raw string value; template layer wraps it in <meta name="robots">.
 		 */
-		metaStylesheetSources: (metaStylesheetSources, context) => {
-			const { pageName } = context;
-
-			const pageStyleSheetLinks = metaStylesheetSources?.[pageName];
-
-			if (!pageStyleSheetLinks || !pageStyleSheetLinks?.length) {
-				console.warn(`[getInitialHeadData]: No stylesheet links found for page: ${pageName}`);
-				return ["stylesheet", ""];
-			}
-
-			const stylesheetLinks = pageStyleSheetLinks.map(getMetaLinkTag).join('\n');
-
-			return ["stylesheet", stylesheetLinks];
-		},
+		robotsParams: (robotsParams) => ["robots", robotsParams],
 
 		/**
-		 * creates links for scripts in <head>
-		 * @sample <script src="/js/*.js" defer></script>
-		 * @param {Record<string, TPageMetaItem[]>} metaScriptSources
-		 * @param {Context} context
-		 *
-		 * @return {[string, string]}
+		 * Stylesheet links — supports inline critical CSS and deferred loading.
 		 */
-		metaScriptSources: (metaScriptSources, context) => {
-			const { pageName } = context;
-
-			const pageScripts = metaScriptSources?.[pageName];
-
-			const scriptSource = pageScripts?.length > 0
-				? pageScripts.map((scriptSrc) => {
-					const { tagType, dataSrc, ...restAttr } = scriptSrc;
-
-					return getMetaLinkTag({
-						tagType,
-						dataSrc,
-						...restAttr,
-					});
-				}).join('\n')
-				: "";
-
-			return ["script", scriptSource];
-		},
+		metaStylesheetSources: createMetaSourceHandler("stylesheet"),
 
 		/**
-		 * creates links for shortcut icons in <head>
-		 * @sample <link rel="shortcut icon" sizes="48x48" href="/assets/img/24_7_48x48.ico" type="image/x-icon" >
-		 * @param {Record<string, TPageMetaItem[]>} metaShortCutIconSources
-		 * @param {Context} context
-		 *
-		 * @return {[string, string]}
+		 * Script tags with optional module/defer attributes.
 		 */
-		metaShortCutIconSources: (metaShortCutIconSources, context) => {
-			const { pageName } = context;
-
-			const shortCutIcons = metaShortCutIconSources?.[pageName];
-			const shortCutIconSource = shortCutIcons?.length > 0
-				? shortCutIcons.map((shortCutIconSrc) => {
-					const { tagType, dataSrc, ...restAttr } = shortCutIconSrc;
-
-					return getMetaLinkTag({
-						tagType,
-						dataSrc,
-						...restAttr,
-					});
-				}).join('\n')
-				: "";
-
-			return ["shortCutIcon", shortCutIconSource];
-		},
+		metaScriptSources: createMetaSourceHandler("script"),
 
 		/**
-		 * creates preload links in <head>
-		 * @sample <link rel="preload" href="/assets/fonts/Roboto/Roboto-Bold.woff2" as="font" type="font/woff2" crossorigin >
-		 * @param {Record<string, TPageMetaItem[]>} metaPreloadSources
-		 * @param {Context} context
-		 *
-		 * @return {[string, string]}
+		 * Shortcut icon links (favicons).
 		 */
-		metaPreloadSources: (metaPreloadSources, context) => {
-			const { pageName } = context;
+		metaShortCutIconSources: createMetaSourceHandler("shortCutIcon"),
 
-			const preloadSources = metaPreloadSources?.[pageName];
-
-			const preloadSource = preloadSources?.length > 0
-				? preloadSources.map((preloadSrc) => {
-					const { tagType, dataSrc, ...restAttr } = preloadSrc;
-
-					return getMetaLinkTag({
-						tagType,
-						dataSrc,
-						...restAttr,
-					});
-				}).join('\n')
-				: "";
-
-			return ["preload", preloadSource];
-		},
-	}
+		/**
+		 * Resource preload hints (fonts, etc.).
+		 */
+		metaPreloadSources: createMetaSourceHandler("preload"),
+	};
 }
 
 /**
@@ -1142,6 +1054,9 @@ function getUrlLangVersion(language, rootUrl, pageName) {
 }
 
 /**
+ * Builds the initial <head> data by dispatching context properties
+ * through their corresponding handlers in getHeadDataHandlers.
+ *
  * @param {Context} context
  */
 function getInitialHeadData(context) {

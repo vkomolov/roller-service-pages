@@ -38,11 +38,10 @@ import CustomImgOptimizer from "../modules/CustomImgOptimizer.js";
 
 //custom modules
 import CustomRenameFile from "../modules/CustomRenameFile.js";
-import { pathData } from "./paths.js";
+import { pathData, alternateLanguages } from "./paths.js";
 
 import {
   beautifySettings,
-  languages,
   minifyCss,
   modes,
   optimizeCss,
@@ -80,7 +79,7 @@ const imgRegex = /<img(?:.|\n|\r)*?>/g;
 function streamToPromise(stream) {
   return new Promise((resolve, reject) => {
     stream.on('finish', resolve);
-    //stream.on('end', resolve);  // на всякий случай
+    //stream.on('end', resolve);  // in some case
     stream.on('error', reject);
   });
 }
@@ -122,7 +121,7 @@ function streamToPromise(stream) {
 const tasks = {
   [modes.dev]: {
     pipeHtml() {
-      return Promise.all(languages.map(lang => {
+      return Promise.all(alternateLanguages.map(lang => {
         const tempHtmlPath = path.join(pathData.tempPath, lang);
 
         const stream = src(pathData.src.html)
@@ -233,7 +232,7 @@ const tasks = {
   },
   [modes.build]: {
     pipeHtml() {
-      return Promise.all(languages.map(lang => {
+      return Promise.all(alternateLanguages.map(lang => {
         const stream = src(pathData.src.html)
           .pipe(plumber({ errorHandler: handleError("Error at pipeHtml...") }))
           .pipe(fileInclude(setFileIncludeSettings(lang)))
