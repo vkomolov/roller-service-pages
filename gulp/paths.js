@@ -251,16 +251,18 @@ const totalStyleSource = [
 const totalScriptSource = [
 	{
 		tagType: "script",
-		dataSrc: mainScriptSource,
-		type: "module", //optional
+		dataSrc: vendorScriptSource,
+		//type: "module", //optional
 		defer: true   //optional
 	},
 	{
 		tagType: "script",
-		dataSrc: vendorScriptSource,
-		type: "module", //optional
+		dataSrc: mainScriptSource,
+		//type: "module", //optional
 		defer: true   //optional
 	},
+	/*** gsap.bundle.js will be loaded dynamically when calling getGsap() ***/
+
 ];
 
 /**

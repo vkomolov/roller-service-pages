@@ -9,7 +9,7 @@ import normalizeWhitespace from 'postcss-normalize-whitespace';
 import sortMediaQueries from 'postcss-sort-media-queries';
 import TerserPlugin from 'terser-webpack-plugin';
 import { fileEntries, robotsParams } from './paths.js';
-import { getPageData} from './utilFuncs.js';
+import { getPageData } from './utilFuncs.js';
 
 /////////////// END OF IMPORTS /////////////////////////
 
@@ -133,18 +133,43 @@ export const webpackConfigJs = {
 		optimization: {
 			splitChunks: {
 				cacheGroups: {
-					// Moves GSAP and other node_modules to vendor.bundle.js
+					//! REMOVE or comment out the gsap group —
+					// dynamic import with webpackChunkName will already create a separate chunk.
+					// splitChunks with chunks: 'all' + enforce will pull GSAP out of the async chunk
+					// back into the entry, breaking atomic loading.
+					//
+					// gsap: { ... } ← delete
+					gsap: {
+						test: /[\\/]node_modules[\\/]gsap[\\/]/,
+						name: 'gsap',
+						chunks: 'all',
+						priority: 20,
+						enforce: true,
+						minSize: 0,        // ← force chunking, ignoring size
+						minChunks: 1,      // ← one case of usage - to chunk
+					},
 					vendor: {
-						test: /[\\/]node_modules[\\/]/,
+						test: /[\\/]node_modules[\\/](?!gsap[\\/])/,
 						name: 'vendor',
 						chunks: 'all',
-						enforce: true
+						priority: 10,
+						enforce: true,
+						minSize: 0,
+						minChunks: 1,
 					}
 				}
 			},
 		},
 		module: {
 			rules: [
+				{
+					//! Disable fullySpecified for all JS files,
+					// so that bare specifiers like 'gsap/ScrollTrigger' are resolved without .js
+					test: /\.m?js$/,
+					resolve: {
+						fullySpecified: false,
+					},
+				},
 				{
 					test: /\.js$/,
 					exclude: /node_modules/,
@@ -178,32 +203,45 @@ export const webpackConfigJs = {
 			//path: pathData.build.js,  //will be piped to gulp.dest with the path: pathData.build.js
 		},
 		optimization: {
-			minimize: true,
-			minimizer: [
-				new TerserPlugin({
-					parallel: true,
-					terserOptions: {
-						format: {
-							comments: false
-						}
-					},
-					extractComments: false
-				})
-			],
 			splitChunks: {
 				cacheGroups: {
-					// Moves GSAP and other node_modules to vendor.bundle.js
+					//! REMOVE or comment out the gsap group —
+					// dynamic import with webpackChunkName will already create a separate chunk.
+					// splitChunks with chunks: 'all' + enforce will pull GSAP out of the async chunk
+					// back into the entry, breaking atomic loading.
+					//
+					// gsap: { ... } ← delete
+					gsap: {
+						test: /[\\/]node_modules[\\/]gsap[\\/]/,
+						name: 'gsap',
+						chunks: 'all',
+						priority: 20,
+						enforce: true,
+						minSize: 0,        // ← force chunking, ignoring size
+						minChunks: 1,      // ← one case of usage - to chunk
+					},
 					vendor: {
-						test: /[\\/]node_modules[\\/]/,
+						test: /[\\/]node_modules[\\/](?!gsap[\\/])/,
 						name: 'vendor',
 						chunks: 'all',
-						enforce: true
+						priority: 10,
+						enforce: true,
+						minSize: 0,
+						minChunks: 1,
 					}
 				}
-			}
+			},
 		},
 		module: {
 			rules: [
+				{
+					//! Disable fullySpecified for all JS files,
+					// so that bare specifiers like 'gsap/ScrollTrigger' are resolved without .js
+					test: /\.m?js$/,
+					resolve: {
+						fullySpecified: false,
+					},
+				},
 				{
 					test: /\.js$/,
 					exclude: /node_modules/,

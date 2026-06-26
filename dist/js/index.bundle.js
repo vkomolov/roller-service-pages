@@ -952,14 +952,25 @@ async function cleanupModal(dom, state, fadeDuration = 300) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./helpers/funcsDOM.js */ "./src/js/helpers/funcsDOM.js");
 /* harmony import */ var _modulesPack_gallery_thumbs_index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./modulesPack/gallery-thumbs/index.js */ "./src/js/modulesPack/gallery-thumbs/index.js");
-/* harmony import */ var _partials_animations_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./partials/animations.js */ "./src/js/partials/animations.js");
+/* harmony import */ var _partials_gsap_loader_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./partials/gsap-loader.js */ "./src/js/partials/gsap-loader.js");
+/* harmony import */ var _partials_animations_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./partials/animations.js */ "./src/js/partials/animations.js");
+
+
+/**
+ * @file index.js
+ * @description Entry point. Bootstraps non-GSAP UI first, then lazily loads
+ * GSAP via gsap-loader.js, builds animations through animations.js, and
+ * initializes the masonry gallery.
+ */
 
 
 
 
 
+// ============================================
+// INITIAL DATA
+// ============================================
 
-//INITIAL DATA
 const linkAnchors = {
   index: "#about-us",
   gates: "#gatesSection",
@@ -983,34 +994,53 @@ const langSwitchData = {
 };
 const gallerySelector = "#gallery-work";
 const galleryThumbsFolderName = "thumbs";
+
+// ============================================
+// DOM READY
+// ============================================
+
 document.addEventListener("DOMContentLoaded", async () => {
-  /*** @type {string} */
+  /** @type {string} */
   const pageType = document.body.dataset.type;
 
-  /// Navigation ///
-  //checking and lighten several duplicate navigations for the .active links:
+  // ------------------------------------------
+  // Navigation & Language (non-GSAP, immediate)
+  // ------------------------------------------
   (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.activateNavLink)(navLinkSelector, pageType, linkClassNameActive, linkAnchors[pageType] || "#");
   (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.activateNavLink)(navHexagonSelector, pageType, linkClassNameActive, linkAnchors[pageType] || "#");
+  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.initLangSwitcher)(langSwitchData);
 
-  //GSAP animation tweens
-  const totalTl = (0,_partials_animations_js__WEBPACK_IMPORTED_MODULE_2__.animatePage)();
+  // ------------------------------------------
+  // Lazy load GSAP + ScrollTrigger + animations module
+  // ------------------------------------------
+  const {
+    gsap,
+    ScrollTrigger
+  } = await (0,_partials_gsap_loader_js__WEBPACK_IMPORTED_MODULE_2__.getGsap)();
+  const {
+    animatePage,
+    fadeInGallery
+  } = (0,_partials_animations_js__WEBPACK_IMPORTED_MODULE_3__.createAnimations)(gsap, ScrollTrigger);
+
+  // ------------------------------------------
+  // GSAP-dependent operations
+  // ------------------------------------------
+  const totalTl = animatePage();
   try {
-    // Masonry + Gallery + Thumbs - consistent and readable
     const imageItems = await (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.createMasonry)(gallerySelector, {
       gap: 20
     });
-    const timelines = (0,_partials_animations_js__WEBPACK_IMPORTED_MODULE_2__.fadeInGallery)(imageItems);
+    const timelines = fadeInGallery(imageItems);
     Object.assign(totalTl, timelines);
     await (0,_modulesPack_gallery_thumbs_index_js__WEBPACK_IMPORTED_MODULE_1__.initThumbs)(gallerySelector, galleryThumbsFolderName);
   } catch (error) {
     console.error("Gallery initialization failed:", error);
   }
 
-  //initializing optional language versions interaction
-  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.initLangSwitcher)(langSwitchData);
-
-  //listening to "resize" event to recompile the masonry gallery with the new parameters...
-  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.lockedEventListener)("resize", window, 2000)(async () => {
+  // ------------------------------------------
+  // Resize listener
+  // ------------------------------------------
+  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.lockedEventListener)("resize", window, 1500)(async () => {
     try {
       await (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.createMasonry)(gallerySelector, {
         gap: 20
@@ -1020,7 +1050,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  ///////// END OF DOMContentLoaded Listener ////////////
+  // ------------------------------------------
+  // Optional: full cleanup on page unload
+  // Useful for SPA navigation or hot-reload scenarios
+  // ------------------------------------------
+  window.addEventListener("beforeunload", () => {
+    (0,_partials_gsap_loader_js__WEBPACK_IMPORTED_MODULE_2__.killAllAnimations)();
+    (0,_partials_gsap_loader_js__WEBPACK_IMPORTED_MODULE_2__.resetGsapCache)();
+  });
 });
 
 /***/ }),
@@ -1557,29 +1594,27 @@ function delay(ms) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   animatePage: function() { return /* binding */ animatePage; },
-/* harmony export */   fadeInGallery: function() { return /* binding */ fadeInGallery; }
+/* harmony export */   createAnimations: function() { return /* binding */ createAnimations; }
 /* harmony export */ });
-/* harmony import */ var gsap__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! gsap */ "./node_modules/gsap/index.js");
-/* harmony import */ var gsap_ScrollTrigger_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! gsap/ScrollTrigger.js */ "./node_modules/gsap/ScrollTrigger.js");
 /* harmony import */ var _helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../helpers/funcsDOM.js */ "./src/js/helpers/funcsDOM.js");
+/* harmony import */ var _gsap_loader_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./gsap-loader.js */ "./src/js/partials/gsap-loader.js");
+
+
+/**
+ * @file animations.js
+ * @description GSAP animation factory integrated with gsap-loader.js caching.
+ * All animations are registered in the global gsap-loader cache so they can
+ * be killed individually or in bulk. No local WeakMap is used anymore.
+ */
 
 
 
+// ============================================
+// SELECTORS
+// ============================================
 
-
-
-///////////////// REGISTER GSAP PLUGINS /////////////
-gsap__WEBPACK_IMPORTED_MODULE_1__.gsap.registerPlugin(gsap_ScrollTrigger_js__WEBPACK_IMPORTED_MODULE_2__.ScrollTrigger);
-
-////////////////// INITIATING SCROLL CONTROLLER /////////
-//const { lockScroll } = initLockScroll();
-
-//////////////// ANIMATION DATA /////////////////////
-/// ANIMATION SELECTORS
-/// index.html
-/// SELECTORS
-const i = {
+/** @type {Object.<string, string>} Animation selectors map */
+const SELECTORS = {
   scrolledNav: "#scrolledNav",
   burgerBase: ".burger_nav",
   burgerFixed: ".burger_nav:not(.hidden)",
@@ -1601,278 +1636,253 @@ const i = {
   fadeInUp: "[data-anime=fade-in-up]",
   scaleIn: "[data-anime=scale-in]"
 };
-const navMenuFixed = document.querySelector(i.navMenuHidden);
-const burgerHidden = document.querySelector(i.burgerHidden);
-const burgerFixed = document.querySelector(i.burgerFixed);
-const burgerAll = document.querySelectorAll(i.burgerBase);
-const navMenuAnime = gsap__WEBPACK_IMPORTED_MODULE_1__.gsap.to(navMenuFixed, {
-  top: -20,
-  //to compensate animation top shift
-  duration: .8,
-  ease: "back.out(0.8)",
-  paused: true
-});
-const getHeroAnimation = () => {
-  const tlHero = gsap__WEBPACK_IMPORTED_MODULE_1__.gsap.timeline();
-  tlHero.to(i.headingAccentHero, {
+
+// ============================================
+// DOM REFERENCES (evaluated once at module load)
+// ============================================
+
+const navMenuFixed = document.querySelector(SELECTORS.navMenuHidden);
+const burgerHidden = document.querySelector(SELECTORS.burgerHidden);
+const burgerFixed = document.querySelector(SELECTORS.burgerFixed);
+const burgerAll = Array.from(document.querySelectorAll(SELECTORS.burgerBase));
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+/**
+ * Checks if a GSAP timeline has real (non-zero duration) animations.
+ *
+ * @param {gsap.core.Timeline|gsap.core.Tween} timeline - The timeline to check
+ * @returns {boolean} True if at least one child tween has duration > 0
+ */
+function hasRealAnimations(timeline) {
+  return timeline.getChildren().some(child => child.duration() > 0);
+}
+
+// ============================================
+// SCROLL TIMELINE BUILDERS
+// ============================================
+
+/**
+ * Creates a scroll-triggered timeline with fade-in from opacity 0.
+ * The resulting timeline is automatically cached via gsap-loader.js.
+ *
+ * @param {typeof import('gsap').gsap} gsap - GSAP instance
+ * @param {HTMLElement} elem - Target element
+ * @param {HTMLElement} triggerElem - ScrollTrigger trigger element
+ * @param {Object} gsapToParams - Parameters for gsap.to (fade in)
+ * @param {Object} gsapFromParams - Parameters for gsap.from (entrance motion)
+ * @param {string} [nextAnimePos="<"] - Timeline position for second tween
+ * @returns {gsap.core.Timeline|false} Created timeline or false if invalid
+ */
+function getScrollTimelineTwoTweens(gsap, elem, triggerElem, gsapToParams = {}, gsapFromParams = {}, nextAnimePos = "<") {
+  if (!(elem instanceof HTMLElement) || !(triggerElem instanceof HTMLElement)) {
+    console.warn(`getScrollTimelineTwoTweens: invalid element (${elem}) or trigger (${triggerElem})`);
+    return false;
+  }
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: triggerElem,
+      start: "top 80%",
+      toggleActions: "play none none reverse",
+      preventOverlaps: true
+    }
+  });
+  tl.to(elem, {
+    ...gsapToParams
+  });
+  tl.from(elem, {
+    ...gsapFromParams
+  }, nextAnimePos);
+
+  // Register in gsap-loader cache; kills previous animation for this element automatically
+  (0,_gsap_loader_js__WEBPACK_IMPORTED_MODULE_1__.cacheAnimation)(tl, elem);
+  return tl;
+}
+
+/**
+ * Creates multiple scroll-triggered timelines for an array of elements.
+ * Each timeline is cached against its element via gsap-loader.js.
+ *
+ * @param {typeof import('gsap').gsap} gsap - GSAP instance
+ * @param {HTMLElement[]} elemsArr - Array of target elements
+ * @param {HTMLElement|null} triggerElem - Common trigger element (or null for per-element)
+ * @param {string} propKey - Prefix for timeline keys in result object
+ * @param {Object} gsapToParams - Parameters for gsap.to
+ * @param {Object} gsapFromParams - Parameters for gsap.from
+ * @param {string} [nextAnimePos="<"] - Timeline position
+ * @returns {Object.<string, gsap.core.Timeline>} Object with timeline references
+ */
+function getAllScrollTwoTweens(gsap, elemsArr, triggerElem, propKey = "tlKey", gsapToParams = {}, gsapFromParams = {}, nextAnimePos = "<") {
+  const tlObj = {};
+  let trigger = null;
+  if (!Array.isArray(elemsArr)) {
+    console.error(`getAllScrollTwoTweens: elemsArr is not an Array`);
+    return tlObj;
+  }
+  if (triggerElem !== null) {
+    if (!(triggerElem instanceof HTMLElement) || !document.body.contains(triggerElem)) {
+      console.error(`getAllScrollTwoTweens: invalid trigger element`);
+      return tlObj;
+    }
+    trigger = triggerElem;
+  }
+  elemsArr.forEach((elem, index) => {
+    if (!(elem instanceof HTMLElement) || !document.body.contains(elem)) {
+      console.warn(`getAllScrollTwoTweens: element at index ${index} is invalid`);
+      return;
+    }
+    const tlKey = `${propKey}_${index}`;
+    const tl = getScrollTimelineTwoTweens(gsap, elem, trigger || elem, gsapToParams, gsapFromParams, nextAnimePos);
+    if (tl && hasRealAnimations(tl)) {
+      tlObj[tlKey] = tl;
+    }
+  });
+  return tlObj;
+}
+
+// ============================================
+// BUILDER FUNCTIONS (accept gsap instance)
+// ============================================
+
+/**
+ * Builds the hero section entrance animation timeline.
+ * Cached globally so it can be killed on page transition.
+ *
+ * @param {typeof import('gsap').gsap} gsap - GSAP instance
+ * @returns {gsap.core.Timeline} Hero animation timeline
+ */
+function buildHeroAnimation(gsap) {
+  const tlHero = gsap.timeline();
+  tlHero.to(SELECTORS.headingAccentHero, {
     opacity: 1,
     duration: 2,
     delay: 0.3
   });
-  tlHero.from(i.headingAccentHero, {
+  tlHero.from(SELECTORS.headingAccentHero, {
     x: 80,
     duration: 0.8,
     ease: "circ.out"
   }, "<");
-  tlHero.to(i.headingHeroRest, {
+  tlHero.to(SELECTORS.headingHeroRest, {
     opacity: 1,
     duration: 2
   }, "<");
-  tlHero.from(i.headingHeroRest, {
+  tlHero.from(SELECTORS.headingHeroRest, {
     x: -80,
     duration: 0.8,
     ease: "circ.out"
   }, "<");
-  tlHero.to(i.textBlockHero, {
+  tlHero.to(SELECTORS.textBlockHero, {
     opacity: 1,
     duration: 2
   }, "-=1.5");
-  tlHero.from(i.textBlockHero, {
+  tlHero.from(SELECTORS.textBlockHero, {
     y: 80,
     duration: 0.8,
     ease: "circ.out"
   }, "<");
-  tlHero.to(i.biddingBlockHero, {
+  tlHero.to(SELECTORS.biddingBlockHero, {
     opacity: 1,
     duration: 2
   }, "<+0.3");
-  tlHero.from(i.biddingBlockHero, {
+  tlHero.from(SELECTORS.biddingBlockHero, {
     y: 40,
     duration: 0.8,
     ease: "circ.out"
   }, "<");
-  tlHero.to(i.iconWrapperHero, {
+  tlHero.to(SELECTORS.iconWrapperHero, {
     scale: 1,
     duration: 1.5,
     ease: "elastic.out"
   }, "<+0.2");
+  (0,_gsap_loader_js__WEBPACK_IMPORTED_MODULE_1__.cacheAnimation)(tlHero);
   return tlHero;
-};
-const initScrolledNavigation = () => {
-  gsap__WEBPACK_IMPORTED_MODULE_1__.gsap.to(i.scrolledNav, {
+}
+
+/**
+ * Builds the scrolled navigation show/hide animation.
+ *
+ * @param {typeof import('gsap').gsap} gsap - GSAP instance
+ * @param {typeof import('gsap/ScrollTrigger').ScrollTrigger} ScrollTrigger - ScrollTrigger plugin
+ */
+function buildScrolledNav(gsap, ScrollTrigger) {
+  const target = document.querySelector(SELECTORS.scrolledNav);
+  if (!target) return;
+  const tween = gsap.to(target, {
     top: -10,
-    duration: .7,
+    duration: 0.7,
     ease: "back.out(1.5)",
     delay: 0.5,
     scrollTrigger: {
-      trigger: i.benefitsSection,
+      trigger: SELECTORS.benefitsSection,
       start: "top 5%",
-      //end: "bottom 85%",
       toggleActions: "play none none reverse",
-      //markers: true,
-      /**
-       * preventOverlaps vs fastScrollEnd - should be chosen on of them
-       */
-      preventOverlaps: true //prevent overlapping animations at several trigger animations
-      //fastScrollEnd: true, // stop previous animation if the scrollTrigger starts animation again...
+      preventOverlaps: true
     }
   });
-};
+  (0,_gsap_loader_js__WEBPACK_IMPORTED_MODULE_1__.cacheAnimation)(tween, target);
+}
 
 /**
- * @description It creates parralax effect on the target Element with GSAP
- * @param {string} auxTarget - className of the target html Element
- * @param {string} auxTrigger - className of the trigger html Element
- * @returns {gsap.core.Tween|undefined}
+ * Builds a parallax background effect using ScrollTrigger scrub.
+ * Cached against the target element.
+ *
+ * @param {typeof import('gsap').gsap} gsap - GSAP instance
+ * @param {typeof import('gsap/ScrollTrigger').ScrollTrigger} ScrollTrigger - ScrollTrigger plugin
+ * @param {string} targetSelector - Selector for the parallax target
+ * @param {string} triggerSelector - Selector for the trigger container
+ * @returns {gsap.core.Tween|undefined} The parallax tween or undefined if elements missing
  */
-const getBackgroundParallax = (auxTarget, auxTrigger) => {
-  const target = document.querySelector(auxTarget);
-  const trigger = document.querySelector(auxTrigger);
+function buildParallax(gsap, ScrollTrigger, targetSelector, triggerSelector) {
+  const target = document.querySelector(targetSelector);
+  const trigger = document.querySelector(triggerSelector);
   if (!target || !trigger) return;
-  // start position: the image is shifted up by 10%
-  return gsap__WEBPACK_IMPORTED_MODULE_1__.gsap.fromTo(target, {
+  const tween = gsap.fromTo(target, {
     yPercent: 10
-  },
-  // End position: the image moves to -10%
-  {
+  }, {
     yPercent: -10,
     ease: "none",
-    // Linear movement synchronized with scroll
     scrollTrigger: {
       trigger,
-      //The parent container
       start: "top bottom",
-      // start animation when top of section enters viewport
       end: "bottom top",
-      //end animation when bottom of section leaves viewport
       scrub: 1.5,
-      //adds 1.5 of smooth "catch-up" delay (inertia)
-      invalidateOnRefresh: true // Recalculates values on window resize for responsiveness
+      invalidateOnRefresh: true
     }
   });
-};
-const burgerClickHandler = e => {
-  //if clicked out of the burger-menu range then to check if the burger is opened and reverse the animation...
-  if (!e.target.closest(i.burgerBase)) {
-    const isNavActive = navMenuFixed.getAttribute("aria-expanded") === "true";
-    if (isNavActive) {
-      // Changing aria-expanded for both burger menu buttons and the fixed navigation menu
-      (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.setAttributes)([burgerHidden, burgerFixed, navMenuFixed], {
-        "aria-expanded": !isNavActive
-      });
-      burgerHidden.classList.remove("opened");
-      burgerFixed.classList.remove("opened");
+  (0,_gsap_loader_js__WEBPACK_IMPORTED_MODULE_1__.cacheAnimation)(tween, target);
+  return tween;
+}
 
-      /// animation of hiding the fixed navigation menu with top: -100%;
-      navMenuAnime.reverse();
+/**
+ * Builds fade-in animations for elements matching a selector.
+ * Each element's timeline is cached individually.
+ *
+ * @param {typeof import('gsap').gsap} gsap - GSAP instance
+ * @param {string} selector - CSS selector for target elements
+ * @param {string} propKey - Key prefix for timeline references
+ * @param {Object} fromParams - gsap.from parameters (entrance motion)
+ * @returns {Object.<string, gsap.core.Timeline>} Timeline references object
+ */
+function buildFadeAnimations(gsap, selector, propKey, fromParams) {
+  return getAllScrollTwoTweens(gsap, gsap.utils.toArray(document.querySelectorAll(selector)), null, propKey, {
+    opacity: 1,
+    duration: 0.7,
+    delay: 0.2
+  }, fromParams);
+}
 
-      //returning scroll to the page...
-      //lockScroll(false);
-      document.body.style.overflow = "auto";
-    }
-  }
-};
-const burgerInitListener = burger => {
-  burger.addEventListener("click", e => {
-    const burgerMenu = e.target.closest(i.burgerBase);
-    if (burgerMenu) {
-      e.preventDefault();
-      const isExpanded = burger.getAttribute("aria-expanded") === "true";
-
-      // Changing aria-expanded for both burger menu buttons and the fixed navigation menu
-      (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.setAttributes)([burgerHidden, burgerFixed, navMenuFixed], {
-        "aria-expanded": !isExpanded
-      });
-      if (isExpanded) {
-        burgerHidden.classList.remove("opened");
-        burgerFixed.classList.remove("opened");
-        //lockScroll(false);
-        document.documentElement.style.scrollbarGutter = "initial";
-        document.body.style.scrollbarGutter = "initial";
-        document.body.style.overflow = "auto";
-      } else {
-        burgerHidden.classList.add("opened");
-        burgerFixed.classList.add("opened");
-        //lockScroll(true);
-        document.documentElement.style.scrollbarGutter = "stable";
-        document.body.style.scrollbarGutter = "stable";
-        document.body.style.overflow = "hidden";
-      }
-      if (isExpanded) {
-        navMenuAnime.reverse();
-      } else {
-        navMenuAnime.play();
-      }
-    }
-  });
-};
-const initBurgerMenu = () => {
-  //// animation of the fixed navigation menu
-  document.addEventListener("click", burgerClickHandler);
-
-  //adding listener to the burger buttons...
-  burgerAll.forEach(burgerInitListener);
-};
-
-/// ANIMATION PARAMS
-const pageAnimations = {
-  // animations for the separate pages
-  automation: () => {
-    const tlData = {};
-    const rollerParallax = getBackgroundParallax(i.automationParallaxBg, i.automationParallax);
-    if (rollerParallax) {
-      tlData["rollerParallax"] = rollerParallax;
-    }
-    return tlData;
-  },
-  common: () => {
-    const tlData = {};
-
-    ///////////// SECTION HERO ANIMATION /////////////////
-    const tlHero = getHeroAnimation();
-    if (hasRealAnimations(tlHero)) {
-      tlData["tlHero"] = tlHero;
-    }
-
-    ///////////// SECTION SERVICES ANIMATION /////////////////
-    const servicesParallax = getBackgroundParallax(i.servicesParallaxBg, i.servicesParallax);
-    if (servicesParallax) {
-      tlData["servicesParallax"] = servicesParallax;
-    }
-
-    ///////////// FADE-IN-LEFT ANIMATIONS ////////////////
-
-    const fadeInLeftAnimations = getAllScrollTwoTweens(gsap__WEBPACK_IMPORTED_MODULE_1__.gsap.utils.toArray(document.querySelectorAll(i.fadeInLeft)), null, "fadeInLeft", {
-      opacity: 1,
-      duration: 0.7,
-      delay: 0.2
-    }, {
-      x: -60,
-      y: 40,
-      duration: 1,
-      ease: "circ.out"
-    });
-    //assigning timeline references
-    Object.assign(tlData, fadeInLeftAnimations);
-
-    ///////////// FADE-IN-RIGHT ANIMATIONS /////////////////
-
-    const fadeInRightAnimations = getAllScrollTwoTweens(gsap__WEBPACK_IMPORTED_MODULE_1__.gsap.utils.toArray(document.querySelectorAll(i.fadeInRight)), null, "fadeInRight", {
-      opacity: 1,
-      duration: 0.7,
-      delay: 0.2
-    }, {
-      x: 60,
-      y: 40,
-      duration: 1,
-      ease: "circ.out"
-    });
-    //assigning timeline references
-    Object.assign(tlData, fadeInRightAnimations);
-
-    ///////////// SCALE-IN ANIMATIONS ///////////
-
-    const scaleInAnimations = getAllScrollTwoTweens(gsap__WEBPACK_IMPORTED_MODULE_1__.gsap.utils.toArray(document.querySelectorAll(i.scaleIn)), null, "scaleIn", {
-      opacity: 1,
-      duration: 0.8
-      //delay: 0.2,
-    }, {
-      scale: 0.7,
-      duration: 1.2,
-      ease: "back.out(1)"
-    });
-    //assigning timeline references
-    Object.assign(tlData, scaleInAnimations);
-
-    //////////// FADE-IN-UP ANIMATIONS /////////////////
-
-    const fadeInUpAnimations = getAllScrollTwoTweens(gsap__WEBPACK_IMPORTED_MODULE_1__.gsap.utils.toArray(document.querySelectorAll(i.fadeInUp)), null, "fadeInUp", {
-      opacity: 1,
-      duration: 1,
-      delay: 0.2
-    }, {
-      y: 40,
-      duration: 1,
-      ease: "circ.out"
-    });
-    //assigning timeline references
-    Object.assign(tlData, fadeInUpAnimations);
-
-    ///////////////// SEPARATE TWEENS ////////////////////
-
-    ///////////// SCROLLED NAVIGATION ANIMATION //////////
-    initScrolledNavigation();
-
-    //////////// BURGER MENU OPEN ANIMATION /////////////
-    initBurgerMenu();
-    return tlData;
-  }
-};
-
-////////////////  ANIMATION FUNCTIONS ////////////////
-
-function fadeInGallery(elemsArr = []) {
-  return getAllScrollTwoTweens(elemsArr, document.querySelector(i.galleryWork), "fadInGallery", {
+/**
+ * Builds gallery image fade-in animations.
+ *
+ * @param {typeof import('gsap').gsap} gsap - GSAP instance
+ * @param {HTMLElement[]} elemsArr - Gallery image elements
+ * @returns {Object.<string, gsap.core.Timeline>} Timeline references
+ */
+function buildGalleryFade(gsap, elemsArr) {
+  return getAllScrollTwoTweens(gsap, elemsArr, document.querySelector(SELECTORS.galleryWork), "fadeInGallery", {
     opacity: 1,
     duration: 0.8,
     delay: 0.2
@@ -1883,131 +1893,337 @@ function fadeInGallery(elemsArr = []) {
   });
 }
 
-//for the dynamic and SPA site without reloading, using the flag to avoid multiple listeners
-let listenerAdded = false;
-const animatePage = () => {
-  //if no Listener on DOMContentLoaded then to add Listener onPageLoaded()
-  if (document.readyState === "loading" && !listenerAdded) {
-    document.addEventListener("DOMContentLoaded", () => onPageLoaded(pageAnimations));
-    listenerAdded = true; // Set a flag so that the listener is added only once
-  } else {
-    return onPageLoaded(pageAnimations);
-  }
-};
+// ============================================
+// BURGER MENU (returns handlers + tween)
+// ============================================
 
 /**
- * It gets the animation instructions Object and returns the Object with the references to the initiated timelines
- * @param {Object} animationData - the Object with the animation instructions for the pages
- * @return {Object} - Returns the Object with the references to all the initiated timelines
- */
-function onPageLoaded(animationData) {
-  const pageName = document.body.dataset.type;
-  const totalTl = {};
-  if (animationData.common) {
-    Object.assign(totalTl, animationData.common());
-  }
-  if (pageName in animationData) {
-    Object.assign(totalTl, animationData[pageName]());
-  }
-  requestAnimationFrame(() => gsap_ScrollTrigger_js__WEBPACK_IMPORTED_MODULE_2__.ScrollTrigger.refresh());
-  return totalTl;
-}
-
-/**
- * Checking the gsap timeline for not empty animations
- * @param {gsap.core.Timeline | gsap.core.Tween} timeline - the gsap timeline to be checked
- * @return {boolean} - Returns true if the timeline has at least one tween with a duration greater than zero.
- */
-function hasRealAnimations(timeline) {
-  // Getting all child tweens of the timeline
-  // Checking if there is at least one tween with a duration greater than zero
-  return timeline.getChildren().some(child => child.duration() > 0);
-}
-
-/**
- * It creates the Timeline scroll animations with fading in from opacity: 0, and optional gsap.from params which
- * are animated with the opacity animation...
- * @param {HTMLElement} elem  - the HTMLElement
- * @param {HTMLElement} triggerElem - the trigger HTMLElement for the animations at scrollTrigger
- * @param {Object} [gsapToParams={}] - params for the first tween with gsap.to
- * @param {Object} [gsapFromParams={}] - params for the last tween with gsap.from
- * @param {string} [nextAnimePos="<"] - The position for the second tween, indicating when the animation should start relative to the first.
- * @return {gsap.core.Timeline|boolean} - Returns a Timeline with animations, or false if the passed element is not an HTMLElement.
+ * Creates burger menu animation and event handlers.
+ * The open/close tween is cached against the nav menu element.
  *
- * @example using first tween gsap.to params for the first animation, and gsap.from params for the last tween
- * getScrollTimelineTwoTweens(elem, triggerElem, { opacity: 1, duration: 0.7, delay: 0.2 }, { x: 80, y: 80, duration: 1, ease: "circ.out", });
+ * @param {typeof import('gsap').gsap} gsap - GSAP instance
+ * @returns {{navMenuAnime: gsap.core.Tween, burgerClickHandler: Function, burgerInitListener: Function}}
+ */
+function createBurgerHandlers(gsap) {
+  const navMenuAnime = gsap.to(navMenuFixed, {
+    top: -20,
+    duration: 0.8,
+    ease: "back.out(0.8)",
+    paused: true
+  });
+  (0,_gsap_loader_js__WEBPACK_IMPORTED_MODULE_1__.cacheAnimation)(navMenuAnime, navMenuFixed);
+  const burgerClickHandler = e => {
+    if (!e.target.closest(SELECTORS.burgerBase)) {
+      const isNavActive = navMenuFixed.getAttribute("aria-expanded") === "true";
+      if (isNavActive) {
+        (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.setAttributes)([burgerHidden, burgerFixed, navMenuFixed], {
+          "aria-expanded": !isNavActive
+        });
+        burgerHidden.classList.remove("opened");
+        burgerFixed.classList.remove("opened");
+        navMenuAnime.reverse();
+        document.body.style.overflow = "auto";
+      }
+    }
+  };
+  const burgerInitListener = burger => {
+    burger.addEventListener("click", e => {
+      const burgerMenu = e.target.closest(SELECTORS.burgerBase);
+      if (!burgerMenu) return;
+      e.preventDefault();
+      const isExpanded = burger.getAttribute("aria-expanded") === "true";
+      (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.setAttributes)([burgerHidden, burgerFixed, navMenuFixed], {
+        "aria-expanded": !isExpanded
+      });
+      if (isExpanded) {
+        burgerHidden.classList.remove("opened");
+        burgerFixed.classList.remove("opened");
+        document.documentElement.style.scrollbarGutter = "initial";
+        document.body.style.scrollbarGutter = "initial";
+        document.body.style.overflow = "auto";
+        navMenuAnime.reverse();
+      } else {
+        burgerHidden.classList.add("opened");
+        burgerFixed.classList.add("opened");
+        document.documentElement.style.scrollbarGutter = "stable";
+        document.body.style.scrollbarGutter = "stable";
+        document.body.style.overflow = "hidden";
+        navMenuAnime.play();
+      }
+    });
+  };
+  return {
+    navMenuAnime,
+    burgerClickHandler,
+    burgerInitListener
+  };
+}
+
+// ============================================
+// MAIN FACTORY
+// ============================================
+
+/**
+ * Creates all page animations. Must be called AFTER GSAP is dynamically loaded.
+ * All animations are registered in gsap-loader.js for centralized cleanup.
+ *
+ * @param {typeof import('gsap').gsap} gsap - GSAP core instance
+ * @param {typeof import('gsap/ScrollTrigger').ScrollTrigger} ScrollTrigger - ScrollTrigger plugin
+ * @returns {{animatePage: Function, fadeInGallery: Function}} Animation API
  *
  * @example
- * getScrollTimelineTwoTweens(elem, triggerElem, { opacity: 1, duration: 1, delay: 0.2 }, { scale: 0.7, duration: 1, ease: "circ.out", }, "-=1.5");
+ * const { gsap, ScrollTrigger } = await getGsap();
+ * const { animatePage, fadeInGallery } = createAnimations(gsap, ScrollTrigger);
+ * const totalTl = animatePage();
  */
-function getScrollTimelineTwoTweens(elem, triggerElem, gsapToParams = {}, gsapFromParams = {}, nextAnimePos = "<") {
-  if (!(elem instanceof HTMLElement) || !(triggerElem instanceof HTMLElement)) {
-    console.warn(`at getScrollTimeLinePairLeftRight: the given selector: ${elem} or trigger: ${triggerElem} is not HTMLElement... animation is omitted...`);
-    return false;
+function createAnimations(gsap, ScrollTrigger) {
+  const {
+    burgerClickHandler,
+    burgerInitListener
+  } = createBurgerHandlers(gsap);
+  const pageAnimations = {
+    automation: () => {
+      const tlData = {};
+      const rollerParallax = buildParallax(gsap, ScrollTrigger, SELECTORS.automationParallaxBg, SELECTORS.automationParallax);
+      if (rollerParallax) tlData.rollerParallax = rollerParallax;
+      return tlData;
+    },
+    common: () => {
+      const tlData = {};
+      const tlHero = buildHeroAnimation(gsap);
+      if (hasRealAnimations(tlHero)) tlData.tlHero = tlHero;
+      const servicesParallax = buildParallax(gsap, ScrollTrigger, SELECTORS.servicesParallaxBg, SELECTORS.servicesParallax);
+      if (servicesParallax) tlData.servicesParallax = servicesParallax;
+      Object.assign(tlData, buildFadeAnimations(gsap, SELECTORS.fadeInLeft, "fadeInLeft", {
+        x: -60,
+        y: 40,
+        duration: 1,
+        ease: "circ.out"
+      }));
+      Object.assign(tlData, buildFadeAnimations(gsap, SELECTORS.fadeInRight, "fadeInRight", {
+        x: 60,
+        y: 40,
+        duration: 1,
+        ease: "circ.out"
+      }));
+      Object.assign(tlData, buildFadeAnimations(gsap, SELECTORS.scaleIn, "scaleIn", {
+        scale: 0.7,
+        duration: 1.2,
+        ease: "back.out(1)"
+      }));
+      Object.assign(tlData, buildFadeAnimations(gsap, SELECTORS.fadeInUp, "fadeInUp", {
+        y: 40,
+        duration: 1,
+        ease: "circ.out"
+      }));
+      buildScrolledNav(gsap, ScrollTrigger);
+      document.addEventListener("click", burgerClickHandler);
+      burgerAll.forEach(burgerInitListener);
+      return tlData;
+    }
+  };
+  function fadeInGallery(elemsArr = []) {
+    return buildGalleryFade(gsap, elemsArr);
   }
 
-  //The timeline initiation with the ScrollTrigger and its default params...
-  const tl = gsap__WEBPACK_IMPORTED_MODULE_1__.gsap.timeline({
-    scrollTrigger: {
-      trigger: triggerElem,
-      start: "top 80%",
-      //end: "bottom 85%",
-      toggleActions: "play none none reverse",
-      //markers: true,
-      /**
-       * preventOverlaps vs fastScrollEnd - should be chosen on of them
-       */
-      preventOverlaps: true //prevent overlapping animations at several trigger animations
-      //fastScrollEnd: true, // stop previous animation if the scrollTrigger starts animation again...
-    }
+  /**
+   * Runs all page animations.
+   * DOM readiness is guaranteed by index.js (DOMContentLoaded + async GSAP load),
+   * so no redundant readyState checks are needed here.
+   *
+   * @returns {Object.<string, gsap.core.Timeline|gsap.core.Tween>} Map of all active timelines/tweens
+   */
+  function animatePage() {
+    return onPageLoaded(pageAnimations);
+  }
+  function onPageLoaded(animationData) {
+    const pageName = document.body.dataset.type;
+    const totalTl = {};
+    if (animationData.common) Object.assign(totalTl, animationData.common());
+    if (pageName in animationData) Object.assign(totalTl, animationData[pageName]());
+    requestAnimationFrame(() => ScrollTrigger.refresh());
+    return totalTl;
+  }
+  return {
+    animatePage,
+    fadeInGallery
+  };
+}
+
+/***/ }),
+
+/***/ "./src/js/partials/gsap-loader.js":
+/*!****************************************!*\
+  !*** ./src/js/partials/gsap-loader.js ***!
+  \****************************************/
+/***/ (function(__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   cacheAnimation: function() { return /* binding */ cacheAnimation; },
+/* harmony export */   generateAnimId: function() { return /* binding */ generateAnimId; },
+/* harmony export */   getCachedGsap: function() { return /* binding */ getCachedGsap; },
+/* harmony export */   getGsap: function() { return /* binding */ getGsap; },
+/* harmony export */   isGsapLoaded: function() { return /* binding */ isGsapLoaded; },
+/* harmony export */   killAllAnimations: function() { return /* binding */ killAllAnimations; },
+/* harmony export */   killAnimation: function() { return /* binding */ killAnimation; },
+/* harmony export */   killAnimationByKey: function() { return /* binding */ killAnimationByKey; },
+/* harmony export */   resetGsapCache: function() { return /* binding */ resetGsapCache; }
+/* harmony export */ });
+
+
+/**
+ * @file gsap-loader.js
+ * @description Atomic lazy-loader for GSAP + ScrollTrigger.
+ * Exports a global animation cache so that animations.js (or any consumer)
+ * can register, retrieve, and kill tweens/timelines in one centralized place.
+ */
+
+// ============================================
+// CACHE & STATE
+// ============================================
+
+/** @type {{ gsap?: typeof import('gsap').gsap, ScrollTrigger?: typeof import('gsap/ScrollTrigger').ScrollTrigger }|null} */
+let gsapCache = null;
+
+/** @type {Promise<{ gsap: typeof import('gsap').gsap, ScrollTrigger: typeof import('gsap/ScrollTrigger').ScrollTrigger }>|null} */
+let gsapLoadPromise = null;
+
+/** @type {Map<string, gsap.core.Tween|gsap.core.Timeline>} */
+const activeAnimations = new Map();
+
+/** @type {number} */
+let animationId = 0;
+
+// ============================================
+// LOADER
+// ============================================
+
+/**
+ * Loading and caching GSAP + ScrollTrigger as a single atomic chunk.
+ * Returns the cached result when called again.
+ *
+ * @returns {Promise<{
+ *   gsap: typeof import('gsap').gsap,
+ *   ScrollTrigger: typeof import('gsap/ScrollTrigger').ScrollTrigger
+ * }>}
+ */
+async function getGsap() {
+  if (gsapCache) return gsapCache;
+  if (gsapLoadPromise) return gsapLoadPromise;
+  gsapLoadPromise = Promise.all(/*! import() */[__webpack_require__.e("gsap"), __webpack_require__.e("src_js_partials_gsap-all_js")]).then(__webpack_require__.bind(__webpack_require__, /*! ./gsap-all.js */ "./src/js/partials/gsap-all.js")).then(({
+    gsap,
+    ScrollTrigger
+  }) => {
+    gsap.registerPlugin(ScrollTrigger);
+    gsapCache = {
+      gsap,
+      ScrollTrigger
+    };
+    return gsapCache;
   });
-  tl.to(elem, {
-    ...gsapToParams
-  });
-  tl.from(elem, {
-    ...gsapFromParams
-  }, nextAnimePos);
-  return tl;
+  return gsapLoadPromise;
+}
+
+// ============================================
+// ANIMATION CACHE API
+// ============================================
+
+/**
+ * Generates a unique cache key for an animation.
+ * @returns {string}
+ */
+function generateAnimId() {
+  return `anim_${++animationId}`;
 }
 
 /**
- * Creates multiple scroll-triggered timelines for elements matching the selector.
- * It makes animation timeline for the each element and returns the Object with the timeline references...
- * @param {Array<HTMLElement>} elemsArr - the Array of the target elements in DOM
- * @param {HTMLElement|null} triggerElem - the trigger element for the scrollTrigger (or null).
- * @param {string} [propKey="tlKey"] - the key part for making unique key of the timeline in the Object to return...
- * @param {Object} [gsapToParams={}] - params for the first tween with gsap.to
- * @param {Object} [gsapFromParams={}] - params for the last tween with gsap.from
- * @param {string} [nextAnimePos="<"] - The position for the second tween, indicating when the animation should start relative to the first.
- * @return {Object} - An object containing timelines with unique keys.
+ * Caches the animation. Returns the cache key.
+ * When an element is provided and has existing animation, it is killed.
+ *
+ * @param {gsap.core.Tween|gsap.core.Timeline} animation
+ * @param {HTMLElement} [element] - Optional element for element-based kill
+ * @returns {string} Cache key
  */
-function getAllScrollTwoTweens(elemsArr, triggerElem, propKey = "tlKey", gsapToParams = {}, gsapFromParams = {}, nextAnimePos = "<") {
-  const tlObj = {};
-  let trigger = null;
-  if (!Array.isArray(elemsArr)) {
-    console.error(`at getAllScrollTwoTweens(): the given "elemsArr" is not Array...`);
-    return tlObj;
-  }
-  if (triggerElem !== null) {
-    if (!(triggerElem instanceof HTMLElement) || !document.body.contains(triggerElem)) {
-      console.error(`at getAllScrollTwoTweens: the given trigger is not HTMLElement or not in DOM...`);
-      return tlObj;
-    } else {
-      trigger = triggerElem;
+function cacheAnimation(animation, element) {
+  if (element) {
+    for (const [key, anim] of activeAnimations.entries()) {
+      if (anim.targets && anim.targets().includes(element)) {
+        anim.kill();
+        activeAnimations.delete(key);
+      }
     }
   }
-  elemsArr.forEach((elem, index) => {
-    if (!(elem instanceof HTMLElement) || !document.body.contains(elem)) {
-      console.warn(`at getAllScrollTwoTweens: the target element at index ${index} is not HTMLElement or not in DOM...`);
-      return;
+  const key = generateAnimId();
+  activeAnimations.set(key, animation);
+  return key;
+}
+
+/**
+ * Kills animation by cache key.
+ * @param {string} key
+ */
+function killAnimationByKey(key) {
+  const animation = activeAnimations.get(key);
+  if (animation) {
+    animation.kill();
+    activeAnimations.delete(key);
+  }
+}
+
+/**
+ * Kills animation by element (finds in cache by target).
+ * @param {HTMLElement} element
+ */
+function killAnimation(element) {
+  for (const [key, anim] of activeAnimations.entries()) {
+    if (anim.targets && anim.targets().includes(element)) {
+      anim.kill();
+      activeAnimations.delete(key);
     }
-    const tlKey = `${propKey}_${index}`;
-    const tl = getScrollTimelineTwoTweens(elem, trigger || elem, gsapToParams, gsapFromParams, nextAnimePos);
-    if (tl && hasRealAnimations(tl)) {
-      tlObj[tlKey] = tl;
-    }
-  });
-  return tlObj;
+  }
+}
+
+/**
+ * Kills ALL cached animations and ScrollTriggers.
+ * Safe cleanup that preserves GSAP cache.
+ */
+function killAllAnimations() {
+  const {
+    ScrollTrigger
+  } = gsapCache || {};
+  activeAnimations.forEach(anim => anim.kill());
+  activeAnimations.clear();
+  if (ScrollTrigger) {
+    ScrollTrigger.getAll().forEach(st => st.kill());
+  }
+  animationId = 0;
+}
+
+/**
+ * Kills all animations AND clears GSAP cache.
+ * Use for full page reload / SPA navigation.
+ */
+function resetGsapCache() {
+  killAllAnimations();
+  gsapCache = null;
+  gsapLoadPromise = null;
+}
+
+/**
+ * Checks if GSAP is loaded.
+ * @returns {boolean}
+ */
+function isGsapLoaded() {
+  return gsapCache !== null;
+}
+
+/**
+ * Returns cached GSAP instance without reloading.
+ * @returns {{ gsap: typeof import('gsap').gsap, ScrollTrigger: typeof import('gsap/ScrollTrigger').ScrollTrigger }|null}
+ */
+function getCachedGsap() {
+  return gsapCache;
 }
 
 /***/ })
@@ -2088,9 +2304,89 @@ function getAllScrollTwoTweens(elemsArr, triggerElem, propKey = "tlKey", gsapToP
 /******/ 		};
 /******/ 	}();
 /******/ 	
+/******/ 	/* webpack/runtime/ensure chunk */
+/******/ 	!function() {
+/******/ 		__webpack_require__.f = {};
+/******/ 		// This file contains only the entry chunk.
+/******/ 		// The chunk loading function for additional chunks
+/******/ 		__webpack_require__.e = function(chunkId) {
+/******/ 			return Promise.all(Object.keys(__webpack_require__.f).reduce(function(promises, key) {
+/******/ 				__webpack_require__.f[key](chunkId, promises);
+/******/ 				return promises;
+/******/ 			}, []));
+/******/ 		};
+/******/ 	}();
+/******/ 	
+/******/ 	/* webpack/runtime/get javascript chunk filename */
+/******/ 	!function() {
+/******/ 		// This function allow to reference async chunks
+/******/ 		__webpack_require__.u = function(chunkId) {
+/******/ 			// return url for filenames based on template
+/******/ 			return "" + chunkId + ".bundle.js";
+/******/ 		};
+/******/ 	}();
+/******/ 	
+/******/ 	/* webpack/runtime/global */
+/******/ 	!function() {
+/******/ 		__webpack_require__.g = (function() {
+/******/ 			if (typeof globalThis === 'object') return globalThis;
+/******/ 			try {
+/******/ 				return this || new Function('return this')();
+/******/ 			} catch (e) {
+/******/ 				if (typeof window === 'object') return window;
+/******/ 			}
+/******/ 		})();
+/******/ 	}();
+/******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	!function() {
 /******/ 		__webpack_require__.o = function(obj, prop) { return Object.prototype.hasOwnProperty.call(obj, prop); }
+/******/ 	}();
+/******/ 	
+/******/ 	/* webpack/runtime/load script */
+/******/ 	!function() {
+/******/ 		var inProgress = {};
+/******/ 		var dataWebpackPrefix = "gulp5_starting_kit_2024:";
+/******/ 		// loadScript function to load a script via script tag
+/******/ 		__webpack_require__.l = function(url, done, key, chunkId) {
+/******/ 			if(inProgress[url]) { inProgress[url].push(done); return; }
+/******/ 			var script, needAttach;
+/******/ 			if(key !== undefined) {
+/******/ 				var scripts = document.getElementsByTagName("script");
+/******/ 				for(var i = 0; i < scripts.length; i++) {
+/******/ 					var s = scripts[i];
+/******/ 					if(s.getAttribute("src") == url || s.getAttribute("data-webpack") == dataWebpackPrefix + key) { script = s; break; }
+/******/ 				}
+/******/ 			}
+/******/ 			if(!script) {
+/******/ 				needAttach = true;
+/******/ 				script = document.createElement('script');
+/******/ 		
+/******/ 				script.charset = 'utf-8';
+/******/ 				script.timeout = 120;
+/******/ 				if (__webpack_require__.nc) {
+/******/ 					script.setAttribute("nonce", __webpack_require__.nc);
+/******/ 				}
+/******/ 				script.setAttribute("data-webpack", dataWebpackPrefix + key);
+/******/ 		
+/******/ 				script.src = url;
+/******/ 			}
+/******/ 			inProgress[url] = [done];
+/******/ 			var onScriptComplete = function(prev, event) {
+/******/ 				// avoid mem leaks in IE.
+/******/ 				script.onerror = script.onload = null;
+/******/ 				clearTimeout(timeout);
+/******/ 				var doneFns = inProgress[url];
+/******/ 				delete inProgress[url];
+/******/ 				script.parentNode && script.parentNode.removeChild(script);
+/******/ 				doneFns && doneFns.forEach(function(fn) { return fn(event); });
+/******/ 				if(prev) return prev(event);
+/******/ 			}
+/******/ 			var timeout = setTimeout(onScriptComplete.bind(null, undefined, { type: 'timeout', target: script }), 120000);
+/******/ 			script.onerror = onScriptComplete.bind(null, script.onerror);
+/******/ 			script.onload = onScriptComplete.bind(null, script.onload);
+/******/ 			needAttach && document.head.appendChild(script);
+/******/ 		};
 /******/ 	}();
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
@@ -2104,6 +2400,29 @@ function getAllScrollTwoTweens(elemsArr, triggerElem, propKey = "tlKey", gsapToP
 /******/ 		};
 /******/ 	}();
 /******/ 	
+/******/ 	/* webpack/runtime/publicPath */
+/******/ 	!function() {
+/******/ 		var scriptUrl;
+/******/ 		if (__webpack_require__.g.importScripts) scriptUrl = __webpack_require__.g.location + "";
+/******/ 		var document = __webpack_require__.g.document;
+/******/ 		if (!scriptUrl && document) {
+/******/ 			if (document.currentScript && document.currentScript.tagName.toUpperCase() === 'SCRIPT')
+/******/ 				scriptUrl = document.currentScript.src;
+/******/ 			if (!scriptUrl) {
+/******/ 				var scripts = document.getElementsByTagName("script");
+/******/ 				if(scripts.length) {
+/******/ 					var i = scripts.length - 1;
+/******/ 					while (i > -1 && (!scriptUrl || !/^http(s?):/.test(scriptUrl))) scriptUrl = scripts[i--].src;
+/******/ 				}
+/******/ 			}
+/******/ 		}
+/******/ 		// When supporting browsers where an automatic publicPath is not supported you must specify an output.publicPath manually via configuration
+/******/ 		// or pass an empty string ("") and set the __webpack_public_path__ variable from your code to use your own logic.
+/******/ 		if (!scriptUrl) throw new Error("Automatic publicPath is not supported in this browser");
+/******/ 		scriptUrl = scriptUrl.replace(/^blob:/, "").replace(/#.*$/, "").replace(/\?.*$/, "").replace(/\/[^\/]+$/, "/");
+/******/ 		__webpack_require__.p = scriptUrl;
+/******/ 	}();
+/******/ 	
 /******/ 	/* webpack/runtime/jsonp chunk loading */
 /******/ 	!function() {
 /******/ 		// no baseURI
@@ -2115,7 +2434,44 @@ function getAllScrollTwoTweens(elemsArr, triggerElem, propKey = "tlKey", gsapToP
 /******/ 			"index": 0
 /******/ 		};
 /******/ 		
-/******/ 		// no chunk on demand loading
+/******/ 		__webpack_require__.f.j = function(chunkId, promises) {
+/******/ 				// JSONP chunk loading for javascript
+/******/ 				var installedChunkData = __webpack_require__.o(installedChunks, chunkId) ? installedChunks[chunkId] : undefined;
+/******/ 				if(installedChunkData !== 0) { // 0 means "already installed".
+/******/ 		
+/******/ 					// a Promise means "currently loading".
+/******/ 					if(installedChunkData) {
+/******/ 						promises.push(installedChunkData[2]);
+/******/ 					} else {
+/******/ 						if(true) { // all chunks have JS
+/******/ 							// setup Promise in chunk cache
+/******/ 							var promise = new Promise(function(resolve, reject) { installedChunkData = installedChunks[chunkId] = [resolve, reject]; });
+/******/ 							promises.push(installedChunkData[2] = promise);
+/******/ 		
+/******/ 							// start chunk loading
+/******/ 							var url = __webpack_require__.p + __webpack_require__.u(chunkId);
+/******/ 							// create error before stack unwound to get useful stacktrace later
+/******/ 							var error = new Error();
+/******/ 							var loadingEnded = function(event) {
+/******/ 								if(__webpack_require__.o(installedChunks, chunkId)) {
+/******/ 									installedChunkData = installedChunks[chunkId];
+/******/ 									if(installedChunkData !== 0) installedChunks[chunkId] = undefined;
+/******/ 									if(installedChunkData) {
+/******/ 										var errorType = event && (event.type === 'load' ? 'missing' : event.type);
+/******/ 										var realSrc = event && event.target && event.target.src;
+/******/ 										error.message = 'Loading chunk ' + chunkId + ' failed.\n(' + errorType + ': ' + realSrc + ')';
+/******/ 										error.name = 'ChunkLoadError';
+/******/ 										error.type = errorType;
+/******/ 										error.request = realSrc;
+/******/ 										installedChunkData[1](error);
+/******/ 									}
+/******/ 								}
+/******/ 							};
+/******/ 							__webpack_require__.l(url, loadingEnded, "chunk-" + chunkId, chunkId);
+/******/ 						}
+/******/ 					}
+/******/ 				}
+/******/ 		};
 /******/ 		
 /******/ 		// no prefetching
 /******/ 		
