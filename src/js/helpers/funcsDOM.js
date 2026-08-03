@@ -1,6 +1,78 @@
 'use strict';
 
 import imagesLoaded from 'imagesloaded';
+import { getInvalidKeys } from "./funcs.js";
+
+//////////////// TYPE DEFINITIONS /////////////////
+
+/**
+ * Configuration object for required DOM elements.
+ * @typedef {{
+ * key: string,
+ * selector: string,
+ * multiple?: boolean
+ * }} TDataSelectors
+ *
+ */
+
+/**
+ * @typedef {Record<string, number>} ImageSize
+ * @property {number} naturalWidth - Original image width in pixels
+ * @property {number} naturalHeight - Original image height in pixels
+ * @property {number} offsetWidth - Rendered width including padding/borders
+ * @property {number} offsetHeight - Rendered height including padding/borders
+ */
+
+/**
+ * @typedef {Record<string, unknown>} LoadedImageResult
+ * @property {HTMLElement} element - The parent element containing the image
+ * @property {ImageSize} size - Dimension information
+ */
+
+/**
+ * Type definition for arguments of {@link activateNavLink}
+ *
+ * @typedef {Object} TActivateNavlinkParams
+ * @property {string} navLinkSelector - The CSS selector to find the navigation link items.
+ * @property {string} pageType - The type of the page to match with the pagesVersions attribute of the navigation items.
+ * @property {string} activeClass - The class name to add to the matched navigation link items.
+ * @property {string} anchorLink - The URL to set as the `href` attribute for the matched navigation items.
+ */
+
+/**
+ * Type definition for arguments of {@link initLangSwitcher}
+ *
+ * @typedef {Object} TInitLangSwitcherParams
+ * @property {string} langSwitcherSelector - Selector for the root container.
+ * @property {string} langSwitcherCurrent - Selector for language button to open dropDown lang menu...
+ * @property {string} langSwitcherButton - Selector for language button.
+ * @property {string} langSwitcherItem - Selector for <li> in the drop-down list of not active language vers...
+ * @property {string} langActiveSelector - Selector for active language element.
+ * @property {string} langListSelector - Selector for options container.
+ * @property {string[]} langOptionArr - Supported language codes.
+ * @property {string} dataSetKey - Dataset parameter name.
+ *
+ */
+
+/**
+ * @description - the type of argument "params" for the function {@link getLangItems}
+ *
+ * @typedef {Record<string, string>} TGetLangItemsParams
+ * @property {string} langSwitcherItem - className of the language list item <li>
+ * @property {string} langSwitcherButton - className of the buttons <button>
+ * @property {string} dataSetKey - the key of the dataset
+ *
+ */
+
+/**
+ * @typedef {{
+ *   component: string, //Component or module name.
+ *   message: string, //Error description
+ *   details?: unknown,  //Optional data
+ * }} TLogErrorParams
+ */
+
+//////////////// END OF TYPE DEFINITIONS /////////////////
 
 /**
  * It checks whether the given style rule is supported for the given HTML Element
@@ -14,17 +86,26 @@ export function isStyleSupported(element, param, value) {
 }
 
 /**
+ * @typedef {{
+ *   target: HTMLElement,
+ *   parentFrom: HTMLElement,
+ *   parentTo: HTMLElement,
+ * }} TMigrageElementParams
+ */
+/**
  * it migrates the given HTML Element to another HTML parent
  * @param {HTMLElement} target - the target HTML Element
  * @param {HTMLElement} parentFrom - the current HTML parent
  * @param {HTMLElement} parentTo - the target HTML parent to migrate to
  */
 export function migrateElement({ target, parentFrom, parentTo }) {
+
 	if (target.isConnected) {
 		(target.parentElement === parentFrom ? parentTo : parentFrom).appendChild(
 			target
 		);
-	} else {
+	}
+	else {
 		console.warn(`transitBox: target in not in DOM: ${target}`);
 	}
 }
@@ -228,13 +309,14 @@ export function observeIntersection(targetElement, options = {}) {
 
 /**
  *  It sets attributes to HTMLElement instances
- * @param {[Element]} [elements=[]] the list of HTMLElements to be set with the attributes
- * @param {Object} [targetAttr={}] consists of the keys as the attributes and the values
+ *  @param {Element[]} elements - target Elements to set attributes...
+ * @param {Record<string, string | number | boolean | null | undefined>} [targetAttr={}] the list of
+ * HTMLElements to be set with the attributes
  * @returns {void}
  */
 export function setAttributes(elements = [], targetAttr = {}) {
 	elements.forEach((element, i) => {
-		if (!(element instanceof HTMLElement)) {
+		if (!(element instanceof Element)) {
 			throw new Error(
 				`one of the elements at index ${i} is not the instance of HTMLElement...`
 			);
@@ -353,32 +435,159 @@ export function initLockScroll() {
 	};
 }
 
-//// getImagesLoaded SECTION ////
-/**
- * @typedef {Object} ImageSize
- * @property {number} naturalWidth - Original image width in pixels
- * @property {number} naturalHeight - Original image height in pixels
- * @property {number} offsetWidth - Rendered width including padding/borders
- * @property {number} offsetHeight - Rendered height including padding/borders
- */
-
-/**
- * @typedef {Object} LoadedImageResult
- * @property {HTMLElement} element - The parent element containing the image
- * @property {ImageSize} size - Dimension information
- */
-
 /**
  * Validates that container is attached to DOM
  * @param {HTMLElement} container - Element to validate
  * @throws {Error} If container is not connected to DOM
  */
-function validateContainer(container) {
+function checkInDOM(container) {
 	if (!container?.isConnected) {
 		throw new Error(
-			'[getImagesLoaded]: Container must be a DOM element connected to the document'
+			'[checkInDOM]: Container must be a DOM element connected to the document'
 		);
 	}
+}
+
+/**
+ * Finds an element in the DOM, checks its existence, and types it for JSDoc/TS.
+ * If the element is not found, logs an error.
+ *
+ * @template {Element} T - Expected element type (e.g., HTMLButtonElement)
+ * @param {string} selector - CSS selector to search for
+ * @param {Document | Element | DocumentFragment} [context=document] - Search context.
+ * @returns {T | null} Returns the element or null (to safely exit the function)
+ *
+ * @sample
+ * above: template {HTMLButtonElement}
+ * const button = getDOMElement('.js-submit-btn');
+ *
+ * @sample
+ * above: template {HTMLFormElement}
+ * const form = getDOMElement('#login-form');
+ * if (!form) return;
+*
+ */
+export function getDOMElement(selector, context = document) {
+	const element = context.querySelector(selector);
+
+	if (!element) {
+		logInitError({
+			component: "getDOMElement",
+			message: `Element with selector "${selector}" was not found in the DOM.`,
+			details: { parent: parent.constructor.name }
+		});
+		return null;
+	}
+
+	// returning the element by casting it to the generic type T
+	return /** @type {T} */ (element);
+}
+
+
+/**
+ * Returns DOM element(s) matching the specified CSS selector.
+ * Searches within the provided context. Logs an error if no elements are found.
+ *
+ * @template {Element} T - Expected element type (e.g., HTMLButtonElement)
+ * @param {string} selector - CSS selector to search for.
+ * @param {Document | Element | DocumentFragment} [context=document] - Search context.
+ * @param {boolean} [multiple=false] - Whether to fetch all matching elements.
+ * @returns {T[]} Array containing zero, one, or multiple elements.
+ *
+ * @example
+ * above: template {HTMLElement}
+ * const [header] = getElements('#header');
+ * above: template {HTMLButtonElement}
+ * const [button] = getElements('.btn', modal);
+ * const cards = getElements('.card', document, true);
+ */
+export function getElements(selector, context = document, multiple = false) {
+	if (multiple) {
+		const elements = /** @type {T[]} */ ([...context.querySelectorAll(selector)]);
+
+		if (elements.length === 0) {
+			logInitError({
+				component: "getElements",
+				message: `No elements matched selector "${selector}". Array is empty.`,
+				details: { context: context.constructor.name, multiple: true }
+			});
+		}
+
+		return elements;
+	}
+
+	const element = context.querySelector(selector);
+
+	if (!element) {
+		logInitError({
+			component: "getElements",
+			message: `Element with selector "${selector}" was not found in the DOM.`,
+			details: { context: context.constructor.name, multiple: false }
+		});
+		return [];
+	}
+
+	return [/** @type {T} */ (element)];
+}
+
+/**
+ * Retrieves required DOM elements and groups them into an object.
+ * Throws a hard error and logs diagnostics if any required element is missing.
+ *
+ * @param {TDataSelectors[]} selectors - List of selectors to retrieve.
+ * @param {Document | Element | DocumentFragment} [context=document] - Search context.
+ * @returns {Record<string, unknown>} Object containing confirmed DOM elements.
+ *
+ * @throws {Error} If a required selector does not match any DOM element.
+ *
+ * @example
+ * const DOM = requireElements([
+ *     {
+ *         key: "navMenuHidden",
+ *         selector: SELECTORS.navMenuHidden,
+ *     },
+ *     {
+ *         key: "burgerHidden",
+ *         selector: SELECTORS.burgerHidden,
+ *     },
+ *     {
+ *         key: "burgerFixed",
+ *         selector: SELECTORS.burgerFixed,
+ *     },
+ *     {
+ *         key: "burgerNavAll",
+ *         selector: SELECTORS.burgerNavAll,
+ *         multiple: true,
+ *     },
+ * ]);
+ *
+ * DOM.navMenuHidden.classList.add("opened");
+ * DOM.burgerNavAll.forEach((button) => button.classList.add("active"));
+ */
+export function requireElements(selectors, context=document) {
+	/** @type {Record<string, unknown>} */
+	const elements = {};
+
+	for (const { key, selector, multiple = false } of selectors) {
+		// Leverage getElements internally. The soft warning inside getElements will trigger first...
+		const result = getElements(selector, context, multiple);
+
+		if (!result.length) {
+			const errorMessage = `Required DOM element missing. Key: "${key}", Selector: "${selector}"`;
+			logInitError({
+				component: "requireElements",
+				message: errorMessage,
+			});
+
+			throw new Error(`[requireElements]: ${errorMessage}`);
+		}
+
+		elements[key] = multiple
+			? result
+			: result[0];
+	}
+
+	return elements;
 }
 
 /**
@@ -518,7 +727,8 @@ async function processImageResults(instance, parentMap) {
 				src: img.src || img.currentSrc || 'unknown',
 				element: parentElement
 			});
-		} else {
+		}
+		else {
 			loadedPromises.push(
 				getImageDimensions(img).then(size => ({
 					element: parentElement,
@@ -548,23 +758,25 @@ async function processImageResults(instance, parentMap) {
  */
 export async function getImagesLoaded(container, options = {}) {
 	// Validate container
-	validateContainer(container);
+	checkInDOM(container);
 
 	// Return a promise that resolves when imagesLoaded completes
 	return new Promise((resolve, reject) => {
 		try {
-			imagesLoaded(container, options, async instance => {
+			imagesLoaded(container, options, async (instance) => {
 				try {
 					const parentMap = buildImageParentMap(container, options);
 					const results = await processImageResults(instance, parentMap);
 					resolve(results);
-				} catch (error) {
+				}
+				catch (error) {
 					reject(
 						new Error(`[getImagesLoaded] Processing error: ${error.message}`)
 					);
 				}
 			});
-		} catch (error) {
+		}
+		catch (error) {
 			reject(
 				new Error(`[getImagesLoaded] Initialization error: ${error.message}`)
 			);
@@ -689,7 +901,8 @@ export async function createMasonry(containerSelector, params = {}) {
 		}
 
 		return imageItems;
-	} catch (error) {
+	}
+	catch (error) {
 		console.error('[createMasonry]:', error.message);
 		throw error; // Re-throw to allow caller to handle it
 	}
@@ -719,39 +932,59 @@ function getColumnsNumber(containerWidth, itemWidth, gap) {
  * Activates the navigation link based on the specified conditions.
  * Adds an `activeClass` to the matching navigation items and sets the `href` attribute to the provided `anchorLink`.
  *
- * @param {string} navLinkSelector - The CSS selector to find the navigation link items.
- * @param {string} pageType - The type of the page to match with the pagesVersions attribute of the navigation items.
- * @param {string} activeClass - The class name to add to the matched navigation link items.
- * @param {string} anchorLink - The URL to set as the `href` attribute for the matched navigation items.
- *
+ * @param {TActivateNavlinkParams} params
  * @returns {void} This function does not return any value.
  *
  * @example
  * // Example usage:
- * activateNavLink('.nav-link', 'home', 'active', '#homeAnchor');
+ * activateNavLink({
+ * navLinkSelector: '.nav-link',
+ * pageType: 'home',
+ * activeClass: 'active',
+ * anchorLink: '#homeAnchor'
+ * });
  */
-export function activateNavLink(
-	navLinkSelector,
-	pageType,
-	activeClass,
-	anchorLink
-) {
+export function activateNavLink(params) {
 	// Check if all necessary arguments are provided, otherwise, log a warning.
-	if (!navLinkSelector || !pageType || !activeClass || !anchorLink) {
-		console.warn('at activateNavLink: no given all arguments');
+	/** @type {(keyof TActivateNavlinkParams)[]} */
+	const requiredKeys = [
+		"navLinkSelector",
+		"pageType",
+		"activeClass",
+		"anchorLink",
+	];
+
+	const missingKeys = getInvalidKeys(
+		params,
+		requiredKeys,
+		{
+			invalidValues: ["", undefined, null, 0]
+		}
+	);
+
+		if (missingKeys.length) {
+			logInitError({
+				component: "activateNavLink",
+				message: `Missing required parameters:\n${missingKeys.join("\n")}`,
+				details: params
+			});
+
 		return;
 	}
+
+		const {
+			navLinkSelector,
+			pageType,
+			activeClass,
+			anchorLink,
+		} = params;
 
 	// Get all navigation link items using the provided selector.
-	const navLinkItems = Array.from(document.querySelectorAll(navLinkSelector));
-
+	const navLinkItems = /** @type {HTMLAnchorElement[]} */ (
+		getElements(navLinkSelector, document, true)
+	);
 	// If no matching navigation items are found, log a warning and exit.
-	if (!navLinkItems.length) {
-		console.warn(
-			`at activateNavLink: the nav link items with selector: ${navLinkSelector} are not found in the page...`
-		);
-		return;
-	}
+	if (!navLinkItems.length) return;
 
 	// Iterate over each navigation item to check if its pagesVersions-type matches the provided pageType.
 	for (const navItem of navLinkItems) {
@@ -764,96 +997,418 @@ export function activateNavLink(
 }
 
 /**
- * Initializes a language switcher component.
- * @param {Object} params - Configuration object.
- * @param {string} [params.langSwitcherSelector="#lang-switcher"] - Selector for the root container.
- * @param {string} [params.iconLangSelector=".lang-switcher__lang-icon"] - Selector for language icons.
- * @param {string} [params.langActiveSelector=".active"] - Selector for active language element.
- * @param {string} [params.langListSelector="#listbox"] - Selector for options container.
- * @param {string[]} [params.langOptionArr=["ua","ru"]] - Supported language codes.
- * @param {string} [params.dataSetParam="lang"] - Dataset parameter name.
- * @returns {void} Returns early if any critical elements are missing.
+ * Logs an initialization error with optional diagnostic details.
+ *
+ * @param {TLogErrorParams} params
+ * @returns {void}
+ *
+ * @example
+ * logInitError({
+ *     component: "initLangSwitcher",
+ *     message: 'Element ".lang-switcher" was not found.'
+ * });
+ *
+ * @example
+ * logInitError({
+ *     component: "initLangSwitcher",
+ *     message: 'Button has no data-lang attribute.',
+ *     details: button
+ * });
  */
-export function initLangSwitcher(params = {}) {
-	const {
-		langSwitcherSelector = '#lang-switcher',
-		iconLangSelector = '.lang-switcher__lang-icon',
-		langActiveSelector = '.active',
-		langListSelector = '#listbox',
-		langOptionArr = ['uk', 'ru'],
-		dataSetParam = 'lang'
-	} = params;
+export function logInitError(params) {
+	const {component, message, details} = params;
 
-	/**
-	 *
-	 * @param {string} selector
-	 * @param {string} addition
-	 */
-	const notFoundError = (selector, addition = '') => {
-		console.error(
-			`at initLangSwitcher: the given selector: ${selector} is not found in DOM`,
-			addition
-		);
-	};
+	const prefix = `[${component}]`;
 
-	const url = window.location.href;
-	const langSwitcher = document.querySelector(langSwitcherSelector);
-
-	if (!langSwitcher) {
-		notFoundError(langSwitcherSelector);
+	if (details !== undefined) {
+		console.error(`${prefix}: ${message}`, details);
 		return;
 	}
 
-	const langActiveElement = langSwitcher.querySelector(
-		`${iconLangSelector}${langActiveSelector}`
-	);
-	const langActive = langActiveElement?.dataset[dataSetParam];
+	console.error(`${prefix} ${message}`);
+}
 
-	if (!langActive) {
-		notFoundError(
-			`${iconLangSelector}${langActiveSelector}`,
-			`or data-${dataSetParam} has no value...`
+/**
+ * Handles language selection.
+ * @param {string} dataSetKey - the key of the dataset-[key]: dataset-lang
+ * @param {string} langActive - active version of language
+ *
+ * @return ()=>{} //returning cb for {@link initLangSwitcher}
+ */
+function getLangClickHandler (dataSetKey, langActive) {
+	/**
+	 * the callback for the click listener at langListSelector "#lang-list"
+	 * @param {MouseEvent}  event
+	 */
+	return (event) => {
+		const eTarget = event.target;
+		if (!(eTarget instanceof Element)) {
+			// Cast to any type inside JSDoc comment so TS allows reading properties
+			const unsafeTarget = /** @type {*} */ (eTarget);
+
+			logInitError({
+				component: "getLangClickHandler",
+				message: `Expected Element, but got ${eTarget?.constructor?.name || typeof eTarget}`,
+				details: {
+					type: typeof eTarget,
+					tagName: unsafeTarget?.tagName,
+					className: unsafeTarget?.className
+				}
+			});
+
+			return;
+		}
+
+		const clickedLang = getClickedLanguage(eTarget, dataSetKey);
+		if (!clickedLang) return;
+
+		redirectToLanguage(langActive, clickedLang);
+	}
+}
+
+/**
+ * @param {string} langActive
+ * @param {string} clickedLang
+ * @return {void}
+ */
+function redirectToLanguage(langActive, clickedLang) {
+	const currentUrl = new URL(window.location.href);
+
+	currentUrl.pathname =
+		currentUrl.pathname.replace(
+			`/${langActive}/`,
+			`/${clickedLang}/`
 		);
+
+
+	window.location.replace(currentUrl.toString());
+}
+
+/**
+ *
+ * @param {Element} eTarget
+ * @param {string} dataSetKey
+ * @return {string|undefined}
+ */
+function getClickedLanguage(eTarget, dataSetKey) {
+//const langElement = e.target.closest("[data-lang]");
+	//const langElement = e.target.closest("button");
+	const langElement = eTarget.closest(`[data-${dataSetKey}]`);
+
+	//'dataset' is guaranteed only for HTMLElement (HTMLButtonElement...)
+	if (!langElement || !checkHtmlElement(langElement)) return;
+
+	//langElement is already checked to be HTMLElement and has "dataset" property...
+	 const dataSetLang = langElement.dataset;
+
+
+	const clickedLang = dataSetLang[dataSetKey];
+	if (!clickedLang) {
+		logInitError({
+			component: "getLangClickHandler",
+			message: `The given HTMLElement has no data-set attributes or not valid:`,
+			details: {
+				dataset: dataSetLang,
+				tagName: langElement?.tagName,
+				className: langElement?.className
+			}
+		});
+
+		return;
+	}
+
+	return clickedLang;
+}
+
+/**
+ * Toggles the expanded state of an interactive element.
+ * it is made for {@link toggleMenu}
+ * @param {HTMLElement} element - Interactive element exposing the `ariaExpanded` property.
+ * @returns {void}
+ */
+function toggleAriaExpanded(element) {
+	const expanded = element.ariaExpanded === "true";
+	element.ariaExpanded = `${!expanded}`;
+}
+
+
+/**
+ * Handles click on the current language button.
+ *
+ * @param {MouseEvent} event - Mouse click event.
+ * @returns {void}
+ */
+function toggleMenu(event) {
+	//checking HTMLElement type of event.currentTarget
+	if (!checkEventCurrentTarget(event)) return;
+	const curTarget = event.currentTarget;
+	toggleAriaExpanded(curTarget);
+}
+
+/**
+ * Opens the language menu.
+ *
+ * @param {HTMLElement} currentButton - Element with attributes dataSet
+ * @returns {void}
+ */
+
+function openLanguageMenu(currentButton) {
+	currentButton.ariaExpanded = "true";
+}
+
+/**
+ * Closes the language menu.
+ *
+ * @param {HTMLElement} currentButton
+ * @returns {void}
+ */
+
+function closeLanguageMenu(currentButton) {
+	currentButton.ariaExpanded = "false";
+}
+
+/**
+ * Checks whether the currentTarget is an HTMLElement.
+ * Serves as a Type Guard for TypeScript/JSDoc.
+ *
+ * @param {MouseEvent|KeyboardEvent} event
+ * @returns {event is (MouseEvent|KeyboardEvent) & { currentTarget: HTMLElement }}
+ */
+export function checkEventCurrentTarget(event) {
+	const curTarget = event.currentTarget;
+
+	if (!(isHTMLElement(curTarget))) {
+		// Cast to any type inside JSDoc comment so TS allows reading properties
+		const unsafeTarget = /** @type {*} */ (curTarget);
+
+		logInitError({
+			component: "checkEventCurrentTarget",
+			message: `Expected HTMLElement, but got ${curTarget?.constructor?.name || typeof curTarget}`,
+			details: {
+				eventType: event.type,
+				tagName: unsafeTarget?.tagName,
+				className: unsafeTarget?.className
+			}
+		});
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Checks whether Element is an HTMLElement.
+ * @param {unknown} element
+ * @returns {element is HTMLElement}
+ */
+export function isHTMLElement(element) {
+	return element instanceof HTMLElement;
+}
+
+/**
+ * Checks whether Element is an HTMLElement.
+ * Serves as a Type Guard for TypeScript/JSDoc.
+ * @param {unknown} element
+ * @returns {element is HTMLElement}
+ */
+export function checkHtmlElement(element) {
+	const isHTMLElem = isHTMLElement(element);
+
+	if (!isHTMLElem) {
+		// Cast to any type inside JSDoc comment so TS allows reading properties
+		const unsafeTarget = /** @type {*} */ (element);
+
+		logInitError({
+			component: "checkHtmlElement",
+			message: `Expected HTMLElement, but got ${element?.constructor?.name || typeof element}`,
+			details: {
+				type: typeof element,
+				tagName: unsafeTarget?.tagName,
+				className: unsafeTarget?.className
+			}
+		});
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @param {HTMLElement} menuContainer
+ * @param {HTMLElement} toggleButton
+ */
+function getHandlerOnCloseLanguageMenu(menuContainer, toggleButton) {
+	/**
+	 * @param {MouseEvent|KeyboardEvent} event
+	 */
+	return (event) => {
+		// 1. Handling the Escape key press
+		if (event instanceof KeyboardEvent && event.key === "Escape") {
+			closeLanguageMenu(toggleButton);
+
+			return;
+		}
+
+		if (event instanceof MouseEvent) {
+			const target = event.target;
+
+			if (!(target instanceof HTMLElement)) return;
+
+			// If you click INSIDE the menu or INSIDE the button, do nothing (ignore)
+			if (menuContainer?.contains(target)) {
+				return;
+			}
+
+			// If the click was outside these elements, close it
+			closeLanguageMenu(toggleButton);
+		}
+	};
+
+}
+
+/**
+ * Initializes a language switcher component.
+ * @param {TInitLangSwitcherParams} params - Configuration object.
+ *
+ * @returns {void} Returns early if any critical elements are missing.
+ */
+export function initLangSwitcher(params) {
+	const requiredKeys = [
+		"langSwitcherSelector",
+		"langSwitcherCurrent",
+		"langSwitcherButton",
+		"langSwitcherItem",
+		"langActiveSelector",
+		"langListSelector",
+		"langOptionArr",
+		"dataSetKey",
+	];
+
+	const missingKeys = getInvalidKeys(
+		params,
+		requiredKeys,
+		{
+			invalidValues: ["", undefined, null],
+		}
+	);
+
+	if (missingKeys.length) {
+		logInitError({
+			component: "initLangSwitcher",
+			message: `Missing required parameters:\n${missingKeys.join("\n")}`
+			});
+		return;
+	}
+
+	const {
+		langSwitcherSelector,
+		langSwitcherCurrent,
+		langSwitcherButton,
+		langSwitcherItem,
+		langActiveSelector,
+		langListSelector,
+		langOptionArr,
+		dataSetKey
+	} = params;
+
+	const [langSwitcher] = getElements(
+		langSwitcherSelector
+	);
+	//all error logging is in the level of {@link getElements} and {@link checkHtmlElement}
+	if (!langSwitcher || !checkHtmlElement(langSwitcher)) return;
+
+	const [langCurrentButton] = getElements(`${langSwitcherCurrent}${langActiveSelector}`);
+	if (!langCurrentButton || !checkHtmlElement(langCurrentButton)) return;
+
+	const langActive = langCurrentButton.dataset[dataSetKey];
+	if (!langActive) {
+		logInitError({
+			component: "initLangSwitcher",
+			message: `Element with selector: ${langSwitcherCurrent}${langActiveSelector} has no data-${dataSetKey} value...`
+		});
 		return;
 	}
 
 	if (!Array.isArray(langOptionArr) || !langOptionArr.length) {
-		console.error(
-			`at initLangSwitcher: the given array of language versions is not Array or empty: ${langOptionArr}`
-		);
+		logInitError({
+			component: "initLangSwitcher",
+			message: `langOptionArr must be a non-empty array.`,
+			details: langOptionArr
+		});
 		return;
 	}
-
+	//forming the list of not active languages...
 	const langVerArr = langOptionArr.filter(lang => lang !== langActive);
 
-	const langList = langSwitcher.querySelector(langListSelector);
+	const [langList] = getElements(langListSelector, langSwitcher);
+	if (!langList || !checkHtmlElement(langList)) return;
 
-	if (!langList) {
-		notFoundError(langListSelector);
-		return;
-	}
-
-	const optionListElems = langVerArr.map(langVer => {
-		const listElem = document.createElement('li');
-		listElem.classList.add(getSelectorName(iconLangSelector));
-		listElem.setAttribute('role', 'option');
-		listElem.setAttribute(`data-${dataSetParam}`, langVer);
-
-		const spanElem = document.createElement('span');
-		spanElem.textContent = langVer;
-		listElem.appendChild(spanElem);
-
-		return listElem;
+	/**
+	 * Creates language option buttons list.
+	 *
+	 * Each language option is represented by a semantic HTMLElement (<li>, etc...), which includes <button>,
+	 * providing built-in keyboard accessibility (Tab, Enter, Space)
+	 * without additional event handlers.
+	 * @type {HTMLLIElement[]}
+	 *
+	 */
+	const optionListElems = getLangItems(langVerArr, {
+		langSwitcherItem,
+		langSwitcherButton,
+		dataSetKey,
 	});
 
 	langList.append(...optionListElems);
 
-	const handleClick = ({ target }) => {
-		const clickedLang = target.closest(iconLangSelector).dataset[dataSetParam];
-		window.location.replace(url.replace(`/${langActive}/`, `/${clickedLang}/`));
-	};
+	const langListHandler = getLangClickHandler(dataSetKey, langActive);
+	const escapeLanguageMenuHandler = getHandlerOnCloseLanguageMenu(langSwitcher, langCurrentButton);
 
-	langList.addEventListener('click', handleClick);
+	// ESCAPE HANDLERS
+	document.addEventListener("click", escapeLanguageMenuHandler);
+	document.addEventListener("keydown", escapeLanguageMenuHandler);
+
+	//handler on the list of the language buttons
+	langList.addEventListener('click', langListHandler);
+	//handler on the current language button to open and close language menu
+	langCurrentButton.addEventListener('click', toggleMenu);
+}
+
+/**
+ *
+ * @param {string[]} langVerArr
+ * @param {TGetLangItemsParams} params
+ *
+ * @return {HTMLLIElement[]}
+ */
+function getLangItems(langVerArr, params, ) {
+	const{
+		langSwitcherItem,
+		langSwitcherButton,
+		dataSetKey
+	} = params;
+
+	/**
+	 * Creates language option buttons.
+	 *
+	 * Each language option is represented by a semantic HTML button,
+	 * providing built-in keyboard accessibility (Tab, Enter, Space)
+	 * without additional event handlers.
+	 */
+	return langVerArr.map(langVer => {
+		// Create list item.
+		const listItem = document.createElement("li");
+		listItem.classList.add(getSelectorName(langSwitcherItem));
+
+		// Create interactive button.
+		const buttonElem = document.createElement("button");
+		buttonElem.type = "button";
+		buttonElem.classList.add(getSelectorName(langSwitcherButton));
+		buttonElem.dataset[dataSetKey] = langVer;
+		buttonElem.textContent = langVer;
+
+		listItem.appendChild(buttonElem);
+
+		return listItem;
+	});
 }
 
 /**
@@ -1023,3 +1578,4 @@ export async function cleanupModal(dom, state, fadeDuration = 300) {
 		dom.currentImage = null;
 	}
 }
+

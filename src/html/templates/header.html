@@ -1,46 +1,68 @@
 <div class="header-layer">
-<!--data is accessed from context.data of "gulp-file-include"-->
-    @@if (data && page && data[page].header) {
+	<!--data is accessed from context.data of "gulp-file-include"-->
+	@@if (data && page && data[page].header) {
 
-    <header class="header" role="banner">
-        <h2 class="header__logo-heading">@@data.@@page.header.logo-heading</h2>
-        <div class="header__contacts-wrapper" aria-label="@@data.@@page.header.contacts-wrapper_label">
-            <div class="header__contacts-block">
-                @@include("./icon-link--phone.html", {"page": "@@page"})
+	<header class="header" role="banner">
+		<h2 class="header__logo-heading">@@data.@@page.header.logo-heading</h2>
+		<div class="header__contacts-wrapper" aria-label="@@data.@@page.header.contacts-wrapper_label">
+			<div class="header__contacts-block">
+				@@include("./icon-link--phone.html", {"page": "@@page"})
 
-                <div class="social-icons-wrapper">
-                    @@include("./icon-link--viber.html", {"page": "@@page"})
+				<div class="social-icons-wrapper">
+					@@include("./icon-link--viber.html", {"page": "@@page"})
 
-                    @@include("./icon-link--telegram.html", {"page": "@@page"})
+					@@include("./icon-link--telegram.html", {"page": "@@page"})
 
-                    <div id="lang-switcher" role="combobox" aria-haspopup="listbox">
-                        <div class="lang-switcher__lang-icon active"
-                             role="button"
-                             aria-expanded="false"
-                             aria-controls="lang-list"
-                             data-lang="@@data.@@page.main.lang">
-                            <span>@@data.@@page.main.lang</span>
-                        </div>
-                        <div class="lang-switcher__lang-dropdown">
-                            <ul id="lang-list" role="listbox"></ul>
-                        </div>
-                    </div>
+					<div id="lang-switcher" >
+						<button class="lang-switcher__button lang-switcher__current active"
+						        type="button"
+						        aria-expanded="false"
+						        aria-controls="lang-list"
+						        data-lang="@@data.@@page.main.lang">
+										@@data.@@page.main.lang
+						</button>
+						<!--header.scss uses: .lang-switcher__current[aria-expanded="false"] + .lang-switcher__dropdown
+						So, on the level of the button there should be a <div class="language-switcher dropdown">-->
+						<div class="lang-switcher__dropdown">
+							<ul id="lang-list">
+								<!--Elements <li> will be generated with initLangSwitcher()... samples:-->
+<!--								<li class="lang-switcher__item">
+									<button
+											class="lang-switcher__button"
+											type = "button"
+											data-lang="ru"
+									>
+										"ru"
+									</button>
+								</li>
+								<li class="lang-switcher__item">
+									<button
+											class="lang-switcher__button"
+											type = "button"
+											data-lang="en"
+									>
+										"en"
+									</button>
+								</li>-->
+							</ul>
+						</div>
+					</div>
 
-                    <button
-                        class="burger_nav hidden"
-                        aria-label="@@data.@@page.header.nav_label"
-                        aria-expanded="false"
-                        tabindex="0">
-                        <span></span>
-                    </button>
-                </div>
-            </div>
-        </div>
-        <nav class="header__nav" aria-label="@@data.@@page.header.nav_label">
-            <ul class="nav-list">
-                @@include("./nav-list.html", {"page": "@@page"})
-            </ul>
-        </nav>
-    </header>
-    }
+					<button
+							class="burger_nav hidden"
+							aria-label="@@data.@@page.header.nav_label"
+							aria-expanded="false"
+							tabindex="0">
+						<span></span>
+					</button>
+				</div>
+			</div>
+		</div>
+		<nav class="header__nav" aria-label="@@data.@@page.header.nav_label">
+			<ul class="nav-list">
+				@@include("./nav-list.html", {"page": "@@page"})
+			</ul>
+		</nav>
+	</header>
+	}
 </div>

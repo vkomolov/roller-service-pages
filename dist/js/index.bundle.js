@@ -2,6 +2,141 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
+/***/ "./src/js/helpers/funcs.js":
+/*!*********************************!*\
+  !*** ./src/js/helpers/funcs.js ***!
+  \*********************************/
+/***/ (function(__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   getLocalStorage: function() { return /* binding */ getLocalStorage; },
+/* harmony export */   getMatchedFromArray: function() { return /* binding */ getMatchedFromArray; },
+/* harmony export */   getRandomElemsfromArray: function() { return /* binding */ getRandomElemsfromArray; },
+/* harmony export */   isKeyOf: function() { return /* binding */ isKeyOf; },
+/* harmony export */   randomNum: function() { return /* binding */ randomNum; },
+/* harmony export */   setLocalStorage: function() { return /* binding */ setLocalStorage; }
+/* harmony export */ });
+
+
+function randomNum(max, min) {
+  return Math.floor(Math.random() * max) + min;
+}
+
+/**
+ * Filters and returns the elements from `values` that are present in `targetArr`.
+ *
+ * This function checks if the first argument `targetArr` is a non-empty array and then
+ * filters the remaining arguments (`...values`) to find which ones are included in `targetArr`.
+ * If `targetArr` is not a valid array or is empty, a warning is logged to the console and an empty array is returned.
+ *
+ * @param {Array<any>} targetArr - The array to check for matches.
+ * @param {...*} values - A list of values to check against the `targetArr`.
+ *
+ * @returns {Array<any>} - An array of matched values from `values` that exist in `targetArr`.
+ *
+ * @example
+ * const result = getMatchedFromArray([1, 2, 3, 4], 2, 4, 6);
+ * console.log(result); // Output: [2, 4]
+ *
+ * @example
+ * const result = getMatchedFromArray([], 1, 2);
+ * console.log(result); // Output: []
+ */
+function getMatchedFromArray(targetArr, ...values) {
+  if (!Array.isArray(targetArr) || !targetArr.length) {
+    console.error(`at getMatchedFromArray: the given array of values is not Array or empty...`);
+    return [];
+  }
+  const targetSet = new Set(targetArr); // Convert targetArr to Set for O(1) lookups
+  const flatValues = values.flat(); //to flat possible arrays in the array of values
+  return flatValues.filter(val => targetSet.has(val));
+}
+
+/**
+ *  It randomly chooses the requested amount of elems from the given array
+ * @param {Array} fromArray - target array
+ * @param {number} [maxRandCount=1] max number of the random elems from the given array
+ * @return {*[] | []} the array of the random elements from the given array
+ */
+function getRandomElemsfromArray(fromArray, maxRandCount = 1) {
+  if (!Array.isArray(fromArray) || fromArray.length < maxRandCount) {
+    console.error(`the length of the given array ${fromArray.length} should not be less than max random count ${maxRandCount}...`);
+    return [];
+  }
+
+  // Shuffle the array randomly (Fisher-Yates method)
+  for (let i = fromArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [fromArray[i], fromArray[j]] = [fromArray[j], fromArray[i]]; // Swapping elements
+  }
+
+  // Return the first maxRandCount numbers
+  return fromArray.slice(0, maxRandCount);
+}
+
+/**
+ * It gets the LocalStorage by name, validating by the time limit in days;
+ * If the time limit is expired, then to return false;
+ * If the LocalStorage does not exist then to return false;
+ * Else to return the data;
+ * @param { string } name of the LocalStorage data;
+ * @param { number } [timeLimit=1]: number of days;
+ * @returns { object | boolean } the data, stored in the LocalStorage...
+ * or false, if its not found or expired by time
+ * */
+function getLocalStorage(name, timeLimit = 1) {
+  const storage = localStorage.getItem(name);
+  let innData;
+  if (storage) {
+    innData = JSON.parse(storage);
+    const creationDate = innData.creationDate;
+    const currentDate = Date.now();
+    if ((currentDate - creationDate) / 1000 / 60 / 60 / 24 > timeLimit) {
+      return false;
+    }
+    return innData;
+  }
+  return false;
+}
+
+/**@description it receives the data and update it with the current Date
+ * and sets the localStorage;
+ * @param {string} name The name of the LocalStorage to be set
+ * @param {Object} data which is fetched
+ * */
+function setLocalStorage(name = "localData", data) {
+  //log(data, "setting localStorage Data");
+
+  const dataWithDate = {
+    data,
+    creationDate: Date.now()
+  };
+  localStorage.setItem(name, JSON.stringify(dataWithDate));
+}
+
+/**
+ * Type guard that checks if a key exists in an object.
+ * Narrows the key type to keyof T, allowing safe indexed access.
+ *
+ * @template {Record<PropertyKey, unknown>} T
+ * @param {T} obj - The object to check the key against.
+ * @param {PropertyKey} key - The key to check.
+ * @returns {key is keyof T} True if key exists in the object.
+ *
+ * @example
+ * const handlers = { head: (v) => v, main: (v) => v };
+ * const key = "head";
+ * if (isKeyOf(handlers, key)) {
+ *   handlers[key](value); // TS knows key is "head" | "main"
+ * }
+ */
+function isKeyOf(obj, key) {
+  return key in obj;
+}
+
+/***/ }),
+
 /***/ "./src/js/helpers/funcsDOM.js":
 /*!************************************!*\
   !*** ./src/js/helpers/funcsDOM.js ***!
@@ -954,6 +1089,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _modulesPack_gallery_thumbs_index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./modulesPack/gallery-thumbs/index.js */ "./src/js/modulesPack/gallery-thumbs/index.js");
 /* harmony import */ var _partials_gsap_loader_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./partials/gsap-loader.js */ "./src/js/partials/gsap-loader.js");
 /* harmony import */ var _partials_animations_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./partials/animations.js */ "./src/js/partials/animations.js");
+/* harmony import */ var _helpers_funcs_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./helpers/funcs.js */ "./src/js/helpers/funcs.js");
 
 
 /**
@@ -962,6 +1098,7 @@ __webpack_require__.r(__webpack_exports__);
  * GSAP via gsap-loader.js, builds animations through animations.js, and
  * initializes the masonry gallery.
  */
+
 
 
 
@@ -1000,14 +1137,14 @@ const galleryThumbsFolderName = "thumbs";
 // ============================================
 
 document.addEventListener("DOMContentLoaded", async () => {
-  /** @type {string} */
-  const pageType = document.body.dataset.type;
+  const pageType = document.body.dataset.type || "";
+  const isIn = (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_4__.isKeyOf)(linkAnchors, pageType);
 
   // ------------------------------------------
   // Navigation & Language (non-GSAP, immediate)
   // ------------------------------------------
-  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.activateNavLink)(navLinkSelector, pageType, linkClassNameActive, linkAnchors[pageType] || "#");
-  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.activateNavLink)(navHexagonSelector, pageType, linkClassNameActive, linkAnchors[pageType] || "#");
+  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.activateNavLink)(navLinkSelector, pageType, linkClassNameActive, isIn ? linkAnchors[pageType] : "#");
+  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.activateNavLink)(navHexagonSelector, pageType, linkClassNameActive, isIn ? linkAnchors[pageType] : "#");
   (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.initLangSwitcher)(langSwitchData);
 
   // ------------------------------------------
@@ -1598,6 +1735,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../helpers/funcsDOM.js */ "./src/js/helpers/funcsDOM.js");
 /* harmony import */ var _gsap_loader_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./gsap-loader.js */ "./src/js/partials/gsap-loader.js");
+/* harmony import */ var _helpers_funcs_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../helpers/funcs.js */ "./src/js/helpers/funcs.js");
 
 
 /**
@@ -1606,6 +1744,7 @@ __webpack_require__.r(__webpack_exports__);
  * All animations are registered in the global gsap-loader cache so they can
  * be killed individually or in bulk. No local WeakMap is used anymore.
  */
+
 
 
 
@@ -1981,6 +2120,15 @@ function createAnimations(gsap, ScrollTrigger) {
     burgerClickHandler,
     burgerInitListener
   } = createBurgerHandlers(gsap);
+
+  /**
+   * @typedef {{
+   *   automation: () => {},
+   *   common: () => {}
+   * }} TPageAnimations
+   *
+   */
+
   const pageAnimations = {
     automation: () => {
       const tlData = {};
@@ -2036,8 +2184,14 @@ function createAnimations(gsap, ScrollTrigger) {
   function animatePage() {
     return onPageLoaded(pageAnimations);
   }
+
+  /**
+   *
+   * @param animationData
+   * @return {{}}
+   */
   function onPageLoaded(animationData) {
-    const pageName = document.body.dataset.type;
+    const pageName = document.body.dataset.type || "";
     const totalTl = {};
     if (animationData.common) Object.assign(totalTl, animationData.common());
     if (pageName in animationData) Object.assign(totalTl, animationData[pageName]());
@@ -2111,7 +2265,7 @@ let animationId = 0;
 async function getGsap() {
   if (gsapCache) return gsapCache;
   if (gsapLoadPromise) return gsapLoadPromise;
-  gsapLoadPromise = Promise.all(/*! import() */[__webpack_require__.e("gsap"), __webpack_require__.e("src_js_partials_gsap-all_js")]).then(__webpack_require__.bind(__webpack_require__, /*! ./gsap-all.js */ "./src/js/partials/gsap-all.js")).then(({
+  gsapLoadPromise = Promise.all(/*! import() */[__webpack_require__.e("vendors-node_modules_gsap_ScrollTrigger_js-node_modules_gsap_index_js"), __webpack_require__.e("src_js_partials_gsap-all_js")]).then(__webpack_require__.bind(__webpack_require__, /*! ./gsap-all.js */ "./src/js/partials/gsap-all.js")).then(({
     gsap,
     ScrollTrigger
   }) => {

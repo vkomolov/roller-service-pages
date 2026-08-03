@@ -7,76 +7,64 @@
  * initializes the masonry gallery.
  */
 
-import { activateNavLink, createMasonry, initLangSwitcher, lockedEventListener } from "./helpers/funcsDOM.js";
+import {
+  activateNavLink,
+  createMasonry,
+  initLangSwitcher,
+  lockedEventListener
+} from "./helpers/funcsDOM.js";
+
+import {
+  linkAnchors,
+  linkClassNameActive,
+  navLinkSelector,
+  navHexagonSelector,
+  langSwitchData,
+  gallerySelector,
+  galleryThumbsFolderName
+} from "./partials/initialSelectors.js";
+
 import { initThumbs } from "./modulesPack/gallery-thumbs/index.js";
-import { getGsap, killAllAnimations, resetGsapCache } from "./partials/gsap-loader.js";
-import { createAnimations } from "./partials/animations.js";
-
-// ============================================
-// INITIAL DATA
-// ============================================
-
-const linkAnchors = {
-  index: "#about-us",
-  gates: "#gatesSection",
-  rollers: "#securityShuttersSection",
-  automation: "#rollerShuttersAutomation",
-  barriers: "#barrierSection",
-  awnings: "#awningsSection",
-  windows: "#windowSection",
-  security: "#securitySurveillanceSection",
-};
-
-const linkClassNameActive = "active";
-const navLinkSelector = ".nav-link";
-const navHexagonSelector = ".hexagon-comb-block__cell";
-
-const langSwitchData = {
-  langSwitcherSelector: "#lang-switcher",
-  iconLangSelector: ".lang-switcher__lang-icon",
-  langActiveSelector: ".active",
-  langListSelector: "#lang-list",
-  langOptionArr: ["uk", "ru"],
-  dataSetParam: "lang"
-};
-
-const gallerySelector = "#gallery-work";
-const galleryThumbsFolderName = "thumbs";
+import { initAnimations } from "./partials/animations.js";
+import { isKeyOf } from "./helpers/funcs.js";
 
 // ============================================
 // DOM READY
 // ============================================
-
 document.addEventListener("DOMContentLoaded", async () => {
-  /** @type {string} */
-  const pageType = document.body.dataset.type;
-
-  // ------------------------------------------
-  // Navigation & Language (non-GSAP, immediate)
-  // ------------------------------------------
-  activateNavLink(navLinkSelector, pageType, linkClassNameActive, linkAnchors[pageType] || "#");
-  activateNavLink(navHexagonSelector, pageType, linkClassNameActive, linkAnchors[pageType] || "#");
-  initLangSwitcher(langSwitchData);
-
-  // ------------------------------------------
-  // Lazy load GSAP + ScrollTrigger + animations module
-  // ------------------------------------------
-  const { gsap, ScrollTrigger } = await getGsap();
-  const { animatePage, fadeInGallery } = createAnimations(gsap, ScrollTrigger);
-
-  // ------------------------------------------
-  // GSAP-dependent operations
-  // ------------------------------------------
-  const totalTl = animatePage();
+  const pageType = document.body.dataset.type || "";
+  const isIn = isKeyOf(linkAnchors, pageType);
+  const navLinkParams = {
+    navLinkSelector,
+    pageType,
+    activeClass: linkClassNameActive,
+    anchorLink: isIn ? linkAnchors[pageType] : "#",
+  }
+  const navLinkParamsHexagon = {
+    navLinkSelector: navHexagonSelector,
+    pageType,
+    activeClass: linkClassNameActive,
+    anchorLink: isIn ? linkAnchors[pageType] : "#",
+  }
 
   try {
-    const imageItems = await createMasonry(gallerySelector, { gap: 20 });
-    const timelines = fadeInGallery(imageItems);
-    Object.assign(totalTl, timelines);
+    // ------------------------------------------
+    // Navigation & Language (non-GSAP, immediate)
+    // ------------------------------------------
+    activateNavLink(navLinkParams);
+    activateNavLink(navLinkParamsHexagon);
+
+    //initializing GSAP animations...
+    await initAnimations();
+
+
+    //initializing language switcher...
+    initLangSwitcher(langSwitchData);
+
 
     await initThumbs(gallerySelector, galleryThumbsFolderName);
   } catch (error) {
-    console.error("Gallery initialization failed:", error);
+    console.error("[DOMContentLoaded]: initialization failed:", error);
   }
 
   // ------------------------------------------

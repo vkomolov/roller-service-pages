@@ -7,45 +7,31 @@
  * be killed individually or in bulk. No local WeakMap is used anymore.
  */
 
-import { setAttributes } from "../helpers/funcsDOM.js";
-import { cacheAnimation } from "./gsap-loader.js";
+import { createMasonry, setAttributes, requireElements, logInitError } from "../helpers/funcsDOM.js";
+import { cacheAnimation, getGSAP } from "./gsap-loader.js";
+import { isKeyOf } from "../helpers/funcs.js";
+import { gallerySelector, SELECTORS } from "./initialSelectors.js";
 
 // ============================================
-// SELECTORS
-// ============================================
+//****** TYPE DEFINITIONS *******//
 
-/** @type {Object.<string, string>} Animation selectors map */
-const SELECTORS = {
-  scrolledNav: "#scrolledNav",
-  burgerBase: ".burger_nav",
-  burgerFixed: ".burger_nav:not(.hidden)",
-  burgerHidden: ".burger_nav.hidden",
-  navMenuHidden: ".header__nav.abs",
-  benefitsSection: "#benefitsSection",
-  headingAccentHero: ".section__heading-block--hero .accent",
-  headingHeroRest: ".section__heading-block--hero .rest-of-heading",
-  textBlockHero: ".section__text-block--hero",
-  biddingBlockHero: ".section__bidding-block",
-  iconWrapperHero: ".section__img-wrapper--hero",
-  galleryWork: "#gallery-work",
-  automationParallax: ".section--roller-automation",
-  automationParallaxBg: "[data-anime=automation]",
-  servicesParallax: ".section--services",
-  servicesParallaxBg: "[data-anime=services]",
-  fadeInLeft: "[data-anime=fade-in-left]",
-  fadeInRight: "[data-anime=fade-in-right]",
-  fadeInUp: "[data-anime=fade-in-up]",
-  scaleIn: "[data-anime=scale-in]",
-};
+/**
+ *
+ * @typedef {{
+ *   automation: () => {},
+ *   common: () => {}
+ * }} TPageAnimations
+ *
+ */
 
-// ============================================
-// DOM REFERENCES (evaluated once at module load)
-// ============================================
-
-const navMenuFixed = document.querySelector(SELECTORS.navMenuHidden);
-const burgerHidden = document.querySelector(SELECTORS.burgerHidden);
-const burgerFixed = document.querySelector(SELECTORS.burgerFixed);
-const burgerAll = Array.from(document.querySelectorAll(SELECTORS.burgerBase));
+/**
+ * @typedef {{
+ * burgerHiddenSingle: Element,
+ * burgerFixedSingle: Element,
+ * navMenuFixedSingle: Element,
+ * burgerNavAll: Element[],
+ * }} TBurgerElements
+ */
 
 // ============================================
 // UTILITY FUNCTIONS
@@ -58,7 +44,7 @@ const burgerAll = Array.from(document.querySelectorAll(SELECTORS.burgerBase));
  * @returns {boolean} True if at least one child tween has duration > 0
  */
 function hasRealAnimations(timeline) {
-  return timeline.getChildren().some(child => child.duration() > 0);
+	return timeline.getChildren().some(child => child.duration() > 0);
 }
 
 // ============================================
@@ -78,26 +64,26 @@ function hasRealAnimations(timeline) {
  * @returns {gsap.core.Timeline|false} Created timeline or false if invalid
  */
 function getScrollTimelineTwoTweens(gsap, elem, triggerElem, gsapToParams = {}, gsapFromParams = {}, nextAnimePos = "<") {
-  if (!(elem instanceof HTMLElement) || !(triggerElem instanceof HTMLElement)) {
-    console.warn(`getScrollTimelineTwoTweens: invalid element (${elem}) or trigger (${triggerElem})`);
-    return false;
-  }
+	if (!(elem instanceof HTMLElement) || !(triggerElem instanceof HTMLElement)) {
+		console.warn(`getScrollTimelineTwoTweens: invalid element (${elem}) or trigger (${triggerElem})`);
+		return false;
+	}
 
-  const tl = gsap.timeline({
-    scrollTrigger: {
-      trigger: triggerElem,
-      start: "top 80%",
-      toggleActions: "play none none reverse",
-      preventOverlaps: true,
-    }
-  });
+	const tl = gsap.timeline({
+		scrollTrigger: {
+			trigger: triggerElem,
+			start: "top 80%",
+			toggleActions: "play none none reverse",
+			preventOverlaps: true,
+		}
+	});
 
-  tl.to(elem, { ...gsapToParams });
-  tl.from(elem, { ...gsapFromParams }, nextAnimePos);
+	tl.to(elem, { ...gsapToParams });
+	tl.from(elem, { ...gsapFromParams }, nextAnimePos);
 
-  // Register in gsap-loader cache; kills previous animation for this element automatically
-  cacheAnimation(tl, elem);
-  return tl;
+	// Register in gsap-loader cache; kills previous animation for this element automatically
+	cacheAnimation(tl, elem);
+	return tl;
 }
 
 /**
@@ -114,37 +100,37 @@ function getScrollTimelineTwoTweens(gsap, elem, triggerElem, gsapToParams = {}, 
  * @returns {Object.<string, gsap.core.Timeline>} Object with timeline references
  */
 function getAllScrollTwoTweens(gsap, elemsArr, triggerElem, propKey = "tlKey", gsapToParams = {}, gsapFromParams = {}, nextAnimePos = "<") {
-  const tlObj = {};
-  let trigger = null;
+	const tlObj = {};
+	let trigger = null;
 
-  if (!Array.isArray(elemsArr)) {
-    console.error(`getAllScrollTwoTweens: elemsArr is not an Array`);
-    return tlObj;
-  }
+	if (!Array.isArray(elemsArr)) {
+		console.error(`getAllScrollTwoTweens: elemsArr is not an Array`);
+		return tlObj;
+	}
 
-  if (triggerElem !== null) {
-    if (!(triggerElem instanceof HTMLElement) || !document.body.contains(triggerElem)) {
-      console.error(`getAllScrollTwoTweens: invalid trigger element`);
-      return tlObj;
-    }
-    trigger = triggerElem;
-  }
+	if (triggerElem !== null) {
+		if (!(triggerElem instanceof HTMLElement) || !document.body.contains(triggerElem)) {
+			console.error(`getAllScrollTwoTweens: invalid trigger element`);
+			return tlObj;
+		}
+		trigger = triggerElem;
+	}
 
-  elemsArr.forEach((elem, index) => {
-    if (!(elem instanceof HTMLElement) || !document.body.contains(elem)) {
-      console.warn(`getAllScrollTwoTweens: element at index ${index} is invalid`);
-      return;
-    }
+	elemsArr.forEach((elem, index) => {
+		if (!(elem instanceof HTMLElement) || !document.body.contains(elem)) {
+			console.warn(`getAllScrollTwoTweens: element at index ${index} is invalid`);
+			return;
+		}
 
-    const tlKey = `${propKey}_${index}`;
-    const tl = getScrollTimelineTwoTweens(gsap, elem, trigger || elem, gsapToParams, gsapFromParams, nextAnimePos);
+		const tlKey = `${propKey}_${index}`;
+		const tl = getScrollTimelineTwoTweens(gsap, elem, trigger || elem, gsapToParams, gsapFromParams, nextAnimePos);
 
-    if (tl && hasRealAnimations(tl)) {
-      tlObj[tlKey] = tl;
-    }
-  });
+		if (tl && hasRealAnimations(tl)) {
+			tlObj[tlKey] = tl;
+		}
+	});
 
-  return tlObj;
+	return tlObj;
 }
 
 // ============================================
@@ -159,20 +145,20 @@ function getAllScrollTwoTweens(gsap, elemsArr, triggerElem, propKey = "tlKey", g
  * @returns {gsap.core.Timeline} Hero animation timeline
  */
 function buildHeroAnimation(gsap) {
-  const tlHero = gsap.timeline();
+	const tlHero = gsap.timeline();
 
-  tlHero.to(SELECTORS.headingAccentHero, { opacity: 1, duration: 2, delay: 0.3 });
-  tlHero.from(SELECTORS.headingAccentHero, { x: 80, duration: 0.8, ease: "circ.out" }, "<");
-  tlHero.to(SELECTORS.headingHeroRest, { opacity: 1, duration: 2 }, "<");
-  tlHero.from(SELECTORS.headingHeroRest, { x: -80, duration: 0.8, ease: "circ.out" }, "<");
-  tlHero.to(SELECTORS.textBlockHero, { opacity: 1, duration: 2 }, "-=1.5");
-  tlHero.from(SELECTORS.textBlockHero, { y: 80, duration: 0.8, ease: "circ.out" }, "<");
-  tlHero.to(SELECTORS.biddingBlockHero, { opacity: 1, duration: 2 }, "<+0.3");
-  tlHero.from(SELECTORS.biddingBlockHero, { y: 40, duration: 0.8, ease: "circ.out" }, "<");
-  tlHero.to(SELECTORS.iconWrapperHero, { scale: 1, duration: 1.5, ease: "elastic.out" }, "<+0.2");
+	tlHero.to(SELECTORS.headingAccentHero, { opacity: 1, duration: 2, delay: 0.3 });
+	tlHero.from(SELECTORS.headingAccentHero, { x: 80, duration: 0.8, ease: "circ.out" }, "<");
+	tlHero.to(SELECTORS.headingHeroRest, { opacity: 1, duration: 2 }, "<");
+	tlHero.from(SELECTORS.headingHeroRest, { x: -80, duration: 0.8, ease: "circ.out" }, "<");
+	tlHero.to(SELECTORS.textBlockHero, { opacity: 1, duration: 2 }, "-=1.5");
+	tlHero.from(SELECTORS.textBlockHero, { y: 80, duration: 0.8, ease: "circ.out" }, "<");
+	tlHero.to(SELECTORS.biddingBlockHero, { opacity: 1, duration: 2 }, "<+0.3");
+	tlHero.from(SELECTORS.biddingBlockHero, { y: 40, duration: 0.8, ease: "circ.out" }, "<");
+	tlHero.to(SELECTORS.iconWrapperHero, { scale: 1, duration: 1.5, ease: "elastic.out" }, "<+0.2");
 
-  cacheAnimation(tlHero);
-  return tlHero;
+	cacheAnimation(tlHero);
+	return tlHero;
 }
 
 /**
@@ -182,23 +168,23 @@ function buildHeroAnimation(gsap) {
  * @param {typeof import('gsap/ScrollTrigger').ScrollTrigger} ScrollTrigger - ScrollTrigger plugin
  */
 function buildScrolledNav(gsap, ScrollTrigger) {
-  const target = document.querySelector(SELECTORS.scrolledNav);
-  if (!target) return;
+	const target = document.querySelector(SELECTORS.scrolledNav);
+	if (!target) return;
 
-  const tween = gsap.to(target, {
-    top: -10,
-    duration: 0.7,
-    ease: "back.out(1.5)",
-    delay: 0.5,
-    scrollTrigger: {
-      trigger: SELECTORS.benefitsSection,
-      start: "top 5%",
-      toggleActions: "play none none reverse",
-      preventOverlaps: true,
-    }
-  });
+	const tween = gsap.to(target, {
+		top: -10,
+		duration: 0.7,
+		ease: "back.out(1.5)",
+		delay: 0.5,
+		scrollTrigger: {
+			trigger: SELECTORS.benefitsSection,
+			start: "top 5%",
+			toggleActions: "play none none reverse",
+			preventOverlaps: true,
+		}
+	});
 
-  cacheAnimation(tween, target);
+	cacheAnimation(tween, target);
 }
 
 /**
@@ -212,28 +198,29 @@ function buildScrolledNav(gsap, ScrollTrigger) {
  * @returns {gsap.core.Tween|undefined} The parallax tween or undefined if elements missing
  */
 function buildParallax(gsap, ScrollTrigger, targetSelector, triggerSelector) {
-  const target = document.querySelector(targetSelector);
-  const trigger = document.querySelector(triggerSelector);
+	const target = document.querySelector(targetSelector);
+	const trigger = document.querySelector(triggerSelector);
 
-  if (!target || !trigger) return;
+	if (!target || !trigger) return;
 
-  const tween = gsap.fromTo(target,
-    { yPercent: 10 },
-    {
-      yPercent: -10,
-      ease: "none",
-      scrollTrigger: {
-        trigger,
-        start: "top bottom",
-        end: "bottom top",
-        scrub: 1.5,
-        invalidateOnRefresh: true,
-      }
-    }
-  );
+	const tween = gsap.fromTo(target,
+		{ yPercent: 10 },
+		{
+			yPercent: -10,
+			ease: "none",
+			scrollTrigger: {
+				trigger,
+				start: "top bottom",
+				end: "bottom top",
+				scrub: 1.5,
+				invalidateOnRefresh: true,
+			}
+		}
+	);
 
-  cacheAnimation(tween, target);
-  return tween;
+	//caching Tween to js/partials/gsap-loader.js
+	cacheAnimation(tween, target);
+	return tween;
 }
 
 /**
@@ -247,14 +234,14 @@ function buildParallax(gsap, ScrollTrigger, targetSelector, triggerSelector) {
  * @returns {Object.<string, gsap.core.Timeline>} Timeline references object
  */
 function buildFadeAnimations(gsap, selector, propKey, fromParams) {
-  return getAllScrollTwoTweens(
-    gsap,
-    gsap.utils.toArray(document.querySelectorAll(selector)),
-    null,
-    propKey,
-    { opacity: 1, duration: 0.7, delay: 0.2 },
-    fromParams
-  );
+	return getAllScrollTwoTweens(
+		gsap,
+		gsap.utils.toArray(document.querySelectorAll(selector)),
+		null,
+		propKey,
+		{ opacity: 1, duration: 0.7, delay: 0.2 },
+		fromParams
+	);
 }
 
 /**
@@ -265,14 +252,14 @@ function buildFadeAnimations(gsap, selector, propKey, fromParams) {
  * @returns {Object.<string, gsap.core.Timeline>} Timeline references
  */
 function buildGalleryFade(gsap, elemsArr) {
-  return getAllScrollTwoTweens(
-    gsap,
-    elemsArr,
-    document.querySelector(SELECTORS.galleryWork),
-    "fadeInGallery",
-    { opacity: 1, duration: 0.8, delay: 0.2 },
-    { scale: 0.7, duration: 1, ease: "back.out" }
-  );
+	return getAllScrollTwoTweens(
+		gsap,
+		elemsArr,
+		document.querySelector(SELECTORS.galleryWork),
+		"fadeInGallery",
+		{ opacity: 1, duration: 0.8, delay: 0.2 },
+		{ scale: 0.7, duration: 1, ease: "back.out" }
+	);
 }
 
 // ============================================
@@ -280,144 +267,318 @@ function buildGalleryFade(gsap, elemsArr) {
 // ============================================
 
 /**
+ * separate function for {@link createBurgerHandlers}
+ * @return {TBurgerElements}
+ */
+const getSingleBurgerElements = () => {
+	const {
+		navMenuFixed,
+		burgerHidden,
+		burgerFixed,
+		burgerNavAll
+	} = requireElements([
+		{
+			key: "navMenuFixed",
+			selector: SELECTORS.navMenuFixed,
+			multiple: false,
+		},
+		{
+			key: "burgerHidden",
+			selector: SELECTORS.burgerHidden,
+			multiple: false,
+		},
+		{
+			key: "burgerFixed",
+			selector: SELECTORS.burgerFixed,
+			multiple: false,
+		},
+		{
+			key: "burgerNavAll",
+			selector: SELECTORS.burgerNavAll,
+			multiple: true,
+		}
+	]);
+
+	//for jsDoc type checking Element... not Element[]
+	const navMenuFixedSingle = Array.isArray(navMenuFixed) ? navMenuFixed[0] : navMenuFixed;
+	const burgerFixedSingle = Array.isArray(burgerFixed) ? burgerFixed[0] : burgerFixed;
+	const burgerHiddenSingle = Array.isArray(burgerHidden) ? burgerHidden[0] : burgerHidden;
+	const burgerNavAllArr = Array.isArray(burgerNavAll) ? burgerNavAll : [burgerNavAll];
+
+	return {
+		navMenuFixedSingle,
+		burgerFixedSingle,
+		burgerHiddenSingle,
+		burgerNavAll: burgerNavAllArr,
+	}
+}
+
+/*function openBurger() {
+	document.addEventListener("click", closeBurgerHandler);
+}
+
+function closeBurger() {
+	document.removeEventListener("click", closeBurgerHandler);
+}*/
+
+
+/**
+ * separate function for {@link createBurgerHandlers}
+ * @param {Element} burger
+ * @param {TBurgerElements} burgerElements
+ * @param {gsap.core.Tween} navMenuAnime
+ *
+ * @returns {void}
+ */
+function initBurgerListener(burger, burgerElements, navMenuAnime)  {
+	const {
+		burgerHiddenSingle, burgerFixedSingle, navMenuFixedSingle
+	} = burgerElements;
+	burger.addEventListener("click", (e) => {
+		if (!(e.target instanceof Element)) {
+			return;
+		}
+
+		const burgerMenu = e.target.closest(SELECTORS.burgerNavAll);
+		if (!burgerMenu) return;
+
+		e.preventDefault();
+		const isExpanded = burger.getAttribute("aria-expanded") === "true";
+
+		setAttributes([burgerHiddenSingle, burgerFixedSingle, navMenuFixedSingle], {
+			"aria-expanded": !isExpanded,
+		});
+
+		if (isExpanded) {
+			burgerHiddenSingle.classList.remove("opened");
+			burgerFixedSingle.classList.remove("opened");
+
+			document.documentElement.style.scrollbarGutter = "initial";
+			document.body.style.scrollbarGutter = "initial";
+			document.body.style.overflow = "auto";
+
+			navMenuAnime.reverse();
+		}
+		else {
+			burgerHiddenSingle.classList.add("opened");
+			burgerFixedSingle.classList.add("opened");
+			document.documentElement.style.scrollbarGutter = "stable";
+			document.body.style.scrollbarGutter = "stable";
+			document.body.style.overflow = "hidden";
+
+			navMenuAnime.play();
+		}
+	});
+}
+
+/**
+ * Handles burger menu click in {@link createBurgerHandlers}
+ *
+ * Closes the burger navigation when the user clicks outside
+ * of the burger navigation area.
+ *
+ * @param {MouseEvent} e - Mouse click event.
+ * @param {TBurgerElements} burgerElements
+ * @param {GSAPTween} navMenuAnime
+ *
+ * @returns {void}
+ */
+function closeBurgerClickHandler(e, burgerElements, navMenuAnime) {
+	// Ensure the event target is a DOM element.
+	if (!(e.target instanceof Element)) {
+		return;
+	}
+
+	// Ignore clicks inside the burger navigation.
+	if (e.target.closest(SELECTORS.burgerNavAll)) {
+		return;
+	}
+
+	const {
+		burgerHiddenSingle, burgerFixedSingle, navMenuFixedSingle
+	} = burgerElements;
+
+	const isNavActive =
+		navMenuFixedSingle.getAttribute("aria-expanded") === "true";
+
+	if (!isNavActive) {
+		return;
+	}
+
+	// Changing aria-expanded for both burger menu buttons and the fixed navigation menu
+
+	setAttributes(
+		[burgerHiddenSingle, burgerFixedSingle, navMenuFixedSingle],
+		{
+			"aria-expanded": false,
+		}
+	);
+
+	burgerHiddenSingle.classList.remove("opened");
+	burgerFixedSingle.classList.remove("opened");
+
+	/// animation of hiding the fixed navigation menu with top: -100%;
+	navMenuAnime.reverse();
+	//navMenuAnime.reversed(!navMenuAnime.reversed()); //toggle of animation
+	document.body.style.overflow = "auto";
+}
+
+/**
  * Creates burger menu animation and event handlers.
  * The open/close tween is cached against the nav menu element.
  *
  * @param {typeof import('gsap').gsap} gsap - GSAP instance
- * @returns {{navMenuAnime: gsap.core.Tween, burgerClickHandler: Function, burgerInitListener: Function}}
+ * @returns {{burgerNavAll: Element[], closeBurgerHandler: Function, attachBurgerListener: Function}}
  */
 function createBurgerHandlers(gsap) {
-  const navMenuAnime = gsap.to(navMenuFixed, {
-    top: -20,
-    duration: 0.8,
-    ease: "back.out(0.8)",
-    paused: true,
-  });
+//// ============================================
+// DOM REFERENCES (evaluated once at module load)
+// ============================================
 
-  cacheAnimation(navMenuAnime, navMenuFixed);
+	const singleBurgerElements = getSingleBurgerElements();
 
-  const burgerClickHandler = (e) => {
-    if (!(e.target.closest(SELECTORS.burgerBase))) {
-      const isNavActive = navMenuFixed.getAttribute("aria-expanded") === "true";
-      if (isNavActive) {
-        setAttributes([burgerHidden, burgerFixed, navMenuFixed], {
-          "aria-expanded": !isNavActive,
-        });
-        burgerHidden.classList.remove("opened");
-        burgerFixed.classList.remove("opened");
-        navMenuAnime.reverse();
-        document.body.style.overflow = "auto";
-      }
-    }
-  };
+	const {
+	navMenuFixedSingle,
+	burgerNavAll
+} = singleBurgerElements;
 
-  const burgerInitListener = (burger) => {
-    burger.addEventListener("click", (e) => {
-      const burgerMenu = e.target.closest(SELECTORS.burgerBase);
-      if (!burgerMenu) return;
+//core.Tween
+	const navMenuAnime = gsap.to(navMenuFixedSingle, {
+		top: -20,
+		duration: 0.8,
+		ease: "back.out(0.8)",
+		paused: true,
+	});
 
-      e.preventDefault();
-      const isExpanded = burger.getAttribute("aria-expanded") === "true";
+	//caching core.Tween to
+	cacheAnimation(navMenuAnime, navMenuFixedSingle);
 
-      setAttributes([burgerHidden, burgerFixed, navMenuFixed], {
-        "aria-expanded": !isExpanded,
-      });
-
-      if (isExpanded) {
-        burgerHidden.classList.remove("opened");
-        burgerFixed.classList.remove("opened");
-        document.documentElement.style.scrollbarGutter = "initial";
-        document.body.style.scrollbarGutter = "initial";
-        document.body.style.overflow = "auto";
-        navMenuAnime.reverse();
-      } else {
-        burgerHidden.classList.add("opened");
-        burgerFixed.classList.add("opened");
-        document.documentElement.style.scrollbarGutter = "stable";
-        document.body.style.scrollbarGutter = "stable";
-        document.body.style.overflow = "hidden";
-        navMenuAnime.play();
-      }
-    });
-  };
-
-  return { navMenuAnime, burgerClickHandler, burgerInitListener };
+	/**
+	 * @param {MouseEvent} e - Mouse click event.
+	 */
+	const closeBurgerHandler = (e) => {
+		closeBurgerClickHandler(e, singleBurgerElements, navMenuAnime);
+	}
+	/**
+	 *
+	 * @param {Element} burger
+	 */
+	const attachBurgerListener = (burger) => {
+		initBurgerListener(
+			burger,
+			singleBurgerElements,
+			navMenuAnime
+		);
+	}
+	return { burgerNavAll, closeBurgerHandler, attachBurgerListener };
 }
 
 // ============================================
 // MAIN FACTORY
 // ============================================
 
-/**
- * Creates all page animations. Must be called AFTER GSAP is dynamically loaded.
- * All animations are registered in gsap-loader.js for centralized cleanup.
- *
- * @param {typeof import('gsap').gsap} gsap - GSAP core instance
- * @param {typeof import('gsap/ScrollTrigger').ScrollTrigger} ScrollTrigger - ScrollTrigger plugin
- * @returns {{animatePage: Function, fadeInGallery: Function}} Animation API
- *
- * @example
- * const { gsap, ScrollTrigger } = await getGsap();
- * const { animatePage, fadeInGallery } = createAnimations(gsap, ScrollTrigger);
- * const totalTl = animatePage();
- */
-export function createAnimations(gsap, ScrollTrigger) {
-  const { burgerClickHandler, burgerInitListener } = createBurgerHandlers(gsap);
 
-  const pageAnimations = {
-    automation: () => {
-      const tlData = {};
-      const rollerParallax = buildParallax(gsap, ScrollTrigger, SELECTORS.automationParallaxBg, SELECTORS.automationParallax);
-      if (rollerParallax) tlData.rollerParallax = rollerParallax;
-      return tlData;
-    },
+export async function initAnimations() {
 
-    common: () => {
-      const tlData = {};
+	const gsapAll = await getGSAP();
+	if (!gsapAll) {
+		logInitError({
+			component: "initAnimations",
+			message: `gsap is not loaded... omitting...`,
+			details: gsapAll
+		});
+		console.warn(`[initAnimations]: gsap is not loaded... omitting...`)
+		return;
+	}
 
-      const tlHero = buildHeroAnimation(gsap);
-      if (hasRealAnimations(tlHero)) tlData.tlHero = tlHero;
+	const {
+		gsap,
+		ScrollTrigger
+	} = gsapAll;
 
-      const servicesParallax = buildParallax(gsap, ScrollTrigger, SELECTORS.servicesParallaxBg, SELECTORS.servicesParallax);
-      if (servicesParallax) tlData.servicesParallax = servicesParallax;
+	const { burgerNavAll, closeBurgerHandler, attachBurgerListener } = createBurgerHandlers(gsap);
 
-      Object.assign(tlData, buildFadeAnimations(gsap, SELECTORS.fadeInLeft, "fadeInLeft", { x: -60, y: 40, duration: 1, ease: "circ.out" }));
-      Object.assign(tlData, buildFadeAnimations(gsap, SELECTORS.fadeInRight, "fadeInRight", { x: 60, y: 40, duration: 1, ease: "circ.out" }));
-      Object.assign(tlData, buildFadeAnimations(gsap, SELECTORS.scaleIn, "scaleIn", { scale: 0.7, duration: 1.2, ease: "back.out(1)" }));
-      Object.assign(tlData, buildFadeAnimations(gsap, SELECTORS.fadeInUp, "fadeInUp", { y: 40, duration: 1, ease: "circ.out" }));
+	const pageAnimations = {
+		automation: () => {
+			buildParallax(
+				gsap,
+				ScrollTrigger,
+				SELECTORS.automationParallaxBg,
+				SELECTORS.automationParallax
+			);
+		},
 
-      buildScrolledNav(gsap, ScrollTrigger);
+		common: () => {
 
-      document.addEventListener("click", burgerClickHandler);
-      burgerAll.forEach(burgerInitListener);
+			buildHeroAnimation(gsap);
+			buildParallax(gsap, ScrollTrigger, SELECTORS.servicesParallaxBg, SELECTORS.servicesParallax);
+			buildFadeAnimations(gsap, SELECTORS.fadeInLeft, "fadeInLeft", {
+				x: -60,
+				y: 40,
+				duration: 1,
+				ease: "circ.out"
+			});
+			buildFadeAnimations(gsap, SELECTORS.fadeInRight, "fadeInRight", {
+				x: 60,
+				y: 40,
+				duration: 1,
+				ease: "circ.out"
+			});
+			buildFadeAnimations(gsap, SELECTORS.scaleIn, "scaleIn", {
+				scale: 0.7,
+				duration: 1.2,
+				ease: "back.out(1)"
+			});
+			buildFadeAnimations(gsap, SELECTORS.fadeInUp, "fadeInUp", {
+				y: 40,
+				duration: 1,
+				ease: "circ.out"
+			});
 
-      return tlData;
-    }
-  };
+			buildScrolledNav(gsap, ScrollTrigger);
 
-  function fadeInGallery(elemsArr = []) {
-    return buildGalleryFade(gsap, elemsArr);
-  }
+			//closing Burger menu when MouseClick fires outside of the Burger menu
+			document.addEventListener("click", closeBurgerHandler);
+			burgerNavAll.forEach(burger => attachBurgerListener(burger));
+		}
+	};
 
-  /**
-   * Runs all page animations.
-   * DOM readiness is guaranteed by index.js (DOMContentLoaded + async GSAP load),
-   * so no redundant readyState checks are needed here.
-   *
-   * @returns {Object.<string, gsap.core.Timeline|gsap.core.Tween>} Map of all active timelines/tweens
-   */
-  function animatePage() {
-    return onPageLoaded(pageAnimations);
-  }
 
-  function onPageLoaded(animationData) {
-    const pageName = document.body.dataset.type;
-    const totalTl = {};
-    if (animationData.common) Object.assign(totalTl, animationData.common());
-    if (pageName in animationData) Object.assign(totalTl, animationData[pageName]());
-    requestAnimationFrame(() => ScrollTrigger.refresh());
-    return totalTl;
-  }
+	const imageItems = await createMasonry(gallerySelector, { gap: 20 });
+	fadeInGallery(imageItems);
 
-  return { animatePage, fadeInGallery };
+		//const timelines = fadeInGallery(imageItems);
+		//Object.assign(totalTl, timelines);
+
+
+
+
+	function fadeInGallery(elemsArr = []) {
+		return buildGalleryFade(gsap, elemsArr);
+	}
+
+	/**
+	 * Runs all page animations.
+	 * DOM readiness is guaranteed by index.js (DOMContentLoaded),
+	 * so no redundant readyState checks are needed here.
+	 *
+	 * @returns {Object.<string, gsap.core.Timeline|gsap.core.Tween>} Map of all active timelines/tweens
+	 */
+
+	/*  function animatePage() {
+			return onPageLoaded(pageAnimations);
+		}*/
+
+	/**
+	 *
+	 * @param animationData
+	 * @return {void}
+	 */
+	function onPageLoaded(animationData) {
+		const pageName = document.body.dataset.type || "";
+		const totalTl = {};
+		if (animationData.common) Object.assign(totalTl, animationData.common());
+		if (pageName in animationData) Object.assign(totalTl, animationData[pageName]());
+		requestAnimationFrame(() => ScrollTrigger.refresh());
+	}
 }

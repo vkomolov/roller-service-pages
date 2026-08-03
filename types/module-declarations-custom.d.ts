@@ -130,3 +130,9 @@ declare module 'babel-loader' {
 	const babelLoader: any;
 	export default babelLoader;
 }
+
+// imagesloaded
+declare module 'imagesloaded' {
+	const imagesLoaded: any;
+	export default imagesLoaded;
+}

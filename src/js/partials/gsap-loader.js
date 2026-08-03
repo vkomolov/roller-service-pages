@@ -7,18 +7,24 @@
  * can register, retrieve, and kill tweens/timelines in one centralized place.
  */
 
+const gsapAllPath = "./gsap-all.js"; //gsap-all.js must be on the same with gsap-loader.js
+
+/** @type {{
+ * gsap: typeof import('gsap').gsap,
+ * ScrollTrigger: typeof import('gsap/ScrollTrigger').ScrollTrigger
+ * }
+ * |null
+ * } */
+let gsapModules = null;
+
 // ============================================
 // CACHE & STATE
 // ============================================
-
-/** @type {{ gsap?: typeof import('gsap').gsap, ScrollTrigger?: typeof import('gsap/ScrollTrigger').ScrollTrigger }|null} */
-let gsapCache = null;
-
-/** @type {Promise<{ gsap: typeof import('gsap').gsap, ScrollTrigger: typeof import('gsap/ScrollTrigger').ScrollTrigger }>|null} */
-let gsapLoadPromise = null;
-
-/** @type {Map<string, gsap.core.Tween|gsap.core.Timeline>} */
-const activeAnimations = new Map();
+/**
+ * could be new Map on {@link resetGsapAnimationCache}
+ */
+/** @type {Map<string|Element, gsap.core.Tween|gsap.core.Timeline>} */
+let gsapAnimationCache = new Map();  //
 
 /** @type {number} */
 let animationId = 0;
@@ -34,22 +40,23 @@ let animationId = 0;
  * @returns {Promise<{
  *   gsap: typeof import('gsap').gsap,
  *   ScrollTrigger: typeof import('gsap/ScrollTrigger').ScrollTrigger
- * }>}
+ * }|null>}
  */
-export async function getGsap() {
-	if (gsapCache) return gsapCache;
-	if (gsapLoadPromise) return gsapLoadPromise;
+export async function getGSAP() {
+	if (gsapModules) return gsapModules;
 
-	gsapLoadPromise = import(
-		'./gsap-all.js'
-		).then(({ gsap, ScrollTrigger }) => {
-		gsap.registerPlugin(ScrollTrigger);
-		gsapCache = { gsap, ScrollTrigger };
-		return gsapCache;
-	});
+	const { gsap, ScrollTrigger } = await import(gsapAllPath);
+	if (!gsap || !ScrollTrigger) {
+		console.error("at getGSAP: no gsap or ScrollTrigger imported...");
+		return null;
+	}
 
-	return gsapLoadPromise;
-}
+	gsap.registerPlugin(ScrollTrigger);
+	gsapModules = { gsap, ScrollTrigger };
+
+		return gsapModules;
+	}
+
 
 // ============================================
 // ANIMATION CACHE API
@@ -64,62 +71,50 @@ export function generateAnimId() {
 }
 
 /**
- * Caches the animation. Returns the cache key.
- * When an element is provided and has existing animation, it is killed.
+ * Caches the animation. Returns the cache key: string|Element (the target Element, to animated)
+ * When an Element is provided and has existing animation, it will be re-written with new animation of the same key
  *
  * @param {gsap.core.Tween|gsap.core.Timeline} animation
- * @param {HTMLElement} [element] - Optional element for element-based kill
- * @returns {string} Cache key
+ * @param {Element|string} [element] - Optional element for element-based kill (can be Element or unique key)
+ * @returns {string|Element} Cache key
  */
 export function cacheAnimation(animation, element) {
 	if (element) {
-		for (const [key, anim] of activeAnimations.entries()) {
-			if (anim.targets && anim.targets().includes(element)) {
-				anim.kill();
-				activeAnimations.delete(key);
-			}
-		}
+		//checking animation in gsapAnimationCache <Map> and kill if it exists by key: element
+		killAnimation(element);
+
+		gsapAnimationCache.set(element, animation);
+		return element;
 	}
 
 	const key = generateAnimId();
-	activeAnimations.set(key, animation);
+	gsapAnimationCache.set(key, animation);
 	return key;
 }
 
 /**
- * Kills animation by cache key.
- * @param {string} key
+ * Kills animation by cache key (can be the Element, which is to be animated...
+ * It is used with {@link gsapAnimationCache}
+ * @param {string|Element} key
  */
-export function killAnimationByKey(key) {
-	const animation = activeAnimations.get(key);
+export function killAnimation(key) {
+	const animation = gsapAnimationCache.get(key);
 	if (animation) {
 		animation.kill();
-		activeAnimations.delete(key);
+		gsapAnimationCache.delete(key);
 	}
 }
 
-/**
- * Kills animation by element (finds in cache by target).
- * @param {HTMLElement} element
- */
-export function killAnimation(element) {
-	for (const [key, anim] of activeAnimations.entries()) {
-		if (anim.targets && anim.targets().includes(element)) {
-			anim.kill();
-			activeAnimations.delete(key);
-		}
-	}
-}
 
 /**
  * Kills ALL cached animations and ScrollTriggers.
  * Safe cleanup that preserves GSAP cache.
  */
 export function killAllAnimations() {
-	const { ScrollTrigger } = gsapCache || {};
+	const { ScrollTrigger } = gsapModules || {};
 
-	activeAnimations.forEach(anim => anim.kill());
-	activeAnimations.clear();
+	gsapAnimationCache.forEach(anim => anim.kill());
+	gsapAnimationCache.clear();
 
 	if (ScrollTrigger) {
 		ScrollTrigger.getAll().forEach(st => st.kill());
@@ -129,13 +124,12 @@ export function killAllAnimations() {
 }
 
 /**
- * Kills all animations AND clears GSAP cache.
- * Use for full page reload / SPA navigation.
+ * Kills all registered animations and recreates the animation cache.
+ * Does not unload GSAP modules.
  */
-export function resetGsapCache() {
+export function resetGsapAnimationCache() {
 	killAllAnimations();
-	gsapCache = null;
-	gsapLoadPromise = null;
+	gsapAnimationCache = new Map();
 }
 
 /**
@@ -143,13 +137,5 @@ export function resetGsapCache() {
  * @returns {boolean}
  */
 export function isGsapLoaded() {
-	return gsapCache !== null;
-}
-
-/**
- * Returns cached GSAP instance without reloading.
- * @returns {{ gsap: typeof import('gsap').gsap, ScrollTrigger: typeof import('gsap/ScrollTrigger').ScrollTrigger }|null}
- */
-export function getCachedGsap() {
-	return gsapCache;
+	return gsapModules !== null;
 }

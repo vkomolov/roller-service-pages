@@ -1,5 +1,12 @@
 'use strict';
 
+/**** TYPE DEFINITIONS ****/
+/**
+ * for typing of argument params of {@link getInvalidKeys}
+ * @typedef {{
+ *   invalidValues?: unknown[]
+ * }} TGetInvalidKeysParams
+ */
 
 export function randomNum(max, min) {
   return Math.floor(Math.random() * max) + min;
@@ -117,5 +124,54 @@ export function setLocalStorage( name="localData", data ) {
  */
 export function isKeyOf(obj, key) {
   return key in obj;
+}
+
+/**
+ * Returns the names of missing or invalid object properties.
+ *
+ * A property is considered missing if:
+ * - it does not exist as an own property of the object;
+ * - or its value matches one of the specified invalid values.
+ *
+ * String values are trimmed before comparison, so a value containing
+ * only whitespace is treated as an empty string (`''`).
+ *
+ * @param {Record<string, unknown>} targetObj
+ * @param {string[]} keys
+ * @param {TGetInvalidKeysParams} [params]
+ * @returns {string[]}
+ *
+ * @example
+ * getInvalidKeys(
+ *   targetObj,
+ *   ['selector', 'pageType'],
+ *   {invalidValues: [undefined, null, '']}
+ * );
+ *
+ * @example
+ * getInvalidKeys(
+ *   targetObj,
+ *   ['count', 'enabled'],
+ *   {invalidValues: [undefined, null, '', 0]}
+ * );
+ *
+ */
+export function getInvalidKeys(targetObj, keys, params) {
+  const invalidValues = params?.invalidValues ?? [];
+  const invalidSet = new Set(invalidValues);
+
+  return keys.filter(key => {
+    if (!Object.hasOwn(targetObj, key)) {
+      return true;
+    }
+
+    const value = targetObj[key];
+
+    return invalidSet.has(
+      typeof value === "string"
+        ? value.trim()
+        : value
+    );
+  });
 }
 

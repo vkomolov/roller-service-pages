@@ -103,7 +103,7 @@ import { metaDefaultRel } from './paths.js';
  * @typedef {InitialData & {
  *   lang: string,
  *   pageName: string,
- *   [key: string]: any  // ← allowing other keys...
+ *   [key: string]: unknown  // ← allowing other keys...
  * }} Context
  */
 
