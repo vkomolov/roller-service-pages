@@ -133,31 +133,22 @@ export const webpackConfigJs = {
 		optimization: {
 			splitChunks: {
 				cacheGroups: {
-					//! REMOVE or comment out the gsap group —
-					// dynamic import with webpackChunkName will already create a separate chunk.
-					// splitChunks with chunks: 'all' + enforce will pull GSAP out of the async chunk
-					// back into the entry, breaking atomic loading.
-					//
-					// gsap: { ... } ← delete
-					gsap: {
-						test: /[\\/]node_modules[\\/]gsap[\\/]/,
-						name: 'gsap',
-						chunks: 'all',
-						priority: 20,
-						enforce: true,
-						minSize: 0,        // ← force chunking, ignoring size
-						minChunks: 1,      // ← one case of usage - to chunk
-					},
+					// Disable webpack's default vendor splitting.
+					// Otherwise GSAP can be moved out of the dedicated async chunk.
+					defaultVendors: false,
+
+					// Disable webpack's default common chunk splitting.
+					default: false,
+
+					// Put all non-GSAP dependencies into one vendor chunk.
 					vendor: {
 						test: /[\\/]node_modules[\\/](?!gsap[\\/])/,
-						name: 'vendor',
-						chunks: 'all',
+						name: "vendor",
+						chunks: "all",
 						priority: 10,
 						enforce: true,
-						minSize: 0,
-						minChunks: 1,
-					}
-				}
+					},
+				},
 			},
 		},
 		module: {
@@ -205,31 +196,22 @@ export const webpackConfigJs = {
 		optimization: {
 			splitChunks: {
 				cacheGroups: {
-					//! REMOVE or comment out the gsap group —
-					// dynamic import with webpackChunkName will already create a separate chunk.
-					// splitChunks with chunks: 'all' + enforce will pull GSAP out of the async chunk
-					// back into the entry, breaking atomic loading.
-					//
-					// gsap: { ... } ← delete
-					gsap: {
-						test: /[\\/]node_modules[\\/]gsap[\\/]/,
-						name: 'gsap',
-						chunks: 'all',
-						priority: 20,
-						enforce: true,
-						minSize: 0,        // ← force chunking, ignoring size
-						minChunks: 1,      // ← one case of usage - to chunk
-					},
+					// Disable webpack's default vendor splitting.
+					// Otherwise GSAP can be moved out of the dedicated async chunk.
+					defaultVendors: false,
+
+					// Disable webpack's default common chunk splitting.
+					default: false,
+
+					// Put all non-GSAP dependencies into one vendor chunk.
 					vendor: {
 						test: /[\\/]node_modules[\\/](?!gsap[\\/])/,
-						name: 'vendor',
-						chunks: 'all',
+						name: "vendor",
+						chunks: "all",
 						priority: 10,
 						enforce: true,
-						minSize: 0,
-						minChunks: 1,
-					}
-				}
+					},
+				},
 			},
 		},
 		module: {

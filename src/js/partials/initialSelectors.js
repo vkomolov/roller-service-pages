@@ -1,5 +1,48 @@
 "use strict";
 
+/**
+ * @file initialSelectors.js
+ * @description Initial Data with selectors
+ */
+
+//*** TYPE DEFINITIONS ***//
+
+/**
+ * TBurgerElements DOM elements required by the navigation menu.
+ *
+ * @typedef {Object} TBurgerElements
+ * @property {Element} navMenuFixed
+ * @property {Element} burgerHidden
+ * @property {Element} burgerFixed
+ * @property {Element[]} burgerNavAll
+ */
+
+/**
+ * TDOMSelectorConfig: Configuration for a generic DOM element lookup.
+ *
+ * @typedef {Object} TDOMSelectorConfig
+ * @property {string} key - Property name used in the resulting object.
+ * @property {string} selector - CSS selector used to find the element(s).
+ * @property {boolean} [multiple=false] - Whether all matching elements should be returned.
+ */
+
+/**
+ * TNavMenuSelector: Configuration for navigation menu DOM element lookup.
+ *
+ * Specializes the generic selector configuration by restricting `key`
+ * to the known properties of `TBurgerElements`.
+ *
+ * @typedef {Omit<TDOMSelectorConfig, "key"> & {
+ *     key: keyof TBurgerElements
+ * }} TNavMenuSelector
+ */
+
+/**
+ * Page names defined by the linkAnchors registry.
+ *
+ * @typedef {keyof typeof linkAnchors} TPageName
+ */
+
 export const linkAnchors = {
 	index: "#about-us",
 	gates: "#gatesSection",
@@ -36,10 +79,10 @@ export const galleryThumbsFolderName = "thumbs";
 /** @type {Object.<string, string>} Animation selectors map */
 export const SELECTORS = {
 	scrolledNav: "#scrolledNav",
-	burgerNavAll: ".burger_nav",  //multiple elements
+	burgerNav: ".burger_nav",  //for multiple elements
 	burgerFixed: ".burger_nav:not(.hidden)",
 	burgerHidden: ".burger_nav.hidden",
-	navMenuHidden: ".header__nav.abs",
+	navMenuFixed: "#nav-abs",
 	benefitsSection: "#benefitsSection",
 	headingAccentHero: ".section__heading-block--hero .accent",
 	headingHeroRest: ".section__heading-block--hero .rest-of-heading",
@@ -57,4 +100,32 @@ export const SELECTORS = {
 	scaleIn: "[data-anime=scale-in]",
 };
 
-export const
+/**
+ * @type {TNavMenuSelector[]}
+ *
+ * DOM elements required by Burger navigation handlers.
+ */
+export const navMenuSelectorsData = [
+	{
+		key: "navMenuFixed",
+		selector: SELECTORS.navMenuFixed,
+		multiple: false,
+	},
+	{
+		key: "burgerHidden",
+		selector: SELECTORS.burgerHidden,
+		multiple: false,
+	},
+	{
+		key: "burgerFixed",
+		selector: SELECTORS.burgerFixed,
+		multiple: false,
+	},
+	{
+		key: "burgerNavAll",
+		selector: SELECTORS.burgerNav,
+		multiple: true,
+	},
+];
+
+

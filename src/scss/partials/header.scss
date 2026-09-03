@@ -227,49 +227,59 @@
   @include media.maxMobileLandscape {
     display: none;
   }
+}
 
-  &.abs {
-    display: block;
-    position: fixed;
+#nav-abs {
+  display: block;
+  position: fixed;
+  width: 100%;
+  padding-top: 4.7rem;
+  top: -110%;
+  left: 0;
+  z-index: 40;
+  background-color: rgba(255, 255, 255, .5);
+  backdrop-filter: blur(.2rem);
+
+  transition: transform .3s ease;
+
+  .nav-list {
     width: 100%;
-    padding-top: 4.7rem;
-    top: -110%;
-    left: 0;
-    z-index: 40;
-    background-color: rgba(255, 255, 255, .5);
-    backdrop-filter: blur(.2rem);
+    max-width: $maxContentWidth;
+    margin: 0 auto;
+    padding: .5rem 2.2rem;
+    gap: 0.5rem .75rem;
+    list-style: none;
 
-    .nav-list {
-      width: 100%;
-      max-width: $maxContentWidth;
-      margin: 0 auto;
-      padding: .5rem 2.2rem;
-      gap: 0.5rem .75rem;
-      list-style: none;
+    @include mix.flex-box(row, flex-end, center, wrap);
 
-      @include mix.flex-box(row, flex-end, center, wrap);
+    /* mobile (landscape): (max-width: 768px)*/
+    @include media.maxMobileLandscape {
+      //max-width: 20rem;
+      padding-bottom: 1rem;
+      padding-top: 1rem;
 
-      /* mobile (landscape): (max-width: 768px)*/
-      @include media.maxMobileLandscape {
-        //max-width: 20rem;
-        padding-bottom: 1rem;
-        padding-top: 1rem;
-
-        @include mix.flex-box(column, center, flex-end);
-        column-gap: 0.5rem;
-      }
-
-      /* mobile (portrait wide): (max-width: 640px) */
-      @include media.maxMobilePortraitWide {
-        align-items: center;
-        padding-top: 3rem;
-      }
-
-      /* mobile (medium): (max-width: 375px) */
-      @include media.maxMobileMedium {
-        padding-top: 5rem;
-      }
+      @include mix.flex-box(column, center, flex-end);
+      column-gap: 0.5rem;
     }
+
+    /* mobile (portrait wide): (max-width: 640px) */
+    @include media.maxMobilePortraitWide {
+      align-items: center;
+      padding-top: 3rem;
+    }
+
+    /* mobile (medium): (max-width: 375px) */
+    @include media.maxMobileMedium {
+      padding-top: 5rem;
+    }
+  }
+
+  &[aria-expanded="true"] {
+    transform: translateY(0);
+  }
+
+  &[aria-expanded="false"] {
+    transform: translateY(-100%);
   }
 }
 
@@ -360,7 +370,7 @@
     }
   }
 
-  &.opened {
+  &[aria-expanded="true"] {
     background-color: rgba(255, 255, 255, 1);
     border-color: rgba(211, 3, 3, 1);
 

@@ -19,10 +19,10 @@ export function randomNum(max, min) {
  * filters the remaining arguments (`...values`) to find which ones are included in `targetArr`.
  * If `targetArr` is not a valid array or is empty, a warning is logged to the console and an empty array is returned.
  *
- * @param {Array<any>} targetArr - The array to check for matches.
+ * @param {Array<unknown>} targetArr - The array to check for matches.
  * @param {...*} values - A list of values to check against the `targetArr`.
  *
- * @returns {Array<any>} - An array of matched values from `values` that exist in `targetArr`.
+ * @returns {Array<unknown>} - An array of matched values from `values` that exist in `targetArr`.
  *
  * @example
  * const result = getMatchedFromArray([1, 2, 3, 4], 2, 4, 6);
@@ -175,3 +175,39 @@ export function getInvalidKeys(targetObj, keys, params) {
   });
 }
 
+/**
+ * Creates a Set containing the keys of an object.
+ *
+ * The generic key type is preserved instead of being widened
+ * to `string`.
+ *
+ * @template {string} K
+ *
+ * @param {Record<K, unknown>} object
+ *
+ * @returns {Set<K>}
+ */
+export function createKeySet(object) {
+  return new Set(
+    /** @type {K[]} */
+    (Object.keys(object))
+  );
+}
+
+
+/**
+ * Checks whether a string exists in a Set of valid values.
+ *
+ * The successful check narrows the value from `string`
+ * to the Set's element type.
+ *
+ * @template {string} T
+ *
+ * @param {string} value - Value to validate.
+ * @param {Set<T>} values - Set containing valid values.
+ *
+ * @returns {value is T} Whether the value exists in the Set.
+ */
+export function isInSet(value, values) {
+  return values.has(/** @type {T} */ (value));
+}

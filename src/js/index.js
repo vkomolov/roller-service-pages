@@ -51,18 +51,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ------------------------------------------
     // Navigation & Language (non-GSAP, immediate)
     // ------------------------------------------
-    activateNavLink(navLinkParams);
-    activateNavLink(navLinkParamsHexagon);
+    //activateNavLink(navLinkParams);
+    //activateNavLink(navLinkParamsHexagon);
 
     //initializing GSAP animations...
     await initAnimations();
 
 
     //initializing language switcher...
-    initLangSwitcher(langSwitchData);
+    //initLangSwitcher(langSwitchData);
 
 
-    await initThumbs(gallerySelector, galleryThumbsFolderName);
+    //await initThumbs(gallerySelector, galleryThumbsFolderName);
   } catch (error) {
     console.error("[DOMContentLoaded]: initialization failed:", error);
   }
@@ -70,6 +70,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ------------------------------------------
   // Resize listener
   // ------------------------------------------
+
+/*  TEMPORAL
+/*
   lockedEventListener("resize", window, 1500)(async () => {
     try {
       await createMasonry(gallerySelector, { gap: 20 });
@@ -86,4 +89,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     killAllAnimations();
     resetGsapCache();
   });
+
+  */
 });

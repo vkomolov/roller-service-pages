@@ -6,16 +6,41 @@ import { getInvalidKeys } from "./funcs.js";
 //////////////// TYPE DEFINITIONS /////////////////
 
 /**
- * Configuration object for required DOM elements.
- * @typedef {{
- * key: string,
- * selector: string,
- * multiple?: boolean
- * }} TDataSelectors
+ * TBurgerElements
+ * DOM elements required by the navigation menu.
  *
+ * @typedef {Object} TBurgerElements
+ * @property {Element} navMenuFixed
+ * @property {Element} burgerHidden
+ * @property {Element} burgerFixed
+ * @property {Element[]} burgerNavAll
  */
 
 /**
+ * TDOMSelectorConfig
+ * Configuration for a generic DOM element lookup.
+ *
+ * @typedef {Object} TDOMSelectorConfig
+ * @property {string} key - Property name used in the resulting object.
+ * @property {string} selector - CSS selector used to find the element(s).
+ * @property {boolean} [multiple=false] - Whether all matching elements should be returned.
+ */
+
+/**
+ * TNavMenuSelector
+ * Configuration for navigation menu DOM element lookup.
+ *
+ * Specializes the generic selector configuration by restricting `key`
+ * to the known properties of `TBurgerElements`.
+ *
+ * @typedef {Omit<TDOMSelectorConfig, "key"> & {
+ *     key: keyof TBurgerElements
+ * }} TNavMenuSelector
+ */
+
+/**
+ * ImageSize
+ *
  * @typedef {Record<string, number>} ImageSize
  * @property {number} naturalWidth - Original image width in pixels
  * @property {number} naturalHeight - Original image height in pixels
@@ -24,12 +49,15 @@ import { getInvalidKeys } from "./funcs.js";
  */
 
 /**
+ * LoadedImageResult
+ *
  * @typedef {Record<string, unknown>} LoadedImageResult
  * @property {HTMLElement} element - The parent element containing the image
  * @property {ImageSize} size - Dimension information
  */
 
 /**
+ * TActivateNavlinkParams
  * Type definition for arguments of {@link activateNavLink}
  *
  * @typedef {Object} TActivateNavlinkParams
@@ -40,6 +68,7 @@ import { getInvalidKeys } from "./funcs.js";
  */
 
 /**
+ * TInitLangSwitcherParams
  * Type definition for arguments of {@link initLangSwitcher}
  *
  * @typedef {Object} TInitLangSwitcherParams
@@ -55,6 +84,8 @@ import { getInvalidKeys } from "./funcs.js";
  */
 
 /**
+ * TGetLangItemsParams
+ *
  * @description - the type of argument "params" for the function {@link getLangItems}
  *
  * @typedef {Record<string, string>} TGetLangItemsParams
@@ -65,11 +96,23 @@ import { getInvalidKeys } from "./funcs.js";
  */
 
 /**
+ * TLogErrorParams
+ *
  * @typedef {{
  *   component: string, //Component or module name.
  *   message: string, //Error description
  *   details?: unknown,  //Optional data
  * }} TLogErrorParams
+ */
+
+/**
+ * ModalState
+ *
+ * @typedef {Object} ModalState
+ * @property {number|null} currentIndex
+ * @property {boolean} isOpen
+ * @property {boolean} isLoading
+ * @property {HTMLElement|null} currentImage
  */
 
 //////////////// END OF TYPE DEFINITIONS /////////////////
@@ -98,7 +141,7 @@ export function isStyleSupported(element, param, value) {
  * @param {HTMLElement} parentFrom - the current HTML parent
  * @param {HTMLElement} parentTo - the target HTML parent to migrate to
  */
-export function migrateElement({ target, parentFrom, parentTo }) {
+export function migrateElement(target, parentFrom, parentTo) {
 
 	if (target.isConnected) {
 		(target.parentElement === parentFrom ? parentTo : parentFrom).appendChild(
@@ -141,6 +184,9 @@ export function lockedEventListener(event, listenerOwner, delay = 300) {
 
 	let isLocked = false;
 
+	/**
+	 * @type {() => {}} cb
+	 */
 	return (cb, params = []) => {
 		const handler = () => {
 			if (!isLocked) {
@@ -317,8 +363,18 @@ export function observeIntersection(targetElement, options = {}) {
 export function setAttributes(elements = [], targetAttr = {}) {
 	elements.forEach((element, i) => {
 		if (!(element instanceof Element)) {
+			const errorMessage = `one of the elements at index ${i} is not the instance of HTMLElement...`;
+
+			logInitError({
+				component: "setAttributes",
+				message: errorMessage,
+				details: {
+					element
+				}
+			});
+
 			throw new Error(
-				`one of the elements at index ${i} is not the instance of HTMLElement...`
+				`[setAttributes]: ${errorMessage}`
 			);
 		}
 
@@ -449,20 +505,57 @@ function checkInDOM(container) {
 }
 
 /**
+ * Checks whether Element is an HTMLElement.
+ * @param {unknown} element
+ * @returns {element is HTMLElement}
+ */
+export function isHTMLElement(element) {
+	return element instanceof HTMLElement;
+}
+
+/**
+ * Checks whether Element is an HTMLElement.
+ * Serves as a Type Guard for TypeScript/JSDoc.
+ * @param {unknown} element
+ * @returns {element is HTMLElement}
+ */
+export function checkHtmlElement(element) {
+	const isHTMLElem = isHTMLElement(element);
+
+	if (!isHTMLElem) {
+		// Cast to any type inside JSDoc comment so TS allows reading properties
+		const unsafeTarget = /** @type {*} */ (element);
+
+		logInitError({
+			component: "checkHtmlElement",
+			message: `Expected HTMLElement, but got ${element?.constructor?.name || typeof element}`,
+			details: {
+				type: typeof element,
+				tagName: unsafeTarget?.tagName,
+				className: unsafeTarget?.className
+			}
+		});
+		return false;
+	}
+	return true;
+}
+
+
+/**
  * Finds an element in the DOM, checks its existence, and types it for JSDoc/TS.
  * If the element is not found, logs an error.
  *
  * @template {Element} T - Expected element type (e.g., HTMLButtonElement)
  * @param {string} selector - CSS selector to search for
  * @param {Document | Element | DocumentFragment} [context=document] - Search context.
- * @returns {T | null} Returns the element or null (to safely exit the function)
+ * @returns {T | undefined} Returns the element or null (to safely exit the function)
  *
  * @sample
- * above: template {HTMLButtonElement}
+ * above:@template {HTMLButtonElement}
  * const button = getDOMElement('.js-submit-btn');
  *
  * @sample
- * above: template {HTMLFormElement}
+ * above:@template {HTMLFormElement}
  * const form = getDOMElement('#login-form');
  * if (!form) return;
 *
@@ -476,40 +569,75 @@ export function getDOMElement(selector, context = document) {
 			message: `Element with selector "${selector}" was not found in the DOM.`,
 			details: { parent: parent.constructor.name }
 		});
-		return null;
+		return;
 	}
 
 	// returning the element by casting it to the generic type T
 	return /** @type {T} */ (element);
 }
 
-
 /**
  * Returns DOM element(s) matching the specified CSS selector.
- * Searches within the provided context. Logs an error if no elements are found.
  *
- * @template {Element} T - Expected element type (e.g., HTMLButtonElement)
- * @param {string} selector - CSS selector to search for.
- * @param {Document | Element | DocumentFragment} [context=document] - Search context.
- * @param {boolean} [multiple=false] - Whether to fetch all matching elements.
- * @returns {T[]} Array containing zero, one, or multiple elements.
+ * Searches within the provided context and logs an initialization error
+ * when no matching elements are found.
+ *
+ * The generic type `T` describes the expected element type at the call site.
+ * Runtime type validation is intentionally not performed by this function.
+ *
+ * @template {Element} T
+ *
+ * @param {string} selector
+ * CSS selector used to find the element(s).
+ *
+ * @param {Document | Element | DocumentFragment} [context=document]
+ * DOM context in which the selector should be searched.
+ *
+ * @param {boolean} [multiple=true]
+ * Whether to return all matching elements.
+ * When `false`, only the first matching element is returned.
+ *
+ * @returns {T[]}
+ * Array containing the matched element(s).
+ * Returns an empty array when no matching element is found.
  *
  * @example
- * above: template {HTMLElement}
- * const [header] = getElements('#header');
- * above: template {HTMLButtonElement}
- * const [button] = getElements('.btn', modal);
- * const cards = getElements('.card', document, true);
+ * ..@type {HTMLButtonElement[]}
+ * const buttons = getElements(".button");
+ *
+ * @example
+ * ..@type {HTMLElement[]}
+ * const header = getElements("#header", document, false);
+ *
+ * @example
+ * You may also grab alone Element with multiple selection, but recommended to use multiple: false
+ * ..@type {HTMLButtonElement[]}
+ * const [button] = getElements(".button", modal);
  */
-export function getElements(selector, context = document, multiple = false) {
+export function getElements(
+	selector,
+	context = document,
+	multiple = true
+) {
 	if (multiple) {
-		const elements = /** @type {T[]} */ ([...context.querySelectorAll(selector)]);
+		/**
+		 * `querySelectorAll()` returns a NodeListOf<Element>.
+		 *
+		 * The generic type `T` cannot be inferred from the CSS selector,
+		 * therefore the cast documents the expected type declared by the caller.
+		 */
+		const elements = /** @type {T[]} */ (
+			[...context.querySelectorAll(selector)]
+		);
 
-		if (elements.length === 0) {
+		if (!elements.length) {
 			logInitError({
 				component: "getElements",
 				message: `No elements matched selector "${selector}". Array is empty.`,
-				details: { context: context.constructor.name, multiple: true }
+				details: {
+					context: context.constructor.name,
+					multiple: true,
+				},
 			});
 		}
 
@@ -522,23 +650,49 @@ export function getElements(selector, context = document, multiple = false) {
 		logInitError({
 			component: "getElements",
 			message: `Element with selector "${selector}" was not found in the DOM.`,
-			details: { context: context.constructor.name, multiple: false }
+			details: {
+				context: context.constructor.name,
+				multiple: false,
+			},
 		});
+
 		return [];
 	}
 
+	/**
+	 * `querySelector()` returns Element | null.
+	 *
+	 * The runtime check above guarantees that `element` is not null.
+	 * The generic cast describes the element type expected by the caller.
+	 */
 	return [/** @type {T} */ (element)];
 }
 
 /**
  * Retrieves required DOM elements and groups them into an object.
- * Throws a hard error and logs diagnostics if any required element is missing.
  *
- * @param {TDataSelectors[]} selectors - List of selectors to retrieve.
- * @param {Document | Element | DocumentFragment} [context=document] - Search context.
- * @returns {Record<string, unknown>} Object containing confirmed DOM elements.
+ * Each selector configuration defines:
+ * - the property key used in the resulting object;
+ * - the CSS selector used for lookup;
+ * - whether one or all matching elements should be returned.
  *
- * @throws {Error} If a required selector does not match any DOM element.
+ * The function throws an error when any required selector does not match
+ * at least one element.
+ *
+ * `getElements()` is used internally for DOM lookup and diagnostic logging.
+ *
+ * @param {TDOMSelectorConfig[]} selectors
+ * List of DOM selector configurations.
+ *
+ * @param {Document | Element | DocumentFragment} [context=document]
+ * DOM context in which all selectors should be searched.
+ *
+ * @returns {Record<string, Element | Element[]>}
+ * Object whose keys are taken from the `key` property of each selector
+ * configuration.
+ *
+ * @throws {Error}
+ * Throws when a required selector does not match any DOM element.
  *
  * @example
  * const DOM = requireElements([
@@ -562,32 +716,116 @@ export function getElements(selector, context = document, multiple = false) {
  * ]);
  *
  * DOM.navMenuHidden.classList.add("opened");
- * DOM.burgerNavAll.forEach((button) => button.classList.add("active"));
+ * DOM.burgerNavAll.forEach((button) => {
+ *     button.classList.add("active");
+ * });
  */
-export function requireElements(selectors, context=document) {
-	/** @type {Record<string, unknown>} */
+export function requireElements(
+	selectors,
+	context = document
+) {
+	/**
+	 * The function is intentionally generic at runtime.
+	 *
+	 * The exact structure of the resulting object depends on the
+	 * selector configuration passed by the caller.
+	 *
+	 * @type {Record<string, Element | Element[]>}
+	 */
 	const elements = {};
 
-	for (const { key, selector, multiple = false } of selectors) {
-		// Leverage getElements internally. The soft warning inside getElements will trigger first...
-		const result = getElements(selector, context, multiple);
+	for (const {
+		key,
+		selector,
+		multiple = false,
+	} of selectors) {
+		/**
+		 * `getElements()` returns an array in both single and multiple modes.
+		 *
+		 * When `multiple` is false, the array contains one element.
+		 * When `multiple` is true, it contains all matching elements.
+		 */
+		const result = getElements(
+			selector,
+			context,
+			multiple
+		);
 
+		/**
+		 * `getElements()` returns an empty array when nothing was found.
+		 *
+		 * For `requireElements()`, an absent required element is a fatal
+		 * initialization error, therefore execution stops immediately.
+		 */
 		if (!result.length) {
-			const errorMessage = `Required DOM element missing. Key: "${key}", Selector: "${selector}"`;
+			const errorMessage =
+				`Required DOM element missing. ` +
+				`Key: "${key}", Selector: "${selector}"`;
+
 			logInitError({
 				component: "requireElements",
 				message: errorMessage,
 			});
 
-			throw new Error(`[requireElements]: ${errorMessage}`);
+			throw new Error(
+				`[requireElements]: ${errorMessage}`
+			);
 		}
 
+		/**
+		 * Store either the first element or the complete result array
+		 * according to the selector configuration.
+		 */
 		elements[key] = multiple
 			? result
 			: result[0];
 	}
 
 	return elements;
+}
+
+
+/**
+ * Locks document scrolling while the Burger navigation is open.
+ *
+ * The scrollbar gutter is kept stable to prevent the layout from
+ * shifting when the browser removes the document scrollbar after
+ * scrolling is disabled.
+ *
+ * Both the root element and the document body receive the stable
+ * scrollbar gutter configuration to keep their scrollbar behavior
+ * synchronized.
+ *
+ * @returns {void}
+ */
+export function lockDocumentScroll() {
+	// Preserve the scrollbar width while the navigation is open.
+	document.documentElement.style.scrollbarGutter = "stable";
+	document.body.style.scrollbarGutter = "stable";
+
+	// Prevent the document from scrolling behind the navigation.
+	document.body.style.overflow = "hidden";
+}
+
+/**
+ * Restores the document's default scrolling behavior.
+ *
+ * This function resets the scrollbar gutter configuration on both
+ * the root element and the document body, then restores normal
+ * document scrolling.
+ *
+ * It is intended to be called when the Burger navigation is closed
+ * and the document no longer needs to be locked.
+ *
+ * @returns {void}
+ */
+export function restoreDocumentScroll() {
+	// Restore the default automatic scrollbar gutter behavior.
+	document.documentElement.style.scrollbarGutter = "auto";
+	document.body.style.scrollbarGutter = "auto";
+
+	// Restore normal document scrolling.
+	document.body.style.overflow = "auto";
 }
 
 /**
@@ -757,7 +995,7 @@ async function processImageResults(instance, parentMap) {
  * @throws {Error} When container is invalid or processing fails
  */
 export async function getImagesLoaded(container, options = {}) {
-	// Validate container
+	// Validate container or throws error...
 	checkInDOM(container);
 
 	// Return a promise that resolves when imagesLoaded completes
@@ -1122,7 +1360,7 @@ function getClickedLanguage(eTarget, dataSetKey) {
 
 /**
  * Toggles the expanded state of an interactive element.
- * it is made for {@link toggleMenu}
+ * it is made for {@link toggleAriaExpandedMenu}
  * @param {HTMLElement} element - Interactive element exposing the `ariaExpanded` property.
  * @returns {void}
  */
@@ -1138,7 +1376,7 @@ function toggleAriaExpanded(element) {
  * @param {MouseEvent} event - Mouse click event.
  * @returns {void}
  */
-function toggleMenu(event) {
+function toggleAriaExpandedMenu(event) {
 	//checking HTMLElement type of event.currentTarget
 	if (!checkEventCurrentTarget(event)) return;
 	const curTarget = event.currentTarget;
@@ -1151,7 +1389,6 @@ function toggleMenu(event) {
  * @param {HTMLElement} currentButton - Element with attributes dataSet
  * @returns {void}
  */
-
 function openLanguageMenu(currentButton) {
 	currentButton.ariaExpanded = "true";
 }
@@ -1193,42 +1430,6 @@ export function checkEventCurrentTarget(event) {
 		return false;
 	}
 
-	return true;
-}
-
-/**
- * Checks whether Element is an HTMLElement.
- * @param {unknown} element
- * @returns {element is HTMLElement}
- */
-export function isHTMLElement(element) {
-	return element instanceof HTMLElement;
-}
-
-/**
- * Checks whether Element is an HTMLElement.
- * Serves as a Type Guard for TypeScript/JSDoc.
- * @param {unknown} element
- * @returns {element is HTMLElement}
- */
-export function checkHtmlElement(element) {
-	const isHTMLElem = isHTMLElement(element);
-
-	if (!isHTMLElem) {
-		// Cast to any type inside JSDoc comment so TS allows reading properties
-		const unsafeTarget = /** @type {*} */ (element);
-
-		logInitError({
-			component: "checkHtmlElement",
-			message: `Expected HTMLElement, but got ${element?.constructor?.name || typeof element}`,
-			details: {
-				type: typeof element,
-				tagName: unsafeTarget?.tagName,
-				className: unsafeTarget?.className
-			}
-		});
-		return false;
-	}
 	return true;
 }
 
@@ -1362,14 +1563,14 @@ export function initLangSwitcher(params) {
 	const langListHandler = getLangClickHandler(dataSetKey, langActive);
 	const escapeLanguageMenuHandler = getHandlerOnCloseLanguageMenu(langSwitcher, langCurrentButton);
 
-	// ESCAPE HANDLERS
+	//! ESCAPE HANDLERS
 	document.addEventListener("click", escapeLanguageMenuHandler);
 	document.addEventListener("keydown", escapeLanguageMenuHandler);
 
-	//handler on the list of the language buttons
+	//!handler on the list of the language buttons
 	langList.addEventListener('click', langListHandler);
-	//handler on the current language button to open and close language menu
-	langCurrentButton.addEventListener('click', toggleMenu);
+	//!handler on the current language button to open and close language menu
+	langCurrentButton.addEventListener('click', toggleAriaExpandedMenu);
 }
 
 /**
@@ -1453,14 +1654,6 @@ export function replaceFilePath(url, targetFolder) {
 
 	return url.replace(new RegExp(`/${nestedFolder}/`), '/'); // If no match is found, return the original URL
 }
-
-/**
- * @typedef {Object} ModalState
- * @property {number|null} currentIndex
- * @property {boolean} isOpen
- * @property {boolean} isLoading
- * @property {HTMLElement|null} currentImage
- */
 
 /**
  * Creates initial modal state

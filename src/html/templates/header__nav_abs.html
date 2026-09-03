@@ -1,6 +1,9 @@
 @@if (data && page && data[page].header) {
 
-<nav class="header__nav abs" aria-label="@@data.@@page.header.nav_label" aria-expanded="false">
+<nav id="nav-abs"
+     class="header__nav"
+     aria-label="@@data.@@page.header.nav_label"
+     aria-expanded="false">
 	<div class="nav-list">
 		@@include("./nav-list.html", {"page": "@@page"})
 	</div>
