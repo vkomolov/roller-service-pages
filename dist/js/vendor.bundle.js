@@ -1,2 +1,643 @@
-/*! For license information please see vendor.bundle.js.LICENSE.txt */
-(self.webpackChunkgulp5_starting_kit_2024=self.webpackChunkgulp5_starting_kit_2024||[]).push([[121],{96:function(t,e){!function(t){"use strict";var e,i=function(){return i=Object.assign||function(t){for(var e,i=1,n=arguments.length;i<n;i++)for(var o in e=arguments[i])Object.prototype.hasOwnProperty.call(e,o)&&(t[o]=e[o]);return t},i.apply(this,arguments)};"function"==typeof SuppressedError&&SuppressedError,t.TouchSwipeEventType=void 0,(e=t.TouchSwipeEventType||(t.TouchSwipeEventType={})).up="swipeup",e.tap="tap",e.down="swipedown",e.move="swipemove",e.left="swipeleft",e.right="swiperight";var n={endX:0,endY:0,moveX:0,moveY:0,startX:0,startY:0},o=function(){function e(t,e,i){return void 0===t&&(t=document.body),void 0===e&&(e={}),void 0===i&&(i=40),this.element=t,this.eventData=e,this.threshold=i,this.coords=n,this.isMoving=!1,this.moveCoords={x:0,y:0},this.onStart=this.onStart.bind(this),this.onMove=this.onMove.bind(this),this.onEnd=this.onEnd.bind(this),this.bind(),this}return e.prototype.bind=function(){var t=this.element;t.addEventListener("touchstart",this.onStart,{passive:!0}),t.addEventListener("touchmove",this.onMove,{passive:!0}),t.addEventListener("touchend",this.onEnd,{passive:!0}),t.addEventListener("mousedown",this.onStart,{passive:!0}),t.addEventListener("mousemove",this.onMove,{passive:!0}),t.addEventListener("mouseup",this.onEnd,{passive:!0})},e.prototype.unbind=function(){var t=this.element;t.removeEventListener("touchstart",this.onStart,!1),t.removeEventListener("touchmove",this.onMove,!1),t.removeEventListener("touchend",this.onEnd,!1),t.removeEventListener("mousedown",this.onStart,!1),t.removeEventListener("mousemove",this.onMove,!1),t.removeEventListener("mouseup",this.onEnd,!1)},e.prototype.getCoords=function(t){var e=this.moveCoords,i="pageX"in t;return e.x=i?t.pageX:t.changedTouches[0].screenX,e.y=i?t.pageY:t.changedTouches[0].screenY,e},e.prototype.resetCoords=function(){this.coords=n},e.prototype.getEndEventName=function(){var e=this.threshold,i=this.coords,n=i.startX,o=i.startY,s=i.endX,r=i.endY,h=Math.abs(s-n),d=Math.abs(r-o);if(h>d){if(s<n&&h>e)return t.TouchSwipeEventType.left;if(s>n&&h>e)return t.TouchSwipeEventType.right}else{if(r<o&&d>e)return t.TouchSwipeEventType.up;if(r>o&&d>e)return t.TouchSwipeEventType.down}return r===o&&s===n?t.TouchSwipeEventType.tap:""},e.prototype.dispatchEvent=function(t){var e=new CustomEvent(t,{detail:i(i({},this.eventData),{coords:this.coords})});this.element.dispatchEvent(e)},e.prototype.dispatchEnd=function(){var t=this.getEndEventName();t&&this.dispatchEvent(t)},e.prototype.onStart=function(t){var e=this.getCoords(t),i=e.x,n=e.y;this.isMoving=!0,this.coords.startX=i,this.coords.startY=n},e.prototype.onMove=function(e){if(this.isMoving){var i=this.getCoords(e),n=i.x,o=i.y;this.coords.moveX=n,this.coords.moveY=o,this.dispatchEvent(t.TouchSwipeEventType.move)}},e.prototype.onEnd=function(t){var e=this.getCoords(t),i=e.x,n=e.y;this.isMoving=!1,this.coords.endX=i,this.coords.endY=n,this.dispatchEnd(),this.resetCoords()},e}();t.default=o,Object.defineProperty(t,"__esModule",{value:!0})}(e)},137:function(t){var e,i;e="undefined"!=typeof window?window:this,i=function(){function t(){}let e=t.prototype;return e.on=function(t,e){if(!t||!e)return this;let i=this._events=this._events||{},n=i[t]=i[t]||[];return n.includes(e)||n.push(e),this},e.once=function(t,e){if(!t||!e)return this;this.on(t,e);let i=this._onceEvents=this._onceEvents||{};return(i[t]=i[t]||{})[e]=!0,this},e.off=function(t,e){let i=this._events&&this._events[t];if(!i||!i.length)return this;let n=i.indexOf(e);return-1!=n&&i.splice(n,1),this},e.emitEvent=function(t,e){let i=this._events&&this._events[t];if(!i||!i.length)return this;i=i.slice(0),e=e||[];let n=this._onceEvents&&this._onceEvents[t];for(let o of i)n&&n[o]&&(this.off(t,o),delete n[o]),o.apply(this,e);return this},e.allOff=function(){return delete this._events,delete this._onceEvents,this},t},t.exports?t.exports=i():e.EvEmitter=i()},943:function(t,e,i){!function(e,n){t.exports?t.exports=n(e,i(137)):e.imagesLoaded=n(e,e.EvEmitter)}("undefined"!=typeof window?window:this,(function(t,e){let i=t.jQuery,n=t.console;function o(t,e,s){if(!(this instanceof o))return new o(t,e,s);let r=t;var h;"string"==typeof t&&(r=document.querySelectorAll(t)),r?(this.elements=(h=r,Array.isArray(h)?h:"object"==typeof h&&"number"==typeof h.length?[...h]:[h]),this.options={},"function"==typeof e?s=e:Object.assign(this.options,e),s&&this.on("always",s),this.getImages(),i&&(this.jqDeferred=new i.Deferred),setTimeout(this.check.bind(this))):n.error(`Bad element for imagesLoaded ${r||t}`)}o.prototype=Object.create(e.prototype),o.prototype.getImages=function(){this.images=[],this.elements.forEach(this.addElementImages,this)};const s=[1,9,11];o.prototype.addElementImages=function(t){"IMG"===t.nodeName&&this.addImage(t),!0===this.options.background&&this.addElementBackgroundImages(t);let{nodeType:e}=t;if(!e||!s.includes(e))return;let i=t.querySelectorAll("img");for(let t of i)this.addImage(t);if("string"==typeof this.options.background){let e=t.querySelectorAll(this.options.background);for(let t of e)this.addElementBackgroundImages(t)}};const r=/url\((['"])?(.*?)\1\)/gi;function h(t){this.img=t}function d(t,e){this.url=t,this.element=e,this.img=new Image}return o.prototype.addElementBackgroundImages=function(t){let e=getComputedStyle(t);if(!e)return;let i=r.exec(e.backgroundImage);for(;null!==i;){let n=i&&i[2];n&&this.addBackground(n,t),i=r.exec(e.backgroundImage)}},o.prototype.addImage=function(t){let e=new h(t);this.images.push(e)},o.prototype.addBackground=function(t,e){let i=new d(t,e);this.images.push(i)},o.prototype.check=function(){if(this.progressedCount=0,this.hasAnyBroken=!1,!this.images.length)return void this.complete();let t=(t,e,i)=>{setTimeout((()=>{this.progress(t,e,i)}))};this.images.forEach((function(e){e.once("progress",t),e.check()}))},o.prototype.progress=function(t,e,i){this.progressedCount++,this.hasAnyBroken=this.hasAnyBroken||!t.isLoaded,this.emitEvent("progress",[this,t,e]),this.jqDeferred&&this.jqDeferred.notify&&this.jqDeferred.notify(this,t),this.progressedCount===this.images.length&&this.complete(),this.options.debug&&n&&n.log(`progress: ${i}`,t,e)},o.prototype.complete=function(){let t=this.hasAnyBroken?"fail":"done";if(this.isComplete=!0,this.emitEvent(t,[this]),this.emitEvent("always",[this]),this.jqDeferred){let t=this.hasAnyBroken?"reject":"resolve";this.jqDeferred[t](this)}},h.prototype=Object.create(e.prototype),h.prototype.check=function(){this.getIsImageComplete()?this.confirm(0!==this.img.naturalWidth,"naturalWidth"):(this.proxyImage=new Image,this.img.crossOrigin&&(this.proxyImage.crossOrigin=this.img.crossOrigin),this.proxyImage.addEventListener("load",this),this.proxyImage.addEventListener("error",this),this.img.addEventListener("load",this),this.img.addEventListener("error",this),this.proxyImage.src=this.img.currentSrc||this.img.src)},h.prototype.getIsImageComplete=function(){return this.img.complete&&this.img.naturalWidth},h.prototype.confirm=function(t,e){this.isLoaded=t;let{parentNode:i}=this.img,n="PICTURE"===i.nodeName?i:this.img;this.emitEvent("progress",[this,n,e])},h.prototype.handleEvent=function(t){let e="on"+t.type;this[e]&&this[e](t)},h.prototype.onload=function(){this.confirm(!0,"onload"),this.unbindEvents()},h.prototype.onerror=function(){this.confirm(!1,"onerror"),this.unbindEvents()},h.prototype.unbindEvents=function(){this.proxyImage.removeEventListener("load",this),this.proxyImage.removeEventListener("error",this),this.img.removeEventListener("load",this),this.img.removeEventListener("error",this)},d.prototype=Object.create(h.prototype),d.prototype.check=function(){this.img.addEventListener("load",this),this.img.addEventListener("error",this),this.img.src=this.url,this.getIsImageComplete()&&(this.confirm(0!==this.img.naturalWidth,"naturalWidth"),this.unbindEvents())},d.prototype.unbindEvents=function(){this.img.removeEventListener("load",this),this.img.removeEventListener("error",this)},d.prototype.confirm=function(t,e){this.isLoaded=t,this.emitEvent("progress",[this,this.element,e])},o.makeJQueryPlugin=function(e){(e=e||t.jQuery)&&(i=e,i.fn.imagesLoaded=function(t,e){return new o(this,t,e).jqDeferred.promise(i(this))})},o.makeJQueryPlugin(),o}))}}]);
+(self["webpackChunkgulp5_starting_kit_2024"] = self["webpackChunkgulp5_starting_kit_2024"] || []).push([["vendor"],{
+
+/***/ "./node_modules/ev-emitter/ev-emitter.js":
+/*!***********************************************!*\
+  !*** ./node_modules/ev-emitter/ev-emitter.js ***!
+  \***********************************************/
+/***/ (function(module) {
+
+/**
+ * EvEmitter v2.1.1
+ * Lil' event emitter
+ * MIT License
+ */
+
+( function( global, factory ) {
+  // universal module definition
+  if (  true && module.exports ) {
+    // CommonJS - Browserify, Webpack
+    module.exports = factory();
+  } else {
+    // Browser globals
+    global.EvEmitter = factory();
+  }
+
+}( typeof window != 'undefined' ? window : this, function() {
+
+function EvEmitter() {}
+
+let proto = EvEmitter.prototype;
+
+proto.on = function( eventName, listener ) {
+  if ( !eventName || !listener ) return this;
+
+  // set events hash
+  let events = this._events = this._events || {};
+  // set listeners array
+  let listeners = events[ eventName ] = events[ eventName ] || [];
+  // only add once
+  if ( !listeners.includes( listener ) ) {
+    listeners.push( listener );
+  }
+
+  return this;
+};
+
+proto.once = function( eventName, listener ) {
+  if ( !eventName || !listener ) return this;
+
+  // add event
+  this.on( eventName, listener );
+  // set once flag
+  // set onceEvents hash
+  let onceEvents = this._onceEvents = this._onceEvents || {};
+  // set onceListeners object
+  let onceListeners = onceEvents[ eventName ] = onceEvents[ eventName ] || {};
+  // set flag
+  onceListeners[ listener ] = true;
+
+  return this;
+};
+
+proto.off = function( eventName, listener ) {
+  let listeners = this._events && this._events[ eventName ];
+  if ( !listeners || !listeners.length ) return this;
+
+  let index = listeners.indexOf( listener );
+  if ( index != -1 ) {
+    listeners.splice( index, 1 );
+  }
+
+  return this;
+};
+
+proto.emitEvent = function( eventName, args ) {
+  let listeners = this._events && this._events[ eventName ];
+  if ( !listeners || !listeners.length ) return this;
+
+  // copy over to avoid interference if .off() in listener
+  listeners = listeners.slice( 0 );
+  args = args || [];
+  // once stuff
+  let onceListeners = this._onceEvents && this._onceEvents[ eventName ];
+
+  for ( let listener of listeners ) {
+    let isOnce = onceListeners && onceListeners[ listener ];
+    if ( isOnce ) {
+      // remove listener
+      // remove before trigger to prevent recursion
+      this.off( eventName, listener );
+      // unset once flag
+      delete onceListeners[ listener ];
+    }
+    // trigger listener
+    listener.apply( this, args );
+  }
+
+  return this;
+};
+
+proto.allOff = function() {
+  delete this._events;
+  delete this._onceEvents;
+  return this;
+};
+
+return EvEmitter;
+
+} ) );
+
+
+/***/ }),
+
+/***/ "./node_modules/imagesloaded/imagesloaded.js":
+/*!***************************************************!*\
+  !*** ./node_modules/imagesloaded/imagesloaded.js ***!
+  \***************************************************/
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+/*!
+ * imagesLoaded v5.0.0
+ * JavaScript is all like "You images are done yet or what?"
+ * MIT License
+ */
+
+( function( window, factory ) {
+  // universal module definition
+  if (  true && module.exports ) {
+    // CommonJS
+    module.exports = factory( window, __webpack_require__(/*! ev-emitter */ "./node_modules/ev-emitter/ev-emitter.js") );
+  } else {
+    // browser global
+    window.imagesLoaded = factory( window, window.EvEmitter );
+  }
+
+} )( typeof window !== 'undefined' ? window : this,
+    function factory( window, EvEmitter ) {
+
+let $ = window.jQuery;
+let console = window.console;
+
+// -------------------------- helpers -------------------------- //
+
+// turn element or nodeList into an array
+function makeArray( obj ) {
+  // use object if already an array
+  if ( Array.isArray( obj ) ) return obj;
+
+  let isArrayLike = typeof obj == 'object' && typeof obj.length == 'number';
+  // convert nodeList to array
+  if ( isArrayLike ) return [ ...obj ];
+
+  // array of single index
+  return [ obj ];
+}
+
+// -------------------------- imagesLoaded -------------------------- //
+
+/**
+ * @param {[Array, Element, NodeList, String]} elem
+ * @param {[Object, Function]} options - if function, use as callback
+ * @param {Function} onAlways - callback function
+ * @returns {ImagesLoaded}
+ */
+function ImagesLoaded( elem, options, onAlways ) {
+  // coerce ImagesLoaded() without new, to be new ImagesLoaded()
+  if ( !( this instanceof ImagesLoaded ) ) {
+    return new ImagesLoaded( elem, options, onAlways );
+  }
+  // use elem as selector string
+  let queryElem = elem;
+  if ( typeof elem == 'string' ) {
+    queryElem = document.querySelectorAll( elem );
+  }
+  // bail if bad element
+  if ( !queryElem ) {
+    console.error(`Bad element for imagesLoaded ${queryElem || elem}`);
+    return;
+  }
+
+  this.elements = makeArray( queryElem );
+  this.options = {};
+  // shift arguments if no options set
+  if ( typeof options == 'function' ) {
+    onAlways = options;
+  } else {
+    Object.assign( this.options, options );
+  }
+
+  if ( onAlways ) this.on( 'always', onAlways );
+
+  this.getImages();
+  // add jQuery Deferred object
+  if ( $ ) this.jqDeferred = new $.Deferred();
+
+  // HACK check async to allow time to bind listeners
+  setTimeout( this.check.bind( this ) );
+}
+
+ImagesLoaded.prototype = Object.create( EvEmitter.prototype );
+
+ImagesLoaded.prototype.getImages = function() {
+  this.images = [];
+
+  // filter & find items if we have an item selector
+  this.elements.forEach( this.addElementImages, this );
+};
+
+const elementNodeTypes = [ 1, 9, 11 ];
+
+/**
+ * @param {Node} elem
+ */
+ImagesLoaded.prototype.addElementImages = function( elem ) {
+  // filter siblings
+  if ( elem.nodeName === 'IMG' ) {
+    this.addImage( elem );
+  }
+  // get background image on element
+  if ( this.options.background === true ) {
+    this.addElementBackgroundImages( elem );
+  }
+
+  // find children
+  // no non-element nodes, #143
+  let { nodeType } = elem;
+  if ( !nodeType || !elementNodeTypes.includes( nodeType ) ) return;
+
+  let childImgs = elem.querySelectorAll('img');
+  // concat childElems to filterFound array
+  for ( let img of childImgs ) {
+    this.addImage( img );
+  }
+
+  // get child background images
+  if ( typeof this.options.background == 'string' ) {
+    let children = elem.querySelectorAll( this.options.background );
+    for ( let child of children ) {
+      this.addElementBackgroundImages( child );
+    }
+  }
+};
+
+const reURL = /url\((['"])?(.*?)\1\)/gi;
+
+ImagesLoaded.prototype.addElementBackgroundImages = function( elem ) {
+  let style = getComputedStyle( elem );
+  // Firefox returns null if in a hidden iframe https://bugzil.la/548397
+  if ( !style ) return;
+
+  // get url inside url("...")
+  let matches = reURL.exec( style.backgroundImage );
+  while ( matches !== null ) {
+    let url = matches && matches[2];
+    if ( url ) {
+      this.addBackground( url, elem );
+    }
+    matches = reURL.exec( style.backgroundImage );
+  }
+};
+
+/**
+ * @param {Image} img
+ */
+ImagesLoaded.prototype.addImage = function( img ) {
+  let loadingImage = new LoadingImage( img );
+  this.images.push( loadingImage );
+};
+
+ImagesLoaded.prototype.addBackground = function( url, elem ) {
+  let background = new Background( url, elem );
+  this.images.push( background );
+};
+
+ImagesLoaded.prototype.check = function() {
+  this.progressedCount = 0;
+  this.hasAnyBroken = false;
+  // complete if no images
+  if ( !this.images.length ) {
+    this.complete();
+    return;
+  }
+
+  /* eslint-disable-next-line func-style */
+  let onProgress = ( image, elem, message ) => {
+    // HACK - Chrome triggers event before object properties have changed. #83
+    setTimeout( () => {
+      this.progress( image, elem, message );
+    } );
+  };
+
+  this.images.forEach( function( loadingImage ) {
+    loadingImage.once( 'progress', onProgress );
+    loadingImage.check();
+  } );
+};
+
+ImagesLoaded.prototype.progress = function( image, elem, message ) {
+  this.progressedCount++;
+  this.hasAnyBroken = this.hasAnyBroken || !image.isLoaded;
+  // progress event
+  this.emitEvent( 'progress', [ this, image, elem ] );
+  if ( this.jqDeferred && this.jqDeferred.notify ) {
+    this.jqDeferred.notify( this, image );
+  }
+  // check if completed
+  if ( this.progressedCount === this.images.length ) {
+    this.complete();
+  }
+
+  if ( this.options.debug && console ) {
+    console.log( `progress: ${message}`, image, elem );
+  }
+};
+
+ImagesLoaded.prototype.complete = function() {
+  let eventName = this.hasAnyBroken ? 'fail' : 'done';
+  this.isComplete = true;
+  this.emitEvent( eventName, [ this ] );
+  this.emitEvent( 'always', [ this ] );
+  if ( this.jqDeferred ) {
+    let jqMethod = this.hasAnyBroken ? 'reject' : 'resolve';
+    this.jqDeferred[ jqMethod ]( this );
+  }
+};
+
+// --------------------------  -------------------------- //
+
+function LoadingImage( img ) {
+  this.img = img;
+}
+
+LoadingImage.prototype = Object.create( EvEmitter.prototype );
+
+LoadingImage.prototype.check = function() {
+  // If complete is true and browser supports natural sizes,
+  // try to check for image status manually.
+  let isComplete = this.getIsImageComplete();
+  if ( isComplete ) {
+    // report based on naturalWidth
+    this.confirm( this.img.naturalWidth !== 0, 'naturalWidth' );
+    return;
+  }
+
+  // If none of the checks above matched, simulate loading on detached element.
+  this.proxyImage = new Image();
+  // add crossOrigin attribute. #204
+  if ( this.img.crossOrigin ) {
+    this.proxyImage.crossOrigin = this.img.crossOrigin;
+  }
+  this.proxyImage.addEventListener( 'load', this );
+  this.proxyImage.addEventListener( 'error', this );
+  // bind to image as well for Firefox. #191
+  this.img.addEventListener( 'load', this );
+  this.img.addEventListener( 'error', this );
+  this.proxyImage.src = this.img.currentSrc || this.img.src;
+};
+
+LoadingImage.prototype.getIsImageComplete = function() {
+  // check for non-zero, non-undefined naturalWidth
+  // fixes Safari+InfiniteScroll+Masonry bug infinite-scroll#671
+  return this.img.complete && this.img.naturalWidth;
+};
+
+LoadingImage.prototype.confirm = function( isLoaded, message ) {
+  this.isLoaded = isLoaded;
+  let { parentNode } = this.img;
+  // emit progress with parent <picture> or self <img>
+  let elem = parentNode.nodeName === 'PICTURE' ? parentNode : this.img;
+  this.emitEvent( 'progress', [ this, elem, message ] );
+};
+
+// ----- events ----- //
+
+// trigger specified handler for event type
+LoadingImage.prototype.handleEvent = function( event ) {
+  let method = 'on' + event.type;
+  if ( this[ method ] ) {
+    this[ method ]( event );
+  }
+};
+
+LoadingImage.prototype.onload = function() {
+  this.confirm( true, 'onload' );
+  this.unbindEvents();
+};
+
+LoadingImage.prototype.onerror = function() {
+  this.confirm( false, 'onerror' );
+  this.unbindEvents();
+};
+
+LoadingImage.prototype.unbindEvents = function() {
+  this.proxyImage.removeEventListener( 'load', this );
+  this.proxyImage.removeEventListener( 'error', this );
+  this.img.removeEventListener( 'load', this );
+  this.img.removeEventListener( 'error', this );
+};
+
+// -------------------------- Background -------------------------- //
+
+function Background( url, element ) {
+  this.url = url;
+  this.element = element;
+  this.img = new Image();
+}
+
+// inherit LoadingImage prototype
+Background.prototype = Object.create( LoadingImage.prototype );
+
+Background.prototype.check = function() {
+  this.img.addEventListener( 'load', this );
+  this.img.addEventListener( 'error', this );
+  this.img.src = this.url;
+  // check if image is already complete
+  let isComplete = this.getIsImageComplete();
+  if ( isComplete ) {
+    this.confirm( this.img.naturalWidth !== 0, 'naturalWidth' );
+    this.unbindEvents();
+  }
+};
+
+Background.prototype.unbindEvents = function() {
+  this.img.removeEventListener( 'load', this );
+  this.img.removeEventListener( 'error', this );
+};
+
+Background.prototype.confirm = function( isLoaded, message ) {
+  this.isLoaded = isLoaded;
+  this.emitEvent( 'progress', [ this, this.element, message ] );
+};
+
+// -------------------------- jQuery -------------------------- //
+
+ImagesLoaded.makeJQueryPlugin = function( jQuery ) {
+  jQuery = jQuery || window.jQuery;
+  if ( !jQuery ) return;
+
+  // set local variable
+  $ = jQuery;
+  // $().imagesLoaded()
+  $.fn.imagesLoaded = function( options, onAlways ) {
+    let instance = new ImagesLoaded( this, options, onAlways );
+    return instance.jqDeferred.promise( $( this ) );
+  };
+};
+// try making plugin
+ImagesLoaded.makeJQueryPlugin();
+
+// --------------------------  -------------------------- //
+
+return ImagesLoaded;
+
+} );
+
+
+/***/ }),
+
+/***/ "./node_modules/touchsweep/dist/touchsweep.js":
+/*!****************************************************!*\
+  !*** ./node_modules/touchsweep/dist/touchsweep.js ***!
+  \****************************************************/
+/***/ (function(__unused_webpack_module, exports) {
+
+(function (global, factory) {
+     true ? factory(exports) :
+    0;
+})(this, (function (exports) { 'use strict';
+
+    /******************************************************************************
+    Copyright (c) Microsoft Corporation.
+
+    Permission to use, copy, modify, and/or distribute this software for any
+    purpose with or without fee is hereby granted.
+
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+    REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+    AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+    INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+    OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+    PERFORMANCE OF THIS SOFTWARE.
+    ***************************************************************************** */
+    /* global Reflect, Promise, SuppressedError, Symbol */
+
+
+    var __assign = function() {
+        __assign = Object.assign || function __assign(t) {
+            for (var s, i = 1, n = arguments.length; i < n; i++) {
+                s = arguments[i];
+                for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+            }
+            return t;
+        };
+        return __assign.apply(this, arguments);
+    };
+
+    typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+        var e = new Error(message);
+        return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+    };
+
+    exports.TouchSwipeEventType = void 0;
+    (function (TouchSwipeEventType) {
+        TouchSwipeEventType["up"] = "swipeup";
+        TouchSwipeEventType["tap"] = "tap";
+        TouchSwipeEventType["down"] = "swipedown";
+        TouchSwipeEventType["move"] = "swipemove";
+        TouchSwipeEventType["left"] = "swipeleft";
+        TouchSwipeEventType["right"] = "swiperight";
+    })(exports.TouchSwipeEventType || (exports.TouchSwipeEventType = {}));
+    var defaultCoordinates = {
+        endX: 0,
+        endY: 0,
+        moveX: 0,
+        moveY: 0,
+        startX: 0,
+        startY: 0
+    };
+    var TouchSweep = /** @class */ (function () {
+        function TouchSweep(element, data, threshold) {
+            if (element === void 0) { element = document.body; }
+            if (data === void 0) { data = {}; }
+            if (threshold === void 0) { threshold = 40; }
+            this.element = element;
+            this.eventData = data;
+            this.threshold = threshold;
+            this.coords = defaultCoordinates;
+            this.isMoving = false;
+            this.moveCoords = { x: 0, y: 0 };
+            this.onStart = this.onStart.bind(this);
+            this.onMove = this.onMove.bind(this);
+            this.onEnd = this.onEnd.bind(this);
+            this.bind();
+            return this; //NOSONAR
+        }
+        TouchSweep.prototype.bind = function () {
+            var element = this.element;
+            element.addEventListener('touchstart', this.onStart, { passive: true });
+            element.addEventListener('touchmove', this.onMove, { passive: true });
+            element.addEventListener('touchend', this.onEnd, { passive: true });
+            element.addEventListener('mousedown', this.onStart, { passive: true });
+            element.addEventListener('mousemove', this.onMove, { passive: true });
+            element.addEventListener('mouseup', this.onEnd, { passive: true });
+        };
+        TouchSweep.prototype.unbind = function () {
+            var element = this.element;
+            // https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener#matching_event_listeners_for_removal
+            element.removeEventListener('touchstart', this.onStart, false);
+            element.removeEventListener('touchmove', this.onMove, false);
+            element.removeEventListener('touchend', this.onEnd, false);
+            element.removeEventListener('mousedown', this.onStart, false);
+            element.removeEventListener('mousemove', this.onMove, false);
+            element.removeEventListener('mouseup', this.onEnd, false);
+        };
+        TouchSweep.prototype.getCoords = function (event) {
+            var result = this.moveCoords;
+            var isMouseEvent = 'pageX' in event;
+            result.x = isMouseEvent ? event.pageX : event.changedTouches[0].screenX;
+            result.y = isMouseEvent ? event.pageY : event.changedTouches[0].screenY;
+            return result;
+        };
+        TouchSweep.prototype.resetCoords = function () {
+            this.coords = defaultCoordinates;
+        };
+        // prettier-ignore
+        TouchSweep.prototype.getEndEventName = function () {
+            var threshold = this.threshold;
+            var _a = this.coords, startX = _a.startX, startY = _a.startY, endX = _a.endX, endY = _a.endY;
+            var distanceX = Math.abs(endX - startX);
+            var distanceY = Math.abs(endY - startY);
+            var isSwipeX = distanceX > distanceY;
+            if (isSwipeX) {
+                if (endX < startX && distanceX > threshold) {
+                    return exports.TouchSwipeEventType.left;
+                }
+                if (endX > startX && distanceX > threshold) {
+                    return exports.TouchSwipeEventType.right;
+                }
+            }
+            else {
+                if (endY < startY && distanceY > threshold) {
+                    return exports.TouchSwipeEventType.up;
+                }
+                if (endY > startY && distanceY > threshold) {
+                    return exports.TouchSwipeEventType.down;
+                }
+            }
+            if (endY === startY && endX === startX) {
+                return exports.TouchSwipeEventType.tap;
+            }
+            return '';
+        };
+        TouchSweep.prototype.dispatchEvent = function (type) {
+            var event = new CustomEvent(type, {
+                detail: __assign(__assign({}, this.eventData), { coords: this.coords })
+            });
+            this.element.dispatchEvent(event);
+        };
+        TouchSweep.prototype.dispatchEnd = function () {
+            var eventName = this.getEndEventName();
+            if (!eventName) {
+                return;
+            }
+            this.dispatchEvent(eventName);
+        };
+        TouchSweep.prototype.onStart = function (event) {
+            var _a = this.getCoords(event), x = _a.x, y = _a.y;
+            this.isMoving = true;
+            this.coords.startX = x;
+            this.coords.startY = y;
+        };
+        TouchSweep.prototype.onMove = function (event) {
+            if (!this.isMoving) {
+                return;
+            }
+            var _a = this.getCoords(event), x = _a.x, y = _a.y;
+            this.coords.moveX = x;
+            this.coords.moveY = y;
+            this.dispatchEvent(exports.TouchSwipeEventType.move);
+        };
+        TouchSweep.prototype.onEnd = function (event) {
+            var _a = this.getCoords(event), x = _a.x, y = _a.y;
+            this.isMoving = false;
+            this.coords.endX = x;
+            this.coords.endY = y;
+            this.dispatchEnd();
+            this.resetCoords();
+        };
+        return TouchSweep;
+    }());
+
+    exports.default = TouchSweep;
+
+    Object.defineProperty(exports, '__esModule', { value: true });
+
+}));
+//# sourceMappingURL=touchsweep.js.map
+
+
+/***/ })
+
+}]);
+//# sourceMappingURL=vendor.bundle.js.map

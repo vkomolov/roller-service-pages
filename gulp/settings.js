@@ -7,7 +7,7 @@ import cssnano from 'cssnano';
 import discardUnused from 'postcss-discard-unused';
 import normalizeWhitespace from 'postcss-normalize-whitespace';
 import sortMediaQueries from 'postcss-sort-media-queries';
-import TerserPlugin from 'terser-webpack-plugin';
+//import TerserPlugin from 'terser-webpack-plugin';
 import { fileEntries, robotsParams } from './paths.js';
 import { getPageData } from './utilFuncs.js';
 

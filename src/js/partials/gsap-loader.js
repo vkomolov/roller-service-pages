@@ -94,7 +94,6 @@ export async function getGSAP() {
 
 
 
-
 // ============================================
 // ANIMATION CACHE API
 // ============================================
@@ -113,6 +112,16 @@ export function registerAnimation(key, animation) {
 	if (typeof key === "string" && !key) {
 		throw new TypeError(`[registerAnimation]: the given key: ${key} has no length: ${key.length}`);
 	}
+
+	//testing registered animations...
+	if (isRegisteredAnimation(key)) {
+		console.count(
+			"Animation is already registered:",
+		);
+		console.log(key, "key: ");
+		console.log(animation, "animation: ");
+	}
+
 
 	if (typeof key === "string") {
 		namedAnimations.set(key, animation);
@@ -134,6 +143,20 @@ export function getAnimation(key) {
 	}
 
 	return elementAnimations.get(key);
+}
+
+/**
+ * Returns a registered animation.
+ *
+ * @param {TAnimationKey} key - Animation name or DOM element.
+ * @returns {boolean}
+ */
+export function isRegisteredAnimation(key) {
+	if (typeof key === "string") {
+		return namedAnimations.has(key);
+	}
+
+	return elementAnimations.has(key);
 }
 
 

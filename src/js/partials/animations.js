@@ -294,7 +294,6 @@ import { burgerNavTimelineParams, heroTimelineParams } from "./animationParams.j
  * @typedef {TSingleTimelineParams | TGroupTimelineParams | TEachTimelineParams} TTimelineParams
  */
 
-
 /// UTILITY FUNCTIONS ///
 
 /**
@@ -1929,7 +1928,6 @@ function addFromToStep(
  * @returns {Promise<void>}
  */
 export async function initAnimations() {
-
 	const gsapAll = await getGSAP();
 
 	if (!gsapAll) {
@@ -1984,11 +1982,11 @@ export async function initAnimations() {
 			);
 
 			//initializing burger handlers, build and register animation timeline...
-			initBurgerMenu(
+/*			initBurgerMenu(
 				gsap,
 				navMenuSelectorsData,
 				burgerNavTimelineParams
-			);
+			);*/
 
 
 	/*		buildParallax(gsap, SELECTORS.servicesParallaxBg, SELECTORS.servicesParallax);
@@ -2413,7 +2411,7 @@ function createPageNameSet(anchors) {
  * @returns {TTimeline}
  */
 function buildHeroTimeline(gsap, key, params) {
-//Есть ли смысл создавать функцию, которая возвращает выполнение иной функции?
+
 	return buildGroupTimeline(gsap, key, params);
 }
 

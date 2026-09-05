@@ -51,15 +51,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ------------------------------------------
     // Navigation & Language (non-GSAP, immediate)
     // ------------------------------------------
-    //activateNavLink(navLinkParams);
-    //activateNavLink(navLinkParamsHexagon);
+    activateNavLink(navLinkParams);
+    activateNavLink(navLinkParamsHexagon);
 
     //initializing GSAP animations...
     await initAnimations();
 
 
     //initializing language switcher...
-    //initLangSwitcher(langSwitchData);
+    initLangSwitcher(langSwitchData);
 
 
     //await initThumbs(gallerySelector, galleryThumbsFolderName);
