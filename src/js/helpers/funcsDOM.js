@@ -540,6 +540,40 @@ export function checkHtmlElement(element) {
 	return true;
 }
 
+/**
+ * Determines whether the search context can be used as a fallback target.
+ *
+ * The context is eligible only when:
+ *
+ * - `includeContextSelector` is enabled;
+ * - the context is an Element;
+ * - the context itself matches the requested selector.
+ *
+ * @param {Document | Element} context
+ * DOM context used for the selector search.
+ *
+ * @param {string} targetSelector
+ * CSS selector used to resolve the target.
+ *
+ * @param {boolean} includeContextSelector
+ * Whether the context Element may be used as a fallback target.
+ *
+ * @returns {boolean}
+ * `true` when the context can be used as a fallback target;
+ * otherwise, `false`.
+ */
+export function canUseContextAsTarget(
+	context,
+	targetSelector,
+	includeContextSelector,
+) {
+	return (
+		includeContextSelector &&
+		context instanceof Element &&
+		context.matches(targetSelector)
+	);
+}
+
 
 /**
  * Finds an element in the DOM, checks its existence, and types it for JSDoc/TS.
@@ -579,93 +613,119 @@ export function getDOMElement(selector, context = document) {
 /**
  * Returns DOM element(s) matching the specified CSS selector.
  *
- * Searches within the provided context and logs an initialization error
- * when no matching elements are found.
+ * The selector is first resolved against descendants of the provided
+ * context. The context Element itself is considered only when no
+ * matching descendants are found.
  *
- * The generic type `T` describes the expected element type at the call site.
- * Runtime type validation is intentionally not performed by this function.
+ * When `includeContextSelector` is enabled and the context Element
+ * matches the requested selector, the context is returned as a fallback
+ * target.
+ *
+ * This allows a Timeline root to be used as a step target without
+ * changing the default meaning of selector resolution: step targets
+ * are resolved inside the provided context whenever matching Elements
+ * exist there.
+ *
+ * The generic type `T` describes the expected Element type at the
+ * call site. Runtime type validation is intentionally not performed
+ * by this function.
  *
  * @template {Element} T
  *
  * @param {string} selector
- * CSS selector used to find the element(s).
+ * CSS selector used to resolve the target Element(s).
  *
- * @param {Document | Element | DocumentFragment} [context=document]
+ * @param {Document | Element} [context=document]
  * DOM context in which the selector should be searched.
  *
  * @param {boolean} [multiple=true]
- * Whether to return all matching elements.
- * When `false`, only the first matching element is returned.
+ * Whether to return all matching descendants.
+ * When `false`, only the first matching descendant is returned.
+ *
+ * @param {boolean} [includeContextAsTarget=false]
+ * Whether the context Element may be used as a fallback target
+ * when no matching descendants are found.
  *
  * @returns {T[]}
- * Array containing the matched element(s).
- * Returns an empty array when no matching element is found.
+ * Array containing the resolved Element(s).
+ * Returns an empty array when neither matching descendants nor
+ * a matching context Element can be resolved.
  *
  * @example
- * ..@type {HTMLButtonElement[]}
+ * type {HTMLButtonElement[]}
  * const buttons = getElements(".button");
  *
  * @example
- * ..@type {HTMLElement[]}
- * const header = getElements("#header", document, false);
+ * type {HTMLElement[]}
+ * const header = getElements(
+ *   "#header",
+ *   document,
+ *   false,
+ * );
  *
  * @example
- * You may also grab alone Element with multiple selection, but recommended to use multiple: false
- * ..@type {HTMLButtonElement[]}
- * const [button] = getElements(".button", modal);
+ * type {HTMLElement[]}
+ * const targets = getElements(
+ *   ".card",
+ *   cardRoot,
+ *   true,
+ *   true,
+ * );
  */
 export function getElements(
 	selector,
 	context = document,
-	multiple = true
+	multiple = true,
+	includeContextAsTarget = false,
 ) {
-	if (multiple) {
-		/**
-		 * `querySelectorAll()` returns a NodeListOf<Element>.
-		 *
-		 * The generic type `T` cannot be inferred from the CSS selector,
-		 * therefore the cast documents the expected type declared by the caller.
-		 */
-		const elements = /** @type {T[]} */ (
+	const targets = multiple
+		? /** @type {T[]} */ (
 			[...context.querySelectorAll(selector)]
+		)
+		: (() => {
+			const target = context.querySelector(selector);
+
+			return target
+				? [/** @type {T} */ (target)]
+				: [];
+		})();
+
+	/*
+	 * Prefer matching descendants over the context itself.
+	 *
+	 * The context is considered only when the selector produced
+	 * no descendant targets.
+	 */
+	if (
+		!targets.length &&
+		canUseContextAsTarget(
+			context,
+			selector,
+			includeContextAsTarget,
+		) && context instanceof Element
+	) {
+		console.log(`using canUseContextAsTarget with context: ${context.className}`);
+
+		targets.push(
+			/** @type {T} */ (context),
 		);
-
-		if (!elements.length) {
-			logInitError({
-				component: "getElements",
-				message: `No elements matched selector "${selector}". Array is empty.`,
-				details: {
-					context: context.constructor.name,
-					multiple: true,
-				},
-			});
-		}
-
-		return elements;
 	}
 
-	const element = context.querySelector(selector);
-
-	if (!element) {
+	if (!targets.length) {
 		logInitError({
 			component: "getElements",
-			message: `Element with selector "${selector}" was not found in the DOM.`,
+			message:
+				`Element with selector "${selector}" ` +
+				"was not found in DOM.",
 			details: {
 				context: context.constructor.name,
-				multiple: false,
+				multiple,
+				includeContextAsTarget,
 			},
 		});
-
-		return [];
 	}
 
-	/**
-	 * `querySelector()` returns Element | null.
-	 *
-	 * The runtime check above guarantees that `element` is not null.
-	 * The generic cast describes the element type expected by the caller.
-	 */
-	return [/** @type {T} */ (element)];
+	return targets;
 }
 
 /**
@@ -684,7 +744,7 @@ export function getElements(
  * @param {TDOMSelectorConfig[]} selectors
  * List of DOM selector configurations.
  *
- * @param {Document | Element | DocumentFragment} [context=document]
+ * @param {Document | Element} [context=document]
  * DOM context in which all selectors should be searched.
  *
  * @returns {Record<string, Element | Element[]>}
@@ -1141,8 +1201,15 @@ export async function createMasonry(containerSelector, params = {}) {
 		return imageItems;
 	}
 	catch (error) {
-		console.error('[createMasonry]:', error.message);
-		throw error; // Re-throw to allow caller to handle it
+		// whether `error` is an actual error object
+		if (error instanceof Error) {
+			console.error('[createMasonry]:', error.message);
+		} else {
+			console.error('[createMasonry]: Unknown error', error);
+		}
+
+		// Re-throw to allow caller to handle
+		throw error;
 	}
 }
 
@@ -1298,7 +1365,10 @@ function getLangClickHandler (dataSetKey, langActive) {
 		}
 
 		const clickedLang = getClickedLanguage(eTarget, dataSetKey);
+
 		if (!clickedLang) return;
+
+		console.log("clickedLang:", clickedLang);
 
 		redirectToLanguage(langActive, clickedLang);
 	}
@@ -1366,6 +1436,7 @@ function getClickedLanguage(eTarget, dataSetKey) {
  */
 function toggleAriaExpanded(element) {
 	const expanded = element.ariaExpanded === "true";
+
 	element.ariaExpanded = `${!expanded}`;
 }
 
@@ -1378,6 +1449,7 @@ function toggleAriaExpanded(element) {
  */
 function toggleAriaExpandedMenu(event) {
 	//checking HTMLElement type of event.currentTarget
+
 	if (!checkEventCurrentTarget(event)) return;
 	const curTarget = event.currentTarget;
 	toggleAriaExpanded(curTarget);
@@ -1514,6 +1586,7 @@ export function initLangSwitcher(params) {
 	const [langSwitcher] = getElements(
 		langSwitcherSelector
 	);
+
 	//all error logging is in the level of {@link getElements} and {@link checkHtmlElement}
 	if (!langSwitcher || !checkHtmlElement(langSwitcher)) return;
 
@@ -1537,6 +1610,7 @@ export function initLangSwitcher(params) {
 		});
 		return;
 	}
+
 	//forming the list of not active languages...
 	const langVerArr = langOptionArr.filter(lang => lang !== langActive);
 

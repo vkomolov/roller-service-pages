@@ -138,51 +138,42 @@
   position: relative;
   width: fit-content;
   height: fit-content;
+  display: flex;
+  align-items: center;
+  padding: 6px 6px 0;
+  margin-bottom: 6px;
+}
 
-/*  &:hover {
-    #lang-list {
-      transform: translateY(0);
-    }
+.lang-switcher__current[aria-expanded="true"] ~ .lang-switcher__dropdown {
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
 
-    .lang-switcher__dropdown {
-      visibility: visible;
-      pointer-events: auto;
-      transition-delay: 0s; !* Убираем задержку при показе *!
-    }
-  }*/
-
-/*  &:focus-within {
-    #lang-list {
-      transform: translateY(0);
-    }
-
-    .lang-switcher__dropdown {
-      visibility: visible;
-      pointer-events: auto;
-      transition-delay: 0s; !* Убираем задержку при показе *!
-    }
-  }*/
+.lang-switcher__current[aria-expanded="true"] ~ .lang-switcher__dropdown #lang-list {
+  transform: translateY(0);
 }
 
 .lang-switcher__dropdown {
   position: absolute;
-  top: 100%;
+  top: 110%;
   left: 0;
+  padding: 6px;
+
   overflow: hidden;
   visibility: hidden;
-  pointer-events: none; /* Отключаем взаимодействие при скрытии */
-  transition: visibility 0s 0.5s; /* Задержка 0.2s перед скрытием */
+  pointer-events: none;
+
+  transition: visibility 0s 0.5s;
 }
 
-.lang-switcher__current[aria-expanded="false"] ~ .lang-switcher__dropdown {
-  visibility: hidden;
-  pointer-events: none;
-  opacity: 0;
-}
-.lang-switcher__current[aria-expanded="true"] ~ .lang-switcher__dropdown {
-  visibility: visible;
-  pointer-events: auto;
-  opacity: 1;
+#lang-list {
+  @include mix.flex-box(column, flex-start, center);
+
+  gap: 0.6rem;
+
+  transform: translateY(-130%);
+  transition: transform 0.3s cubic-bezier(.26,-0.05,.46,1.58);
 }
 
 .lang-switcher__button {
@@ -193,23 +184,17 @@
   color: $white;
   cursor: pointer;
   font-weight: 700;
+  padding: 6px;
   transition: transform 0.2s ease-in-out, background-color 0.2s ease;
 
-  &:not(.active):is(:hover, :focus-visible) {
-    background-color: $color-01-darken;
-    transform: translateY(-3px);
+  &:is(:hover, :focus-visible) {
+    //background-color: $color-01-darken;
+    transform: scale(1.1);
   }
 
   &.active {
     background-color: $color-01;
   }
-}
-
-#lang-list {
-  @include mix.flex-box(column, flex-start, center);
-  gap: 0.6rem;
-  transform: translateY(-100%);
-  transition: transform 0.3s ease-in-out;
 }
 
 .lang-switcher__item {

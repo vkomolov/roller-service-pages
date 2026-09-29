@@ -554,33 +554,46 @@
 		}
 
 		#lang-switcher {
+			align-items: center;
+			display: flex;
 			height: -moz-fit-content;
 			height: fit-content;
+			margin-bottom: 6px;
+			padding: 6px 6px 0;
 			position: relative;
 			width: -moz-fit-content;
 			width: fit-content;
 		}
 
+		.lang-switcher__current[aria-expanded=true]~.lang-switcher__dropdown {
+			pointer-events: auto;
+			transition-delay: 0s;
+			visibility: visible;
+		}
+
+		.lang-switcher__current[aria-expanded=true]~.lang-switcher__dropdown #lang-list {
+			transform: translateY(0);
+		}
+
 		.lang-switcher__dropdown {
 			left: 0;
 			overflow: hidden;
+			padding: 6px;
 			pointer-events: none;
 			position: absolute;
-			top: 100%;
+			top: 110%;
 			transition: visibility 0s .5s;
 			visibility: hidden;
 		}
 
-		.lang-switcher__current[aria-expanded=false]~.lang-switcher__dropdown {
-			opacity: 0;
-			pointer-events: none;
-			visibility: hidden;
-		}
-
-		.lang-switcher__current[aria-expanded=true]~.lang-switcher__dropdown {
-			opacity: 1;
-			pointer-events: auto;
-			visibility: visible;
+		#lang-list {
+			align-items: center;
+			display: flex;
+			flex-flow: column wrap;
+			gap: .6rem;
+			justify-content: flex-start;
+			transform: translateY(-130%);
+			transition: transform .3s cubic-bezier(.26, -.05, .46, 1.58);
 		}
 
 		.lang-switcher__button {
@@ -590,34 +603,22 @@
 			cursor: pointer;
 			font-weight: 700;
 			height: 2rem;
+			padding: 6px;
 			transition: transform .2s ease-in-out, background-color .2s ease;
 			width: 2rem;
 		}
 
-		.lang-switcher__button:not(.active):is(:hover, :focus-visible) {
-			background-color: #cc5200;
-			transform: translateY(-3px);
+		.lang-switcher__button:is(:hover, :focus-visible) {
+			transform: scale(1.1);
 		}
 
 		.lang-switcher__button.active {
 			background-color: #ff8502;
 		}
 
-		#lang-list {
-			flex-flow: column wrap;
-			gap: .6rem;
-			justify-content: flex-start;
-			transform: translateY(-100%);
-			transition: transform .3s ease-in-out;
-		}
-
-		#lang-list,
 		.header__nav {
 			align-items: center;
 			display: flex;
-		}
-
-		.header__nav {
 			flex-flow: row wrap;
 			justify-content: flex-end;
 			width: 100%;

@@ -1,10 +1,12 @@
 @use "./global_styles/root" as root;
 @use "../js/modulesPack/gallery-thumbs/scss/gallery-thumbs.scss";
 @use "./partials/footer";
+@use "./partials/header"; //!!TODO: to dynamically override inline styles... TO DELETE FROM HERE
 
 
 /////// STYLES ////////
-/*** critical styles are written inline ***/
+/*** critical styles are written inline... ***/
+/////
 
 .bg-darker {
   background-color: root.$color-13;

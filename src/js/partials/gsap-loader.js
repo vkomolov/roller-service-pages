@@ -105,6 +105,10 @@ export async function getGSAP() {
  * @returns {void}
  */
 export function registerAnimation(key, animation) {
+	if (isRegisteredAnimation(key)) {
+		throw new Error(`[registerAnimation]: the given key ${key} is already registered by another timeline`);
+	}
+
 	if (typeof key !== "string" && !(key instanceof Element)) {
 		throw TypeError(`[registerAnimation]: the given key must be string or Element... given key: ${key}`);
 	}
@@ -112,16 +116,6 @@ export function registerAnimation(key, animation) {
 	if (typeof key === "string" && !key) {
 		throw new TypeError(`[registerAnimation]: the given key: ${key} has no length: ${key.length}`);
 	}
-
-	//testing registered animations...
-	if (isRegisteredAnimation(key)) {
-		console.count(
-			"Animation is already registered:",
-		);
-		console.log(key, "key: ");
-		console.log(animation, "animation: ");
-	}
-
 
 	if (typeof key === "string") {
 		namedAnimations.set(key, animation);

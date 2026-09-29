@@ -234,6 +234,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   activateNavLink: function() { return /* binding */ activateNavLink; },
 /* harmony export */   attachModalListeners: function() { return /* binding */ attachModalListeners; },
 /* harmony export */   calculateNavIndex: function() { return /* binding */ calculateNavIndex; },
+/* harmony export */   canUseContextAsTarget: function() { return /* binding */ canUseContextAsTarget; },
 /* harmony export */   checkEventCurrentTarget: function() { return /* binding */ checkEventCurrentTarget; },
 /* harmony export */   checkHtmlElement: function() { return /* binding */ checkHtmlElement; },
 /* harmony export */   cleanupModal: function() { return /* binding */ cleanupModal; },
@@ -750,6 +751,32 @@ function checkHtmlElement(element) {
 }
 
 /**
+ * Determines whether the search context can be used as a fallback target.
+ *
+ * The context is eligible only when:
+ *
+ * - `includeContextSelector` is enabled;
+ * - the context is an Element;
+ * - the context itself matches the requested selector.
+ *
+ * @param {Document | Element} context
+ * DOM context used for the selector search.
+ *
+ * @param {string} targetSelector
+ * CSS selector used to resolve the target.
+ *
+ * @param {boolean} includeContextSelector
+ * Whether the context Element may be used as a fallback target.
+ *
+ * @returns {boolean}
+ * `true` when the context can be used as a fallback target;
+ * otherwise, `false`.
+ */
+function canUseContextAsTarget(context, targetSelector, includeContextSelector) {
+  return includeContextSelector && context instanceof Element && context.matches(targetSelector);
+}
+
+/**
  * Finds an element in the DOM, checks its existence, and types it for JSDoc/TS.
  * If the element is not found, logs an error.
  *
@@ -788,83 +815,94 @@ function getDOMElement(selector, context = document) {
 /**
  * Returns DOM element(s) matching the specified CSS selector.
  *
- * Searches within the provided context and logs an initialization error
- * when no matching elements are found.
+ * The selector is first resolved against descendants of the provided
+ * context. The context Element itself is considered only when no
+ * matching descendants are found.
  *
- * The generic type `T` describes the expected element type at the call site.
- * Runtime type validation is intentionally not performed by this function.
+ * When `includeContextSelector` is enabled and the context Element
+ * matches the requested selector, the context is returned as a fallback
+ * target.
+ *
+ * This allows a Timeline root to be used as a step target without
+ * changing the default meaning of selector resolution: step targets
+ * are resolved inside the provided context whenever matching Elements
+ * exist there.
+ *
+ * The generic type `T` describes the expected Element type at the
+ * call site. Runtime type validation is intentionally not performed
+ * by this function.
  *
  * @template {Element} T
  *
  * @param {string} selector
- * CSS selector used to find the element(s).
+ * CSS selector used to resolve the target Element(s).
  *
- * @param {Document | Element | DocumentFragment} [context=document]
+ * @param {Document | Element} [context=document]
  * DOM context in which the selector should be searched.
  *
  * @param {boolean} [multiple=true]
- * Whether to return all matching elements.
- * When `false`, only the first matching element is returned.
+ * Whether to return all matching descendants.
+ * When `false`, only the first matching descendant is returned.
+ *
+ * @param {boolean} [includeContextAsTarget=false]
+ * Whether the context Element may be used as a fallback target
+ * when no matching descendants are found.
  *
  * @returns {T[]}
- * Array containing the matched element(s).
- * Returns an empty array when no matching element is found.
+ * Array containing the resolved Element(s).
+ * Returns an empty array when neither matching descendants nor
+ * a matching context Element can be resolved.
  *
  * @example
- * ..@type {HTMLButtonElement[]}
+ * type {HTMLButtonElement[]}
  * const buttons = getElements(".button");
  *
  * @example
- * ..@type {HTMLElement[]}
- * const header = getElements("#header", document, false);
+ * type {HTMLElement[]}
+ * const header = getElements(
+ *   "#header",
+ *   document,
+ *   false,
+ * );
  *
  * @example
- * You may also grab alone Element with multiple selection, but recommended to use multiple: false
- * ..@type {HTMLButtonElement[]}
- * const [button] = getElements(".button", modal);
+ * type {HTMLElement[]}
+ * const targets = getElements(
+ *   ".card",
+ *   cardRoot,
+ *   true,
+ *   true,
+ * );
  */
-function getElements(selector, context = document, multiple = true) {
-  if (multiple) {
-    /**
-     * `querySelectorAll()` returns a NodeListOf<Element>.
-     *
-     * The generic type `T` cannot be inferred from the CSS selector,
-     * therefore the cast documents the expected type declared by the caller.
-     */
-    const elements = /** @type {T[]} */
-    [...context.querySelectorAll(selector)];
-    if (!elements.length) {
-      logInitError({
-        component: "getElements",
-        message: `No elements matched selector "${selector}". Array is empty.`,
-        details: {
-          context: context.constructor.name,
-          multiple: true
-        }
-      });
-    }
-    return elements;
+function getElements(selector, context = document, multiple = true, includeContextAsTarget = false) {
+  const targets = multiple ? (/** @type {T[]} */
+  [...context.querySelectorAll(selector)]) : (() => {
+    const target = context.querySelector(selector);
+    return target ? [(/** @type {T} */target)] : [];
+  })();
+
+  /*
+   * Prefer matching descendants over the context itself.
+   *
+   * The context is considered only when the selector produced
+   * no descendant targets.
+   */
+  if (!targets.length && canUseContextAsTarget(context, selector, includeContextAsTarget) && context instanceof Element) {
+    console.log(`using canUseContextAsTarget with context: ${context.className}`);
+    targets.push(/** @type {T} */context);
   }
-  const element = context.querySelector(selector);
-  if (!element) {
+  if (!targets.length) {
     logInitError({
       component: "getElements",
-      message: `Element with selector "${selector}" was not found in the DOM.`,
+      message: `Element with selector "${selector}" ` + "was not found in DOM.",
       details: {
         context: context.constructor.name,
-        multiple: false
+        multiple,
+        includeContextAsTarget
       }
     });
-    return [];
   }
-
-  /**
-   * `querySelector()` returns Element | null.
-   *
-   * The runtime check above guarantees that `element` is not null.
-   * The generic cast describes the element type expected by the caller.
-   */
-  return [(/** @type {T} */element)];
+  return targets;
 }
 
 /**
@@ -883,7 +921,7 @@ function getElements(selector, context = document, multiple = true) {
  * @param {TDOMSelectorConfig[]} selectors
  * List of DOM selector configurations.
  *
- * @param {Document | Element | DocumentFragment} [context=document]
+ * @param {Document | Element} [context=document]
  * DOM context in which all selectors should be searched.
  *
  * @returns {Record<string, Element | Element[]>}
@@ -1283,8 +1321,15 @@ async function createMasonry(containerSelector, params = {}) {
     }
     return imageItems;
   } catch (error) {
-    console.error('[createMasonry]:', error.message);
-    throw error; // Re-throw to allow caller to handle it
+    // whether `error` is an actual error object
+    if (error instanceof Error) {
+      console.error('[createMasonry]:', error.message);
+    } else {
+      console.error('[createMasonry]: Unknown error', error);
+    }
+
+    // Re-throw to allow caller to handle
+    throw error;
   }
 }
 
@@ -1425,6 +1470,7 @@ function getLangClickHandler(dataSetKey, langActive) {
     }
     const clickedLang = getClickedLanguage(eTarget, dataSetKey);
     if (!clickedLang) return;
+    console.log("clickedLang:", clickedLang);
     redirectToLanguage(langActive, clickedLang);
   };
 }
@@ -1491,6 +1537,7 @@ function toggleAriaExpanded(element) {
  */
 function toggleAriaExpandedMenu(event) {
   //checking HTMLElement type of event.currentTarget
+
   if (!checkEventCurrentTarget(event)) return;
   const curTarget = event.currentTarget;
   toggleAriaExpanded(curTarget);
@@ -1601,6 +1648,7 @@ function initLangSwitcher(params) {
     dataSetKey
   } = params;
   const [langSwitcher] = getElements(langSwitcherSelector);
+
   //all error logging is in the level of {@link getElements} and {@link checkHtmlElement}
   if (!langSwitcher || !checkHtmlElement(langSwitcher)) return;
   const [langCurrentButton] = getElements(`${langSwitcherCurrent}${langActiveSelector}`);
@@ -1621,6 +1669,7 @@ function initLangSwitcher(params) {
     });
     return;
   }
+
   //forming the list of not active languages...
   const langVerArr = langOptionArr.filter(lang => lang !== langActive);
   const [langList] = getElements(langListSelector, langSwitcher);
@@ -2469,8 +2518,15 @@ function delay(ms) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   automationParallaxTimelineParams: function() { return /* binding */ automationParallaxTimelineParams; },
 /* harmony export */   burgerNavTimelineParams: function() { return /* binding */ burgerNavTimelineParams; },
-/* harmony export */   heroTimelineParams: function() { return /* binding */ heroTimelineParams; }
+/* harmony export */   fadeInLeftTimelineParams: function() { return /* binding */ fadeInLeftTimelineParams; },
+/* harmony export */   fadeInRightTimelineParams: function() { return /* binding */ fadeInRightTimelineParams; },
+/* harmony export */   fadeInUpTimelineParams: function() { return /* binding */ fadeInUpTimelineParams; },
+/* harmony export */   heroTimelineParams: function() { return /* binding */ heroTimelineParams; },
+/* harmony export */   scaleInTimelineParams: function() { return /* binding */ scaleInTimelineParams; },
+/* harmony export */   scrolledNavTimelineParams: function() { return /* binding */ scrolledNavTimelineParams; },
+/* harmony export */   servicesParallaxTimelineParams: function() { return /* binding */ servicesParallaxTimelineParams; }
 /* harmony export */ });
 /* harmony import */ var _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./initialSelectors.js */ "./src/js/partials/initialSelectors.js");
 
@@ -2488,13 +2544,12 @@ __webpack_require__.r(__webpack_exports__);
  *
  * Generic GSAP vars object.
  *
- * `Record<string, any>` is intentionally used here because this
- * configuration represents generic GSAP vars and may contain
- * properties provided by GSAP core, plugins, or ScrollTrigger.
+ * `Record<string, any>` is intentionally used at this abstraction layer
+ * because animation configuration may contain properties provided by
+ * GSAP core, plugins, or ScrollTrigger.
  *
- * The type is kept generic at this abstraction layer instead of
- * coupling the application-specific animation configuration to
- * every possible GSAP plugin type.
+ * Keeping this type generic prevents the animation builder API from being
+ * coupled to every possible GSAP plugin configuration.
  *
  * @typedef {Record<string, any>} TGsapVars
  */
@@ -2520,7 +2575,7 @@ __webpack_require__.r(__webpack_exports__);
  *
  * Common GSAP animation type.
  *
- * This includes both Tween and Timeline instances.
+ * Includes both Tween and Timeline instances.
  *
  * @typedef {gsap.core.Animation} TAnimation
  */
@@ -2528,13 +2583,13 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * TAnimationKey
  *
- * Cache key used to identify a registered animation.
+ * Cache identity used to register a GSAP animation.
  *
- * Element keys are used when the animation belongs to a concrete
- * DOM Element.
+ * String keys are used for named application-level animations,
+ * such as shared group Timelines.
  *
- * String keys are used for application-level animations such as
- * grouped animations.
+ * Element keys are used when an animation belongs to a concrete
+ * DOM Element, such as a single root or an individual `each` scope.
  *
  * @typedef {string | Element} TAnimationKey
  */
@@ -2542,17 +2597,16 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * TTargetMode
  *
- * Defines how target Elements are associated with timelines.
+ * Defines how DOM targets are associated with GSAP Timelines.
  *
  * `single`
- *     One primary Element and one Timeline.
+ *     One root Element → one Timeline.
  *
  * `group`
- *     Multiple Elements and one shared Timeline.
+ *     Document → one shared Timeline.
  *
  * `each`
- *     Multiple scope Elements and one independent Timeline
- *     for every scope.
+ *     Multiple scope Elements → one independent Timeline per scope.
  *
  * @typedef {"single" | "group" | "each"} TTargetMode
  */
@@ -2560,18 +2614,24 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * TScrollTriggerParams
  *
- * ScrollTrigger configuration for a single timeline step.
+ * Configuration for a ScrollTrigger attached to a Timeline.
  *
- * `trigger` is optional because the builder may resolve it from
- * the current animation context.
+ * `trigger` defines the Element whose scroll position controls
+ * the Timeline. It is independent from the DOM search root used
+ * to resolve Timeline step targets.
  *
- * The resolution rules are:
+ * Therefore:
  *
- * - Explicit `trigger` has the highest priority.
- * - `single` may use its primary target Element.
- * - `each` may use its current scope Element.
- * - `group` does not have an implicit trigger and therefore
- *   requires an explicit `trigger`.
+ *     root
+ *       ↓
+ *     resolves step targets
+ *
+ *     trigger
+ *       ↓
+ *     controls Timeline playback
+ *
+ * These may refer to the same Element, but one must not be
+ * implicitly inferred from the other.
  *
  * @typedef {{
  *   trigger?: string | Element,
@@ -2583,86 +2643,184 @@ __webpack_require__.r(__webpack_exports__);
  *   markers?: boolean,
  *   scrub?: boolean | number,
  *   pin?: boolean | string | Element,
+ *   invalidateOnRefresh?: boolean,
  * }} TScrollTriggerParams
+ */
+
+/**
+ * TTimelineOperationType
+ *
+ * Supported GSAP Timeline operations.
+ *
+ * @typedef {"set" | "from" | "to" | "fromTo"} TTimelineOperationType
  */
 
 /**
  * TTimelineStep
  *
- * Declarative description of one operation in a GSAP Timeline.
- *
- * The order of objects inside the `steps` array is significant:
- * it defines the order in which operations are added to the
- * Timeline.
+ * Declarative configuration of one operation added to a GSAP Timeline.
  *
  * `target`
- *     CSS selector of the Elements animated by this step.
+ *     CSS selector used to resolve the target Elements within
+ *     the Timeline's search root.
  *
  * `type`
- *     GSAP operation used to build the step.
+ *     GSAP Timeline operation to execute.
  *
  * `vars`
- *     Vars used by `set()`, `from()`, and `to()`, and as the
- *     destination vars for `fromTo()`.
+ *     GSAP vars used by `set()`, `from()`, and `to()`.
+ *     For `fromTo()`, these are the destination vars.
  *
  * `fromVars`
- *     Initial vars used only by `fromTo()`.
+ *     Initial GSAP vars used by `fromTo()`.
  *
  * `position`
  *     GSAP Timeline position parameter.
  *
- * `scrollTrigger`
- *     Optional ScrollTrigger configuration attached to the
- *     current GSAP tween.
+ * ScrollTrigger configuration intentionally does not belong to an
+ * individual step. It is configured at the Timeline level.
  *
  * @typedef {{
  *   target: string,
- *   type: "set" | "from" | "to" | "fromTo",
+ *   type: TTimelineOperationType,
  *   vars?: TGsapVars,
  *   fromVars?: TGsapVars,
  *   position?: string | number,
- *   scrollTrigger?: TScrollTriggerParams,
  * }} TTimelineStep
  */
 
 /**
- * TSingleTimelineParams Configuration for a single-target Timeline.
+ * TTimelineStepVars
+ *
+ * Normalized GSAP vars used internally when adding a Timeline step.
+ *
+ * Unlike `TTimelineStep`, both properties are always present after
+ * normalization.
+ *
+ * `vars` contains the destination or primary vars.
+ *
+ * `fromVars` contains the initial vars used only by `fromTo()`.
+ *
+ * @typedef {{
+ *   vars: TGsapVars,
+ *   fromVars: TGsapVars,
+ * }} TTimelineStepVars
+ */
+
+/**
+ * TBaseTimelineParams
+ *
+ * Common Timeline configuration shared by all target modes.
+ *
+ * `paused`
+ *     Controls the initial playback state of the Timeline.
+ *
+ * `scrollTrigger`
+ *     Optional ScrollTrigger configuration attached to the complete
+ *     Timeline.
+ *
+ * `steps`
+ *     Declarative operations that are added to the Timeline.
+ *
+ * The DOM search root is intentionally not defined here because
+ * different target modes derive their search context differently:
+ *
+ *     single → explicit `root`
+ *     group  → `document`
+ *     each   → each matched `scope` Element
+ *
+ * @typedef {{
+ *   paused?: boolean,
+ *   scrollTrigger?: TScrollTriggerParams,
+ *   steps: TTimelineStep[],
+ * }} TBaseTimelineParams
+ */
+
+/**
+ * TSingleTimelineParams
+ *
+ * Configuration for one independent Timeline.
+ *
+ * `root` is required because a single Timeline must have exactly
+ * one explicit DOM search root.
+ *
+ * The resolved root Element is also used as the default cache
+ * identity when no explicit key is supplied to `buildSingleTimeline()`.
  *
  * @typedef {{
  *   targetMode: "single",
- *   paused?: boolean,
- *   steps: TTimelineStep[],
- * }} TSingleTimelineParams
+ *   root: string,
+ * } & TBaseTimelineParams} TSingleTimelineParams
  */
 
 /**
- * TGroupTimelineParams Configuration for a grouped Timeline.
+ * TGroupTimelineParams
+ *
+ * Configuration for one shared Timeline.
+ *
+ * Group mode resolves all step selectors against the Document.
+ * Therefore, no explicit DOM `root` is required or accepted.
+ *
+ * The Timeline represents the complete group and must therefore
+ * be registered under an explicit string cache key.
  *
  * @typedef {{
  *   targetMode: "group",
- *   paused?: boolean,
- *   steps: TTimelineStep[],
- * }} TGroupTimelineParams
+ * } & TBaseTimelineParams} TGroupTimelineParams
  */
 
 /**
- * TEachTimelineParams Configuration for per-element Timelines.
+ * TEachTimelineParams
+ *
+ * Configuration for independent Timelines created for every Element
+ * matching `scope`.
+ *
+ * `scope` defines the Elements that establish independent Timeline
+ * instances.
+ *
+ * For each matched scope Element:
+ *
+ *     scope Element
+ *         ↓
+ *     DOM search root
+ *         ↓
+ *     one Timeline
+ *         ↓
+ *     scope Element as cache identity
+ *
+ * The scope Element is used as the Timeline search context and
+ * cache identity. ScrollTrigger configuration remains independent
+ * and is not implicitly modified by this type.
  *
  * @typedef {{
  *   targetMode: "each",
  *   scope: string,
- *   paused?: boolean,
- *   steps: TTimelineStep[],
- * }} TEachTimelineParams
+ * } & TBaseTimelineParams} TEachTimelineParams
  */
 
 /**
- * TTimelineParams Complete configuration accepted by buildTimeline().
+ * TTimelineParams
+ *
+ * Discriminated union containing the complete configuration accepted
+ * by the Timeline builder system.
+ *
+ * `targetMode` determines which specialized builder is used:
+ *
+ *     "single" → TSingleTimelineParams
+ *     "group"  → TGroupTimelineParams
+ *     "each"   → TEachTimelineParams
  *
  * @typedef {TSingleTimelineParams | TGroupTimelineParams | TEachTimelineParams} TTimelineParams
  */
 
-///////// FUNCTIONS //////////
+///////// ANIMATION CONFIGURATION //////////
+
+const defaultParallaxScrollTrigger = {
+  start: "top bottom",
+  end: "bottom top",
+  scrub: 1.5,
+  invalidateOnRefresh: true
+};
 
 /**
  * Configuration for the Burger navigation Timeline.
@@ -2670,10 +2828,14 @@ __webpack_require__.r(__webpack_exports__);
  * The Timeline is created in its initial paused state because it is
  * controlled interactively by Burger event handlers.
  *
+ * `root` identifies the navigation Element that provides the DOM
+ * search context for the Timeline steps.
+ *
  * @type {TSingleTimelineParams}
  */
 const burgerNavTimelineParams = {
   targetMode: "single",
+  root: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.navMenuFixed,
   paused: true,
   steps: [{
     target: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.navMenuFixed,
@@ -2687,10 +2849,13 @@ const burgerNavTimelineParams = {
 };
 
 /**
- * Configuration for the Hero section entrance animation Timeline.
+ * Configuration for the Hero section entrance Timeline.
  *
- * The Timeline coordinates multiple independent DOM targets and is
- * therefore configured with `targetMode: "group"`.
+ * The Timeline coordinates multiple independent Hero Elements
+ * through one shared Timeline and is therefore configured with
+ * `targetMode: "group"`.
+ *
+ * Group mode resolves all step selectors against the Document.
  *
  * @type {TGroupTimelineParams}
  */
@@ -2786,6 +2951,281 @@ const heroTimelineParams = {
   }]
 };
 
+/**
+ * Configuration for the Automation section parallax Timeline.
+ *
+ * The section Element is used as the Timeline DOM search root,
+ * while the same selector is explicitly used as the ScrollTrigger
+ * trigger.
+ *
+ * These two settings intentionally remain independent even when
+ * they reference the same Element.
+ *
+ * @type {TSingleTimelineParams}
+ */
+const automationParallaxTimelineParams = {
+  targetMode: "single",
+  root: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.automationParallax,
+  scrollTrigger: {
+    trigger: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.automationParallax,
+    ...defaultParallaxScrollTrigger
+  },
+  steps: [{
+    target: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.automationParallaxBg,
+    type: "fromTo",
+    fromVars: {
+      yPercent: 10
+    },
+    vars: {
+      yPercent: -10,
+      ease: "none"
+    }
+  }]
+};
+
+/**
+ * Configuration for the Services section parallax Timeline.
+ *
+ * The section Element is used as the Timeline DOM search root,
+ * while the same selector is explicitly used as the ScrollTrigger
+ * trigger.
+ *
+ * These two settings intentionally remain independent even when
+ * they reference the same Element.
+ *
+ * @type {TSingleTimelineParams}
+ */
+const servicesParallaxTimelineParams = {
+  targetMode: "single",
+  root: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.servicesParallax,
+  scrollTrigger: {
+    trigger: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.servicesParallax,
+    ...defaultParallaxScrollTrigger
+  },
+  steps: [{
+    target: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.servicesParallaxBg,
+    type: "fromTo",
+    fromVars: {
+      yPercent: 10
+    },
+    vars: {
+      yPercent: -10,
+      ease: "none"
+    }
+  }]
+};
+
+/**
+ * Configuration for independent fade-in-from-left Timelines.
+ *
+ * One Timeline is created for every Element matching `scope`.
+ * Each scope Element becomes:
+ *
+ * - the DOM search root for its Timeline steps;
+ * - the Timeline cache identity;
+ * - the default ScrollTrigger trigger when the trigger selector
+ *   resolves to the scope selector.
+ *
+ * @type {TEachTimelineParams}
+ */
+const fadeInLeftTimelineParams = {
+  targetMode: "each",
+  scope: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.fadeInLeft,
+  scrollTrigger: {
+    //will be used for each scope Element
+    trigger: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.fadeInLeft,
+    start: "top 80%",
+    toggleActions: "play none none reverse",
+    preventOverlaps: true
+  },
+  steps: [{
+    target: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.fadeInLeft,
+    type: "to",
+    vars: {
+      opacity: 1,
+      duration: 0.8,
+      delay: 0.2
+    }
+  }, {
+    target: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.fadeInLeft,
+    type: "from",
+    vars: {
+      x: -60,
+      y: 40,
+      duration: 1,
+      ease: "circ.out"
+    },
+    position: "<"
+  }]
+};
+
+/**
+ * Configuration for independent fade-in-from-right Timelines.
+ *
+ * One Timeline is created for every Element matching `scope`.
+ * Each scope Element becomes:
+ *
+ * - the DOM search root for its Timeline steps;
+ * - the Timeline cache identity;
+ * - the default ScrollTrigger trigger when the trigger selector
+ *   resolves to the scope selector.
+ *
+ * @type {TEachTimelineParams}
+ */
+const fadeInRightTimelineParams = {
+  targetMode: "each",
+  scope: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.fadeInRight,
+  scrollTrigger: {
+    //will be used for each scope Element
+    trigger: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.fadeInRight,
+    start: "top 80%",
+    toggleActions: "play none none reverse",
+    preventOverlaps: true
+  },
+  steps: [{
+    target: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.fadeInRight,
+    type: "to",
+    vars: {
+      opacity: 1,
+      duration: 0.8,
+      delay: 0.2
+    }
+  }, {
+    target: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.fadeInRight,
+    type: "from",
+    vars: {
+      x: 60,
+      y: 40,
+      duration: 1,
+      ease: "circ.out"
+    },
+    position: "<"
+  }]
+};
+
+/**
+ * Configuration for independent scale-in Timelines.
+ *
+ * One Timeline is created for every Element matching `scope`.
+ * Each scope Element becomes:
+ *
+ * - the DOM search root for its Timeline steps;
+ * - the Timeline cache identity;
+ * - the default ScrollTrigger trigger when the trigger selector
+ *   resolves to the scope selector.
+ *
+ * @type {TEachTimelineParams}
+ */
+const scaleInTimelineParams = {
+  targetMode: "each",
+  scope: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.scaleIn,
+  scrollTrigger: {
+    //will be used for each scope Element
+    trigger: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.scaleIn,
+    start: "top 80%",
+    toggleActions: "play none none reverse",
+    preventOverlaps: true
+  },
+  steps: [{
+    target: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.scaleIn,
+    type: "to",
+    vars: {
+      opacity: 1,
+      duration: 0.8
+    }
+  }, {
+    target: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.scaleIn,
+    type: "from",
+    vars: {
+      scale: 0.7,
+      duration: 1.2,
+      ease: "back.out(1)"
+    },
+    position: "<"
+  }]
+};
+
+/**
+ * Configuration for independent fade-in-up Timelines.
+ *
+ * One Timeline is created for every Element matching `scope`.
+ * Each scope Element becomes:
+ *
+ * - the DOM search root for its Timeline steps;
+ * - the Timeline cache identity;
+ * - the default ScrollTrigger trigger when the trigger selector
+ *   resolves to the scope selector.
+ *
+ * @type {TEachTimelineParams}
+ */
+const fadeInUpTimelineParams = {
+  targetMode: "each",
+  scope: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.fadeInUp,
+  scrollTrigger: {
+    //will be used for each scope Element
+    trigger: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.fadeInUp,
+    start: "top 80%",
+    toggleActions: "play none none reverse",
+    preventOverlaps: true
+  },
+  steps: [{
+    target: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.fadeInUp,
+    type: "to",
+    vars: {
+      opacity: 1,
+      duration: 0.8,
+      delay: 0.2
+    }
+  }, {
+    target: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.fadeInUp,
+    type: "from",
+    vars: {
+      y: 40,
+      duration: 1,
+      ease: "circ.out"
+    },
+    position: "<"
+  }]
+};
+
+/**
+ * Configuration for the navigation panel show-on-scroll Timeline.
+ *
+ * The Timeline is triggered when the Benefits section reaches 5% from
+ * the top of the viewport and plays the navigation panel entrance
+ * animation. The animation is reversed when the ScrollTrigger leaves
+ * the active range.
+ *
+ * `root` identifies the navigation panel Element used as the Timeline
+ * DOM search root and animation cache identity.
+ *
+ * The ScrollTrigger trigger is intentionally independent from `root`:
+ * the navigation panel is animated, while the Benefits section controls
+ * when the Timeline is activated.
+ *
+ * @type {TSingleTimelineParams}
+ */
+const scrolledNavTimelineParams = {
+  targetMode: "single",
+  root: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.scrolledNav,
+  scrollTrigger: {
+    trigger: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.benefitsSection,
+    start: "top 5%",
+    toggleActions: "play none none reverse",
+    preventOverlaps: true
+  },
+  steps: [{
+    target: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__.SELECTORS.scrolledNav,
+    type: "to",
+    vars: {
+      top: -10,
+      duration: 0.7,
+      ease: "back.out(1.5)",
+      delay: 0.5
+    }
+  }]
+};
+
 /***/ }),
 
 /***/ "./src/js/partials/animations.js":
@@ -2811,7 +3251,6 @@ __webpack_require__.r(__webpack_exports__);
  * All animations are registered in the global gsap-loader cache so they can
  * be killed individually or in bulk. No local WeakMap is used anymore.
  */
-
 
 
 
@@ -2901,13 +3340,12 @@ __webpack_require__.r(__webpack_exports__);
  *
  * Generic GSAP vars object.
  *
- * `Record<string, any>` is intentionally used here because this
- * configuration represents generic GSAP vars and may contain
- * properties provided by GSAP core, plugins, or ScrollTrigger.
+ * `Record<string, any>` is intentionally used at this abstraction layer
+ * because animation configuration may contain properties provided by
+ * GSAP core, plugins, or ScrollTrigger.
  *
- * The type is kept generic at this abstraction layer instead of
- * coupling the application-specific animation configuration to
- * every possible GSAP plugin type.
+ * Keeping this type generic prevents the animation builder API from being
+ * coupled to every possible GSAP plugin configuration.
  *
  * @typedef {Record<string, any>} TGsapVars
  */
@@ -2933,7 +3371,7 @@ __webpack_require__.r(__webpack_exports__);
  *
  * Common GSAP animation type.
  *
- * This includes both Tween and Timeline instances.
+ * Includes both Tween and Timeline instances.
  *
  * @typedef {gsap.core.Animation} TAnimation
  */
@@ -2941,13 +3379,13 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * TAnimationKey
  *
- * Cache key used to identify a registered animation.
+ * Cache identity used to register a GSAP animation.
  *
- * Element keys are used when the animation belongs to a concrete
- * DOM Element.
+ * String keys are used for named application-level animations,
+ * such as shared group Timelines.
  *
- * String keys are used for application-level animations such as
- * grouped animations.
+ * Element keys are used when an animation belongs to a concrete
+ * DOM Element, such as a single root or an individual `each` scope.
  *
  * @typedef {string | Element} TAnimationKey
  */
@@ -2955,17 +3393,16 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * TTargetMode
  *
- * Defines how target Elements are associated with timelines.
+ * Defines how DOM targets are associated with GSAP Timelines.
  *
  * `single`
- *     One primary Element and one Timeline.
+ *     One root Element → one Timeline.
  *
  * `group`
- *     Multiple Elements and one shared Timeline.
+ *     Document → one shared Timeline.
  *
  * `each`
- *     Multiple scope Elements and one independent Timeline
- *     for every scope.
+ *     Multiple scope Elements → one independent Timeline per scope.
  *
  * @typedef {"single" | "group" | "each"} TTargetMode
  */
@@ -2973,18 +3410,24 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * TScrollTriggerParams
  *
- * ScrollTrigger configuration for a single timeline step.
+ * Configuration for a ScrollTrigger attached to a Timeline.
  *
- * `trigger` is optional because the builder may resolve it from
- * the current animation context.
+ * `trigger` defines the Element whose scroll position controls
+ * the Timeline. It is independent from the DOM search root used
+ * to resolve Timeline step targets.
  *
- * The resolution rules are:
+ * Therefore:
  *
- * - Explicit `trigger` has the highest priority.
- * - `single` may use its primary target Element.
- * - `each` may use its current scope Element.
- * - `group` does not have an implicit trigger and therefore
- *   requires an explicit `trigger`.
+ *     root
+ *       ↓
+ *     resolves step targets
+ *
+ *     trigger
+ *       ↓
+ *     controls Timeline playback
+ *
+ * These may refer to the same Element, but one must not be
+ * implicitly inferred from the other.
  *
  * @typedef {{
  *   trigger?: string | Element,
@@ -2996,81 +3439,172 @@ __webpack_require__.r(__webpack_exports__);
  *   markers?: boolean,
  *   scrub?: boolean | number,
  *   pin?: boolean | string | Element,
+ *   invalidateOnRefresh?: boolean,
  * }} TScrollTriggerParams
+ */
+
+/**
+ * TTimelineOperationType
+ *
+ * Supported GSAP Timeline operations.
+ *
+ * @typedef {"set" | "from" | "to" | "fromTo"} TTimelineOperationType
  */
 
 /**
  * TTimelineStep
  *
- * Declarative description of one operation in a GSAP Timeline.
- *
- * The order of objects inside the `steps` array is significant:
- * it defines the order in which operations are added to the
- * Timeline.
+ * Declarative configuration of one operation added to a GSAP Timeline.
  *
  * `target`
- *     CSS selector of the Elements animated by this step.
+ *     CSS selector used to resolve the target Elements within
+ *     the Timeline's search root.
  *
  * `type`
- *     GSAP operation used to build the step.
+ *     GSAP Timeline operation to execute.
  *
  * `vars`
- *     Vars used by `set()`, `from()`, and `to()`, and as the
- *     destination vars for `fromTo()`.
+ *     GSAP vars used by `set()`, `from()`, and `to()`.
+ *     For `fromTo()`, these are the destination vars.
  *
  * `fromVars`
- *     Initial vars used only by `fromTo()`.
+ *     Initial GSAP vars used by `fromTo()`.
  *
  * `position`
  *     GSAP Timeline position parameter.
  *
- * `scrollTrigger`
- *     Optional ScrollTrigger configuration attached to the
- *     current GSAP tween.
+ * ScrollTrigger configuration intentionally does not belong to an
+ * individual step. It is configured at the Timeline level.
  *
  * @typedef {{
  *   target: string,
- *   type: "set" | "from" | "to" | "fromTo",
+ *   type: TTimelineOperationType,
  *   vars?: TGsapVars,
  *   fromVars?: TGsapVars,
  *   position?: string | number,
- *   scrollTrigger?: TScrollTriggerParams,
  * }} TTimelineStep
  */
 
 /**
- * TSingleTimelineParams Configuration for a single-target Timeline.
+ * TTimelineStepVars
+ *
+ * Normalized GSAP vars used internally when adding a Timeline step.
+ *
+ * Unlike `TTimelineStep`, both properties are always present after
+ * normalization.
+ *
+ * `vars` contains the destination or primary vars.
+ *
+ * `fromVars` contains the initial vars used only by `fromTo()`.
+ *
+ * @typedef {{
+ *   vars: TGsapVars,
+ *   fromVars: TGsapVars,
+ * }} TTimelineStepVars
+ */
+
+/**
+ * TBaseTimelineParams
+ *
+ * Common Timeline configuration shared by all target modes.
+ *
+ * `paused`
+ *     Controls the initial playback state of the Timeline.
+ *
+ * `scrollTrigger`
+ *     Optional ScrollTrigger configuration attached to the complete
+ *     Timeline.
+ *
+ * `steps`
+ *     Declarative operations that are added to the Timeline.
+ *
+ * The DOM search root is intentionally not defined here because
+ * different target modes derive their search context differently:
+ *
+ *     single → explicit `root`
+ *     group  → `document`
+ *     each   → each matched `scope` Element
+ *
+ * @typedef {{
+ *   paused?: boolean,
+ *   scrollTrigger?: TScrollTriggerParams,
+ *   steps: TTimelineStep[],
+ * }} TBaseTimelineParams
+ */
+
+/**
+ * TSingleTimelineParams
+ *
+ * Configuration for one independent Timeline.
+ *
+ * `root` is required because a single Timeline must have exactly
+ * one explicit DOM search root.
+ *
+ * The resolved root Element is also used as the default cache
+ * identity when no explicit key is supplied to `buildSingleTimeline()`.
  *
  * @typedef {{
  *   targetMode: "single",
- *   paused?: boolean,
- *   steps: TTimelineStep[],
- * }} TSingleTimelineParams
+ *   root: string,
+ * } & TBaseTimelineParams} TSingleTimelineParams
  */
 
 /**
- * TGroupTimelineParams Configuration for a grouped Timeline.
+ * TGroupTimelineParams
+ *
+ * Configuration for one shared Timeline.
+ *
+ * Group mode resolves all step selectors against the Document.
+ * Therefore, no explicit DOM `root` is required or accepted.
+ *
+ * The Timeline represents the complete group and must therefore
+ * be registered under an explicit string cache key.
  *
  * @typedef {{
  *   targetMode: "group",
- *   paused?: boolean,
- *   steps: TTimelineStep[],
- * }} TGroupTimelineParams
+ * } & TBaseTimelineParams} TGroupTimelineParams
  */
 
 /**
- * TEachTimelineParams Configuration for per-element Timelines.
+ * TEachTimelineParams
+ *
+ * Configuration for independent Timelines created for every Element
+ * matching `scope`.
+ *
+ * `scope` defines the Elements that establish independent Timeline
+ * instances.
+ *
+ * For each matched scope Element:
+ *
+ *     scope Element
+ *         ↓
+ *     DOM search root
+ *         ↓
+ *     one Timeline
+ *         ↓
+ *     scope Element as cache identity
+ *
+ * The scope Element is used as the Timeline search context and
+ * cache identity. ScrollTrigger configuration remains independent
+ * and is not implicitly modified by this type.
  *
  * @typedef {{
  *   targetMode: "each",
  *   scope: string,
- *   paused?: boolean,
- *   steps: TTimelineStep[],
- * }} TEachTimelineParams
+ * } & TBaseTimelineParams} TEachTimelineParams
  */
 
 /**
- * TTimelineParams Complete configuration accepted by buildTimeline().
+ * TTimelineParams
+ *
+ * Discriminated union containing the complete configuration accepted
+ * by the Timeline builder system.
+ *
+ * `targetMode` determines which specialized builder is used:
+ *
+ *     "single" → TSingleTimelineParams
+ *     "group"  → TGroupTimelineParams
+ *     "each"   → TEachTimelineParams
  *
  * @typedef {TSingleTimelineParams | TGroupTimelineParams | TEachTimelineParams} TTimelineParams
  */
@@ -3087,7 +3621,232 @@ function hasTimelineRealAnimations(timeline) {
   return timeline.getChildren().some(child => child.duration() > 0);
 }
 
-/// SCROLL TIMELINE BUILDERS ///
+/// TIMELINE BUILDERS ///
+
+/**
+ * Validates the steps of a Timeline configuration.
+ *
+ * A Timeline must contain at least one step before it can be built.
+ *
+ * @param {TTimelineStep[]} steps
+ * Timeline steps to validate.
+ *
+ * @param {string} [builderName="Animation Builder"]
+ * Name of the builder used to identify the error source.
+ *
+ * @returns {void}
+ *
+ * @throws {TypeError}
+ * When `steps` is not an Array.
+ *
+ * @throws {Error}
+ * When `steps` is an empty Array.
+ */
+function validateTimelineSteps(steps, builderName = "Animation Builder") {
+  if (!Array.isArray(steps)) {
+    console.error("steps is not an Array", steps);
+    throw new TypeError(`[${builderName}]: steps must be an Array.`);
+  }
+  if (!steps.length) {
+    console.error("steps is an empty Array", steps);
+    throw new Error(`[${builderName}]: steps cannot be empty.`);
+  }
+}
+
+/**
+ * Resolves the unique DOM root Element of a single Timeline.
+ *
+ * The root defines the DOM scope used to resolve all step targets.
+ * It is independent from the Timeline's ScrollTrigger configuration.
+ *
+ * A single Timeline requires exactly one root Element.
+ *
+ * @param {string} rootSelector
+ * CSS selector identifying the Timeline root.
+ *
+ * @returns {Element}
+ * The resolved root Element.
+ *
+ * @throws {Error}
+ * When no Element matches `rootSelector`.
+ *
+ * @throws {Error}
+ * When multiple Elements match `rootSelector`.
+ */
+function resolveSingleTimelineRoot(rootSelector) {
+  const roots = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.getElements)(rootSelector, document, true, false);
+  if (!roots.length) {
+    throw new Error(`[resolveSingleTimelineRoot]: root selector ` + `"${rootSelector}" does not exist in DOM.`);
+  }
+  if (roots.length > 1) {
+    throw new Error(`[resolveSingleTimelineRoot]: root selector ` + `"${rootSelector}" has multiple Elements in DOM, ` + `but exactly one is required.`);
+  }
+  return roots[0];
+}
+
+/**
+ * Normalizes the GSAP vars of a Timeline step.
+ *
+ * The declarative Timeline step configuration allows `vars` and
+ * `fromVars` to be optional. This function converts them into a
+ * stable structure where both properties are always present.
+ *
+ * `vars` is used as:
+ *
+ * - the target vars for `set()`;
+ * - the starting vars for `from()`;
+ * - the destination vars for `to()`;
+ * - the destination vars for `fromTo()`.
+ *
+ * `fromVars` is used only by and with `fromTo()`.
+ *
+ * A `fromVars` object requires `vars` because `fromTo()` needs
+ * both an initial and a destination state.
+ *
+ * @param {TTimelineStep} step
+ * Timeline step configuration.
+ *
+ * @returns {TTimelineStepVars}
+ * Normalized GSAP vars for the Timeline operation.
+ *
+ * @throws {Error}
+ * When `fromVars` is provided without `vars`.
+ *
+ * @throws {Error}
+ * When `vars` is empty.
+ *
+ * @example
+ * // Normalize vars for a regular Timeline operation.
+ * const stepVars = normalizeStepVars({
+ *   target: ".title",
+ *   type: "from",
+ *   vars: {
+ *     opacity: 0,
+ *     y: 40,
+ *   },
+ * });
+ *
+ * @example
+ * // Normalize both initial and destination vars for `fromTo()`.
+ * const stepVars = normalizeStepVars({
+ *   target: ".title",
+ *   type: "fromTo",
+ *   fromVars: {
+ *     opacity: 0,
+ *   },
+ *   vars: {
+ *     opacity: 1,
+ *   },
+ * });
+ */
+function normalizeStepVars(step) {
+  if (step.fromVars && !step.vars) {
+    throw new Error(`[normalizeStepVars]: step.vars is required when ` + `step.fromVars is provided. ` + `Target: "${step.target}".`);
+  }
+  const vars = {
+    ...(step.vars ?? {})
+  };
+  const fromVars = {
+    ...(step.fromVars ?? {})
+  };
+  if (!Object.keys(vars).length) {
+    throw new Error(`[normalizeStepVars]: step.vars cannot be empty. ` + `Target: "${step.target}".`);
+  }
+  return {
+    vars,
+    fromVars
+  };
+}
+
+/**
+ * Adds one configured animation step to a GSAP Timeline.
+ *
+ * The operation is selected from `step.type`.
+ *
+ * This function is intentionally limited to dispatching the step
+ * to the corresponding GSAP Timeline method. Target resolution,
+ * Timeline creation, and ScrollTrigger configuration are handled
+ * by higher-level builders.
+ *
+ * @param {TTimeline} timeline
+ * Existing GSAP Timeline instance.
+ *
+ * @param {Element | Element[]} targets
+ * Resolved Element or collection of Elements to animate.
+ *
+ * @param {TTimelineStep} step
+ * Declarative configuration of the Timeline step.
+ *
+ * @returns {void}
+ *
+ * @throws {TypeError}
+ * When `step.type` is not a supported Timeline operation.
+ */
+function addTimelineStep(timeline, targets, step) {
+  const {
+    vars,
+    fromVars
+  } = normalizeStepVars(step);
+  switch (step.type) {
+    case "set":
+      timeline.set(targets, vars, step.position);
+      break;
+    case "from":
+      timeline.from(targets, vars, step.position);
+      break;
+    case "to":
+      timeline.to(targets, vars, step.position);
+      break;
+    case "fromTo":
+      timeline.fromTo(targets, fromVars, vars, step.position);
+      break;
+    default:
+      throw new TypeError(`[addTimelineStep]: unsupported step type "${step.type}".`);
+  }
+}
+
+/**
+ * Resolves and adds all configured animation steps to a GSAP Timeline.
+ *
+ * Each step target is resolved within the supplied DOM search root.
+ * The resolved Elements are then passed to addTimelineStep(), which
+ * appends the corresponding GSAP operation to the Timeline.
+ *
+ * The function is independent of Timeline mode (`single` or `group`).
+ * The caller determines the appropriate DOM search root:
+ *
+ * - `Document` for group-wide target resolution;
+ * - `Element` for single-root target resolution.
+ *
+ * @param {TTimeline} timeline
+ * GSAP Timeline that receives the animation steps.
+ *
+ * @param {TTimelineStep[]} steps
+ * Declarative animation step configurations.
+ *
+ * @param {Element | Document} searchRoot
+ * DOM root used to resolve step targets.
+ *
+ * @param {boolean} [includeContextAsTarget=true]
+ * it happens that context (parent) Element has the same selector as target in search at steps[N].target
+ * In this case the resulting array of the searched Elements will be unshift with context Element
+ * as the target Element of the timeline
+ *
+ * @returns {void}
+ *
+ * @throws {Error}
+ * When a step target cannot be resolved within `searchRoot`.
+ */
+function addTimelineSteps(timeline, steps, searchRoot, includeContextAsTarget = true) {
+  for (const step of steps) {
+    const targets = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.getElements)(step.target, searchRoot, true, includeContextAsTarget);
+    if (!targets.length) {
+      throw new Error(`[addTimelineSteps]: target "${step.target}" ` + "was not found within the specified search root.");
+    }
+    addTimelineStep(timeline, targets, step);
+  }
+}
+
 /**
  * buildTimeline
  *
@@ -3161,40 +3920,8 @@ function hasTimelineRealAnimations(timeline) {
  *     ],
  *   }
  * );
- *
- * @sample
- * buildTimeline(
- *   gsap,
- *   {
- *     targetMode: "group",
- *     steps: [
- *       {
- *         target: ".gallery-item",
- *         type: "from",
- *         vars: {
- *           opacity: 0,
- *         },
- *         scrollTrigger: {
- *           trigger: ".gallery",
- *           start: "top 80%",
- *         },
- *       },
- *     ],
- *   },
- *   "galleryItems"
- * );
  */
 function buildTimeline(gsap, params, key) {
-  /**
-   * Validate the most basic invariant here as well as inside
-   * specialized builders.
-   *
-   * This makes the public entry point fail early and keeps the
-   * specialized builders independently safe.
-   */
-  if (!params.steps.length) {
-    throw new Error("[buildTimeline]: steps cannot be empty.");
-  }
   switch (params.targetMode) {
     case "single":
       return buildSingleTimeline(gsap, params, key);
@@ -3202,7 +3929,7 @@ function buildTimeline(gsap, params, key) {
       if (!key || typeof key !== "string") {
         throw new TypeError("[buildTimeline]: key as `string` is required " + `for group mode. But received: ${key}`);
       }
-      return buildGroupTimeline(gsap, key, params);
+      return buildGroupTimeline(gsap, params, key);
     case "each":
       return buildEachTimelines(gsap, params);
     default:
@@ -3211,276 +3938,243 @@ function buildTimeline(gsap, params, key) {
 }
 
 /**
- * buildSingleTimeline
+ * Creates a GSAP Timeline with shared timeline-level configuration.
  *
- * Builds one GSAP Timeline for a logical single-target animation.
+ * This function centralizes the common Timeline initialization used by
+ * all timeline builders.
  *
- * The function resolves the primary target from the first Timeline step.
- * The primary target serves as the default cache identity when no explicit
- * `key` is provided.
+ * `paused` controls the initial playback state.
  *
- * The first step therefore establishes the following relationship:
+ * `scrollTrigger`, when provided, is attached to the Timeline itself.
+ * ScrollTrigger is intentionally configured at the Timeline level rather
+ * than on individual child tweens.
  *
- *     params.steps[0].target
- *                ↓
- *          primary target
- *                ↓
- *     default animation key
+ * @param {TGsap} gsap - GSAP instance used to create the Timeline.
+ * @param {TTimelineParams} params - Timeline configuration.
+ * @returns {TTimeline} The newly created GSAP Timeline.
+ */
+function createTimeline(gsap, params) {
+  return gsap.timeline({
+    paused: params.paused ?? false,
+    ...(params.scrollTrigger && {
+      scrollTrigger: params.scrollTrigger
+    })
+  });
+}
+
+/**
+ * Resolves Timeline parameters for a specific DOM context.
  *
- * An explicit `key` overrides this default behavior and may be either:
+ * In `each` mode, when the ScrollTrigger `trigger` explicitly matches
+ * the configured `scope`, the selector is resolved to the current
+ * scope Element.
  *
- * - a DOM Element, for Element-based animation caching;
- * - a string, for a named application-level animation.
+ * Other Timeline modes and ScrollTrigger configurations are returned
+ * unchanged.
  *
- * The primary target is also passed to `addTimelineStep()` as the
- * contextual target for ScrollTrigger configuration. Therefore, when
- * a step defines `scrollTrigger` without an explicit `trigger`, the
- * primary target can be used as the default trigger.
+ * @param {TTimelineParams} params - Timeline configuration.
+ * @param {Element | Document} searchRoot - DOM context of the Timeline.
+ * @returns {TTimelineParams} Resolved Timeline configuration.
+ */
+function resolveTimelineParams(params, searchRoot) {
+  if (params.targetMode !== "each" || !(searchRoot instanceof Element) || !params.scrollTrigger) {
+    return params;
+  }
+  const trigger = params.scrollTrigger.trigger;
+  if (trigger === undefined || trigger !== params.scope) {
+    return params;
+  }
+  return {
+    ...params,
+    scrollTrigger: {
+      ...params.scrollTrigger,
+      trigger: searchRoot
+    }
+  };
+}
+
+/***
+ Builds, populates, and registers one GSAP Timeline.
+ * This function centralizes the common Timeline construction pipeline
+ * shared by all target-mode builders.
+ * The construction process is:
+ * 1. Validate Timeline steps.
+ * 2. Create the Timeline with its common configuration.
+ * 3. Resolve and add all configured steps within the supplied DOM root.
+ * 4. Register the completed Timeline under the supplied cache key (string|Element).*
  *
- * Steps after the first one may target different Elements. This allows
- * one logical Timeline to coordinate several related DOM Elements while
- * retaining one primary cache identity.
- *
- * `params.paused` represents the initial runtime state of the Timeline.
- * It is intentionally applied to the Timeline itself rather than being
- * included in an individual Tween's vars.
+ * Target-mode-specific logic is intentionally handled by the caller.
+ * The caller is responsible for resolving the appropriate searchRoot
+ * and determining the correct animationKey.
  *
  * @param {TGsap} gsap
- * Initialized GSAP instance.
+ * Initialized GSAP instance used to create the Timeline.
+ * @param {TTimelineParams} params
+ * Complete Timeline configuration, including its steps and
+ * optional Timeline-level configuration.
+ * @param {Document | Element} searchRoot
+ * DOM context used to resolve the selectors defined by
+ * @param {TAnimationKey} animationKey
+ * Cache key used to register the created Timeline.
  *
- * @param {TSingleTimelineParams} params
- * Configuration for a single-target Timeline.
- *
- * `targetMode` must be `"single"`.
- *
- * @param {TAnimationKey} [key]
- * Optional cache key.
- *
- * When omitted, the first resolved target Element is used as the
- * animation key.
+ * @throws {TypeError}
+ * When params.steps is not an Array.
+ * @throws {Error}
+ * When params.steps is an empty Array or when a step target
+ * cannot be resolved within searchRoot.
  *
  * @returns {TTimeline}
- * Created and registered GSAP Timeline.
- *
- * @throws {Error}
- * When `params.steps` is empty.
- *
- * @throws {Error}
- * When the target of any Timeline step cannot be resolved.
+ * The created, populated, and registered GSAP Timeline.
  *
  * @example
- * // The first target becomes the default cache key.
- * const timeline = buildSingleTimeline(
- *     gsap,
- *     {
- *         targetMode: "single",
- *         steps: [
- *             {
- *                 target: ".hero-title",
- *                 type: "from",
- *                 vars: {
- *                     opacity: 0,
- *                     y: 40,
- *                     duration: 0.8,
- *                 },
- *             },
- *             {
- *                 target: ".hero-text",
- *                 type: "from",
- *                 vars: {
- *                     opacity: 0,
- *                     y: 20,
- *                     duration: 0.6,
- *                 },
- *                 position: "<",
- *             },
- *         ],
- *     }
+ * Build and register a Timeline using a single Element as
+ * the DOM search root and the same Element as its cache identity.
+ * const timeline = buildAndRegisterTimeline(
+ * gsap,
+ * singleTimelineParams,
+ * rootElement,
+ * rootElement,
  * );
  *
  * @example
- * // Explicit string key creates a named cache entry.
- * const timeline = buildSingleTimeline(
- *     gsap,
- *     {
- *         targetMode: "single",
- *         steps: [
- *             {
- *                 target: ".hero",
- *                 type: "from",
- *                 vars: {
- *                     opacity: 0,
- *                 },
- *             },
- *         ],
- *     },
- *     "heroIntro"
+ * Build and register a group Timeline using the Document
+ * as the search root and a named string as its cache identity.
+ * const timeline = buildAndRegisterTimeline(
+ * gsap,
+ * groupTimelineParams,
+ * document,
+ * "heroAnimation",
  * );
  *
- * @example
- * // The primary Element is used as the default ScrollTrigger trigger.
- * const timeline = buildSingleTimeline(
- *     gsap,
- *     {
- *         targetMode: "single",
- *         steps: [
- *             {
- *                 target: ".service-title",
- *                 type: "from",
- *                 vars: {
- *                     opacity: 0,
- *                     y: 30,
- *                     duration: 0.8,
- *                 },
- *                 scrollTrigger: {
- *                     start: "top 80%",
- *                 },
- *             },
- *         ],
- *     }
- * );
- *
- * @example
- * // The Timeline starts paused and can later be controlled by
- * // event handlers using play(), reverse(), pause(), etc.
- * const timeline = buildSingleTimeline(
- *     gsap,
- *     {
- *         targetMode: "single",
- *         paused: true,
- *         steps: [
- *             {
- *                 target: ".burger-menu",
- *                 type: "to",
- *                 vars: {
- *                     top: -20,
- *                     duration: 0.8,
- *                     ease: "back.out(0.8)",
- *                 },
- *             },
- *         ],
- *     }
- * );
  */
-function buildSingleTimeline(gsap, params, key) {
-  /**
-   * A Timeline without steps has no meaningful target or animation.
-   *
-   * Validate this before attempting to resolve the primary target.
-   */
-  if (!params.steps.length) {
-    throw new Error("[buildSingleTimeline]: steps cannot be empty.");
-  }
-
-  /**
-   * The first step establishes the primary target.
-   *
-   * This Element is used as the default cache identity when the
-   * caller does not provide an explicit key.
-   */
-  const firstStep = params.steps[0];
-  const firstTargets = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.getElements)(firstStep.target, document, false);
-  if (!firstTargets.length) {
-    throw new Error(`[buildSingleTimeline]: target "${firstStep.target}" ` + "was not found in DOM.");
-  }
-  const primaryTarget = firstTargets[0];
-
-  /**
-   * Create the Timeline itself.
-   *
-   * `paused` is deliberately not passed to gsap.timeline() here.
-   * The initial playback state is applied after all Timeline steps
-   * have been constructed.
-   */
-  const timeline = gsap.timeline();
-
-  /**
-   * Add every declarative step to the Timeline.
-   *
-   * The primary target is passed as the contextual target so that
-   * addTimelineStep() can use it as the default ScrollTrigger
-   * trigger when a step defines ScrollTrigger without an explicit
-   * trigger.
-   */
-  for (const step of params.steps) {
-    const targets = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.getElements)(step.target, document, false);
-    if (!targets.length) {
-      throw new Error(`[buildSingleTimeline]: target "${step.target}" ` + "was not found in DOM.");
-    }
-    addTimelineStep(timeline, targets[0], step, "single", primaryTarget);
-  }
-
-  /**
-   * An explicit key has priority over the automatically determined
-   * primary Element.
-   *
-   * Element keys are suitable for WeakMap-based caching.
-   * String keys are suitable for named application-level animations.
-   */
-  const animationKey = key ?? primaryTarget;
-
-  /**
-   * Apply the initial runtime state to the complete Timeline.
-   *
-   * `paused` describes the state of the interactive Timeline itself,
-   * not an individual Tween.
-   *
-   * This is especially useful for animations controlled later by
-   * event handlers through play() and reverse().
-   */
-  if (params.paused) {
-    timeline.pause();
-  }
-
-  /**
-   * Register the fully constructed Timeline only after its initial
-   * runtime state has been established.
-   *
-   * The cache therefore exposes the same Timeline instance that
-   * event handlers will subsequently control.
-   */
+function buildAndRegisterTimeline(gsap, params, searchRoot, animationKey) {
+  validateTimelineSteps(params.steps, "buildAndRegisterTimeline");
+  const timelineParams = resolveTimelineParams(params, searchRoot);
+  const timeline = createTimeline(gsap, timelineParams);
+  addTimelineSteps(timeline, timelineParams.steps, searchRoot, true);
   (0,_gsap_loader_js__WEBPACK_IMPORTED_MODULE_1__.registerAnimation)(animationKey, timeline);
   return timeline;
 }
 
 /**
- * buildGroupTimeline
+ * Builds and registers one GSAP Timeline for a single DOM root.
  *
- * Builds one shared Timeline for multiple Elements.
+ * The single mode creates exactly one Timeline from exactly one
+ * resolved root Element.
  *
- * Every step resolves its selector globally and passes all matching
- * Elements to GSAP as one target collection.
+ * The resolved root serves two purposes:
  *
- * The resulting Timeline represents the whole group and is therefore
- * registered under the supplied string cache key.
+ * 1. It defines the DOM search scope for all `params.steps`.
+ * 2. It provides the default Element-based cache identity when
+ *    an explicit `key` is not supplied.
  *
- * Group mode intentionally does not provide an implicit
- * ScrollTrigger trigger. If a step declares ScrollTrigger without
- * an explicit `trigger`, resolveScrollTrigger() throws an error
- * because there is no unique Element representing the whole group.
+ * The root and `scrollTrigger.trigger` have independent responsibilities:
+ *
+ *     root
+ *       ↓
+ *     resolves step targets
+ *
+ *     scrollTrigger.trigger
+ *       ↓
+ *     controls Timeline playback
+ *
+ * The root Element may also become a step target when a step selector
+ * matches the root itself and no matching descendants are found.
  *
  * @param {TGsap} gsap
- * Initialized GSAP instance.
+ * Initialized GSAP instance used to create the Timeline.
  *
- * @param {string} key
- * Named cache key for the group animation.
+ * @param {TSingleTimelineParams} params
+ * Configuration for the single Timeline.
  *
- * @param {TGroupTimelineParams} params
- * Timeline configuration.
+ * @param {TAnimationKey} [key]
+ * Optional explicit cache key.
+ * When omitted, the resolved root Element is used as the cache identity.
  *
  * @returns {TTimeline}
- * Created and registered Timeline.
+ * The created and registered GSAP Timeline.
  *
  * @throws {Error}
- * When `steps` is empty.
+ * When `params.root` does not resolve to exactly one Element.
+ *
+ * @throws {TypeError}
+ * When `params.steps` is not an Array.
  *
  * @throws {Error}
- * When a step target cannot be resolved.
+ * When `params.steps` is empty or a step target cannot be resolved.
  *
- * @sample
- * buildGroupTimeline(
+ * @example
+ * const timeline = buildSingleTimeline(
  *   gsap,
- *   "galleryCards",
+ *   {
+ *     targetMode: "single",
+ *     root: ".hero",
+ *     steps: [
+ *       {
+ *         target: ".hero__title",
+ *         type: "from",
+ *         vars: {
+ *           opacity: 0,
+ *           y: 40,
+ *           duration: 0.8,
+ *         },
+ *       },
+ *     ],
+ *   },
+ * );
+ *
+ * @example
+ * const timeline = buildSingleTimeline(
+ *   gsap,
+ *   singleTimelineParams,
+ *   "heroAnimation",
+ * );
+ */
+function buildSingleTimeline(gsap, params, key) {
+  // Resolve the unique DOM root used as the step search context.
+  const root = resolveSingleTimelineRoot(params.root);
+
+  // Use the explicit key when provided; otherwise use the root
+  // Element as the natural identity for the animation cache.
+  return buildAndRegisterTimeline(gsap, params, root, key ?? root);
+}
+
+/**
+ * Builds and registers one shared GSAP Timeline for a group of Elements.
+ *
+ * Group mode resolves all step selectors against the Document and passes
+ * the complete matching Element collections to the same Timeline.
+ *
+ * Unlike `single` and `each` modes, group mode has no unique Element
+ * that can serve as its implicit cache identity. A non-empty string
+ * `key` is therefore required.
+ *
+ * The supplied key is used as the named identity in the animation cache.
+ *
+ * @param {TGsap} gsap
+ * Initialized GSAP instance used to create the Timeline.
+ *
+ * @param {TGroupTimelineParams} params
+ * Configuration for the shared group Timeline.
+ *
+ * @param {string} key
+ * Non-empty string used as the Timeline's cache identity.
+ *
+ * @returns {TTimeline}
+ * The created and registered GSAP Timeline.
+ *
+ * @throws {TypeError}
+ * When `key` is not a non-empty string.
+ *
+ * @throws {TypeError}
+ * When `params.steps` is not an Array.
+ *
+ * @throws {Error}
+ * When `params.steps` is empty or a step target cannot be resolved.
+ *
+ * @example
+ * const timeline = buildGroupTimeline(
+ *   gsap,
  *   {
  *     targetMode: "group",
  *     steps: [
@@ -3490,109 +4184,81 @@ function buildSingleTimeline(gsap, params, key) {
  *         vars: {
  *           opacity: 0,
  *           y: 40,
+ *           duration: 0.8,
  *         },
  *       },
  *     ],
- *   }
+ *   },
+ *   "galleryCards",
  * );
  *
- * @sample
- * buildGroupTimeline(
+ * @example
+ * const timeline = buildGroupTimeline(
  *   gsap,
- *   "heroGroup",
- *   {
- *     targetMode: "group",
- *     steps: [
- *       {
- *         target: ".hero-title",
- *         type: "from",
- *         vars: {
- *           opacity: 0,
- *         },
- *         scrollTrigger: {
- *           trigger: ".hero",
- *           start: "top 80%",
- *         },
- *       },
- *     ],
- *   }
+ *   groupTimelineParams,
+ *   "heroAnimation",
  * );
  */
-function buildGroupTimeline(gsap, key, params) {
-  if (!params.steps.length) {
-    throw new Error("[buildGroupTimeline]: steps cannot be empty.");
-  }
-  if (!key) {
+function buildGroupTimeline(gsap, params, key) {
+  // Group mode requires an explicit named cache identity because
+  // there is no single Element representing the entire group.
+  if (typeof key !== "string" || !key.trim()) {
     throw new TypeError("[buildGroupTimeline]: key must be a non-empty string.");
   }
-  const timeline = gsap.timeline();
-  for (const step of params.steps) {
-    const targets = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.getElements)(step.target, document, true);
-    if (!targets.length) {
-      throw new Error(`[buildGroupTimeline]: target "${step.target}" ` + "was not found in DOM.");
-    }
 
-    /**
-     * No default trigger is supplied in group mode.
-     *
-     * Explicit step.scrollTrigger.trigger is still fully supported.
-     */
-    addTimelineStep(timeline, targets, step, "group", undefined);
-  }
-
-  /**
-   * One shared Timeline represents the complete group,
-   * therefore the group name becomes its cache identity.
-   */
-  (0,_gsap_loader_js__WEBPACK_IMPORTED_MODULE_1__.registerAnimation)(key, timeline);
-  return timeline;
+  // Group targets are resolved against the entire Document.
+  // `getElements()` cannot use Document as a context target, so
+  // the context itself can never become an animation target.
+  return buildAndRegisterTimeline(gsap, params, document, key);
 }
 
 /**
- * buildEachTimelines
+ * Builds and registers one independent GSAP Timeline for each
+ * Element matching `params.scope`.
  *
- * Builds one independent Timeline for every Element matched
- * by `params.scope`.
+ * Each matched scope Element becomes the DOM search context for
+ * the Timeline created for that scope.
  *
- * Example:
+ * For example:
  *
  *     scope: ".card"
  *
  * produces:
  *
- *     card #1 → Timeline #1
- *     card #2 → Timeline #2
- *     card #3 → Timeline #3
+ *     .card #1 → Timeline #1
+ *     .card #2 → Timeline #2
+ *     .card #3 → Timeline #3
  *
- * Every scope Element becomes:
+ * Each scope Element is also used as the cache identity of its
+ * corresponding Timeline. This maps naturally to the WeakMap-based
+ * animation cache.
  *
- * 1. the DOM context for resolving step targets;
- * 2. the default ScrollTrigger trigger;
- * 3. the cache identity used by registerAnimation().
- *
- * The resulting Element → Timeline relationship fits naturally
- * into the WeakMap-based animation cache.
+ * Step targets are resolved independently inside each scope Element,
+ * preventing selectors from one scope from resolving against another.
  *
  * @param {TGsap} gsap
- * Initialized GSAP instance.
+ * Initialized GSAP instance used to create the Timelines.
  *
  * @param {TEachTimelineParams} params
- * Timeline configuration with `targetMode: "each"`.
+ * Configuration for the per-scope Timelines.
  *
  * @returns {TTimeline[]}
- * One independent Timeline for each scope Element.
+ * One independent Timeline for each matched scope Element.
+ *
+ * @throws {TypeError}
+ * When `params.scope` is not a non-empty string.
+ *
+ * @throws {TypeError}
+ * When `params.steps` is not an Array.
  *
  * @throws {Error}
- * When `scope` is missing.
+ * When `params.steps` is empty.
  *
  * @throws {Error}
- * When `steps` is empty.
+ * When no Elements match `params.scope`.
  *
- * @throws {Error}
- * When no scope Elements are found.
- *
- * @sample
- * buildEachTimelines(
+ * @example
+ * const timelines = buildEachTimelines(
  *   gsap,
  *   {
  *     targetMode: "each",
@@ -3604,1121 +4270,48 @@ function buildGroupTimeline(gsap, key, params) {
  *         vars: {
  *           opacity: 0,
  *           y: 30,
- *         },
- *         scrollTrigger: {
- *           start: "top 80%",
- *         },
- *       },
- *     ],
- *   }
- * );
- *
- * @sample
- * buildEachTimelines(
- *   gsap,
- *   {
- *     targetMode: "each",
- *     scope: ".service-card",
- *     steps: [
- *       {
- *         target: ".service-card__image",
- *         type: "fromTo",
- *         fromVars: {
- *           scale: 0.8,
- *         },
- *         vars: {
- *           scale: 1,
  *           duration: 0.8,
  *         },
  *       },
- *       {
- *         target: ".service-card__text",
- *         type: "from",
- *         vars: {
- *           opacity: 0,
- *         },
- *         position: "<0.2",
- *       },
  *     ],
- *   }
+ *   },
+ * );
+ *
+ * @example
+ * const timelines = buildEachTimelines(
+ *   gsap,
+ *   eachTimelineParams,
  * );
  */
 function buildEachTimelines(gsap, params) {
-  if (!params.steps.length) {
-    throw new Error("[buildEachTimelines]: steps cannot be empty.");
+  // `scope` is the selector that defines the independent Timeline
+  // instances, so validate it before performing the DOM lookup.
+  if (typeof params.scope !== "string" || !params.scope.trim()) {
+    throw new TypeError("[buildEachTimelines]: scope must be a non-empty string.");
   }
-  if (!params.scope) {
-    throw new Error("[buildEachTimelines]: scope is required " + "when targetMode is 'each'.");
-  }
-  const scopes = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.getElements)(params.scope, document, true);
-  if (!scopes.length) {
-    throw new Error(`[buildEachTimelines]: no elements matched scope "${params.scope}".`);
-  }
-  const timelines = [];
-  for (const scope of scopes) {
-    const timeline = buildTimelineForScope(gsap, scope, params.steps);
 
-    /**
-     * Each scope receives its own cache entry.
-     *
-     * WeakMap<Element, TAnimation> provides the required
-     * Element → Timeline identity and allows the DOM Element
-     * to remain eligible for garbage collection.
-     */
-    (0,_gsap_loader_js__WEBPACK_IMPORTED_MODULE_1__.registerAnimation)(scope, timeline);
-    timelines.push(timeline);
+  // Resolve every scope Element once. Each Element becomes the
+  // search context and cache identity of its own Timeline.
+  const scopeElements = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.getElements)(params.scope, document, true, false);
+  if (!scopeElements.length) {
+    throw new Error(`[buildEachTimelines]: no Elements matched scope selector ` + `"${params.scope}".`);
   }
-  return timelines;
+  return scopeElements.map(scopeElement => buildAndRegisterTimeline(gsap, params, scopeElement, scopeElement));
 }
 
 /**
- * buildTimelineForScope
+ * Creates a runtime collection of registered page names.
  *
- * Builds one Timeline for one scope Element.
+ * The type assertion is intentionally localized here because
+ * `Object.keys()` widens its result to `string[]`.
  *
- *! This function is the core of `each` mode.
+ * @param {typeof linkAnchors} anchors
  *
- * Example:
- *
- *     scope: ".card"
- *
- *     current scope:
- *
- *     <article class="card">
- *         <h2 class="card__title"></h2>
- *         <p class="card__text"></p>
- *     </article>
- *
- * Then:
- *
- *     target: ".card__title"
- *
- * is resolved relative to the current `.card` Element.
- *
- * This allows every repeated component to have its own independent
- * Timeline while still using simple relative selectors.
- *
- * The current scope Element is also the default ScrollTrigger trigger
- * for steps that request ScrollTrigger without defining an explicit
- * `trigger`.
- *
- * @param {TGsap} gsap
- * Initialized GSAP instance.
- *
- * @param {Element} scope
- * Current scope Element.
- *
- * @param {TTimelineStep[]} steps
- * Timeline steps resolved relative to the scope.
- *
- * @returns {TTimeline}
- * Created Timeline.
- *
- * @throws {Error}
- * When `steps` is empty.
- *
- * @throws {Error}
- * When a step target cannot be found inside the scope.
- *
- * @sample
- * buildTimelineForScope(
- *   gsap,
- *   cardElement,
- *   [
- *     {
- *       target: ".card__title",
- *       type: "from",
- *       vars: {
- *         opacity: 0,
- *       },
- *       scrollTrigger: {
- *         start: "top 80%",
- *       },
- *     },
- *   ]
- * );
- *
- * @sample
- * buildTimelineForScope(
- *   gsap,
- *   cardElement,
- *   [
- *     {
- *       target: ".card__image",
- *       type: "from",
- *       vars: {
- *         y: 40,
- *       },
- *     },
- *     {
- *       target: ".card__text",
- *       type: "from",
- *       vars: {
- *         opacity: 0,
- *       },
- *       position: "<0.2",
- *     },
- *   ]
- * );
+ * @returns {Set<TPageName>}
  */
-function buildTimelineForScope(gsap, scope, steps) {
-  if (!steps.length) {
-    throw new Error("[buildTimelineForScope]: steps cannot be empty.");
-  }
-  const timeline = gsap.timeline();
-  for (const step of steps) {
-    /**
-     * Resolve the step target relative to the current scope.
-     *
-     * This is what gives `each` mode its component-oriented
-     * behavior.
-     */
-    const targets = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.getElements)(step.target, scope, true);
-    if (!targets.length) {
-      throw new Error(`[buildTimelineForScope]: target "${step.target}" ` + "was not found inside the current scope.");
-    }
-
-    /**
-     * The current scope is the contextual default trigger.
-     *
-     * It is used only when this particular step has ScrollTrigger
-     * configuration without its own explicit trigger.
-     */
-    addTimelineStep(timeline, targets, step, "each", scope);
-  }
-  return timeline;
-}
-
-/**
- * addTimelineStep
- *
- * Dispatches one timeline step to the appropriate GSAP operation.
- *
- * This function deliberately does not contain animation-building
- * logic itself. Its responsibility is only to select the correct
- * operation builder based on `step.type`.
- *
- * Keeping this dispatcher small prevents the complexity of ${@link buildTimeline()}
- * from growing as additional GSAP operation
- * types are introduced.
- *
- * @param {TTimeline} timeline
- * GSAP Timeline instance.
- *
- * @param {Element | Element[]} target
- * Element or collection of Elements animated by the step.
- *
- * @param {TTimelineStep} step
- * Timeline step configuration.
- *
- * @param {TTargetMode} targetMode
- * Current target mode.
- *
- * @param {Element} [defaultTrigger]
- * Contextual Element used as an implicit ScrollTrigger trigger.
- *
- * @returns {void}
- *
- * @throws {TypeError}
- * When `step.type` is not supported.
- *
- * @sample
- * addTimelineStep(
- *   timeline,
- *   heroElement,
- *   {
- *     target: ".hero",
- *     type: "to",
- *     vars: {
- *       opacity: 1,
- *     },
- *   },
- *   "single",
- *   heroElement
- * );
- *
- * @sample
- * addTimelineStep(
- *   timeline,
- *   cards,
- *   {
- *     target: ".card",
- *     type: "from",
- *     vars: {
- *       opacity: 0,
- *       y: 40,
- *     },
- *   },
- *   "group"
- * );
- */
-function addTimelineStep(timeline, target, step, targetMode, defaultTrigger) {
-  switch (step.type) {
-    case "set":
-      addSetStep(timeline, target, step, targetMode, defaultTrigger);
-      break;
-    case "from":
-      addFromStep(timeline, target, step, targetMode, defaultTrigger);
-      break;
-    case "to":
-      addToStep(timeline, target, step, targetMode, defaultTrigger);
-      break;
-    case "fromTo":
-      addFromToStep(timeline, target, step, targetMode, defaultTrigger);
-      break;
-    default:
-      throw new TypeError(`[addTimelineStep]: unsupported step type "${step.type}".`);
-  }
-}
-
-/**
- * resolveScrollTrigger
- *
- * Resolves the final ScrollTrigger configuration for a timeline step.
- *
- * This function intentionally distinguishes between:
- *
- * 1. absence of `scrollTrigger`;
- * 2. explicitly supplied `scrollTrigger.trigger`;
- * 3. an implicit trigger supplied by the current animation context.
- *
- * An explicit trigger always has priority.
- *
- * When `scrollTrigger` is absent, the function returns `undefined`.
- * This is important because a GSAP animation should remain a normal
- * non-scroll-triggered animation unless ScrollTrigger configuration
- * was explicitly requested.
- *
- * For `group` mode there is no unique Element representing the
- * complete target collection. Therefore an implicit trigger would
- * be ambiguous and is rejected.
- *
- * @param {TScrollTriggerParams | undefined} scrollTrigger
- * ScrollTrigger configuration declared by the current step.
- *
- * @param {TTargetMode} targetMode
- * Current target mode.
- *
- * @param {Element} [defaultTrigger]
- * Contextual Element that may be used when the step does not
- * explicitly define `trigger`.
- *
- * @returns {TScrollTriggerParams | undefined}
- * Normalized ScrollTrigger configuration.
- *
- * @throws {Error}
- * When `group` mode declares ScrollTrigger without an explicit
- * `trigger`.
- *
- * @sample
- * const result = resolveScrollTrigger(
- *   {
- *     start: "top 80%",
- *   },
- *   "single",
- *   heroElement
- * );
- *
- * // result.trigger === heroElement
- *
- * @sample
- * const result = resolveScrollTrigger(
- *   {
- *     trigger: ".section",
- *     start: "top 80%",
- *   },
- *   "group"
- * );
- *
- * // Explicit selector is preserved unchanged.
- */
-function resolveScrollTrigger(scrollTrigger, targetMode, defaultTrigger) {
-  /**
-   * No ScrollTrigger configuration means that the animation
-   * must remain a regular GSAP animation.
-   */
-  if (!scrollTrigger) {
-    return undefined;
-  }
-
-  /**
-   * An explicitly supplied trigger always has priority over
-   * any contextual default.
-   */
-  if (scrollTrigger.trigger) {
-    return {
-      ...scrollTrigger
-    };
-  }
-
-  /**
-   * A grouped Timeline represents multiple Elements as one
-   * animation instance. There is no unique implicit Element
-   * that can safely act as the trigger for the whole group.
-   */
-  if (targetMode === "group") {
-    throw new Error("[resolveScrollTrigger]: group mode requires an explicit " + "ScrollTrigger.trigger.");
-  }
-
-  /**
-   * No contextual Element is available.
-   *
-   * We do not invent a trigger. The caller may intentionally
-   * configure ScrollTrigger using only properties such as
-   * `start`, `end`, `scrub`, etc.
-   */
-  if (!defaultTrigger) {
-    return {
-      ...scrollTrigger
-    };
-  }
-
-  /**
-   * Use the contextual Element as the implicit trigger.
-   */
-  return {
-    ...scrollTrigger,
-    trigger: defaultTrigger
-  };
-}
-
-/**
- * createStepVars
- *
- * Creates a new GSAP vars object without mutating the original
- * configuration object.
- *
- * The optional ScrollTrigger configuration is merged into the
- * returned vars object only when it exists.
- *
- * This function also normalizes an `undefined` vars value into
- * an empty object, allowing callers to omit `step.vars`.
- *
- * The second argument is intentionally optional because some
- * GSAP operations do not need ScrollTrigger configuration.
- *
- * @param {TGsapVars | undefined} vars
- * Original GSAP vars object.
- *
- * @param {TScrollTriggerParams} [scrollTrigger]
- * Optional normalized ScrollTrigger configuration.
- *
- * @returns {TGsapVars}
- * New vars object suitable for passing to GSAP.
- *
- * @sample
- * const vars = createStepVars(
- *   {
- *     opacity: 1,
- *     duration: 1,
- *   }
- * );
- *
- * // {
- * //   opacity: 1,
- * //   duration: 1
- * // }
- *
- * @sample
- * const vars = createStepVars(
- *   {
- *     opacity: 1,
- *   },
- *   {
- *     trigger: heroElement,
- *     start: "top 80%",
- *   }
- * );
- *
- * // {
- * //   opacity: 1,
- * //   scrollTrigger: {
- * //     trigger: heroElement,
- * //     start: "top 80%",
- * //   }
- * // }
- */
-function createStepVars(vars, scrollTrigger) {
-  /**
-   * Create a fresh object so that the original animation
-   * configuration remains immutable.
-   *
-   * Using `TGsapVars` allows us to add GSAP/plugin-specific
-   * properties such as `scrollTrigger`.
-   */
-  const normalizedVars = {
-    ...(vars ?? {})
-  };
-  if (scrollTrigger) {
-    normalizedVars.scrollTrigger = scrollTrigger;
-  }
-  return normalizedVars;
-}
-
-/**
- * prepareStepVars
- *
- * Prepares all vars required to execute one timeline step.
- *
- * This function centralizes the repeated preparation logic shared
- * by `set`, `from`, `to`, and `fromTo` operations:
- *
- *     step.scrollTrigger
- *             ↓
- *     resolveScrollTrigger()
- *             ↓
- *     createStepVars()
- *
- * `fromTo()` needs two vars objects:
- *
- *     fromVars → initial values
- *     vars     → destination values
- *
- * Therefore this function always prepares both values. For normal
- * operations, callers simply use `vars` and ignore `fromVars`.
- *
- * ScrollTrigger is intentionally attached only to the destination
- * vars object because those vars are passed to the actual GSAP
- * tween configuration.
- *
- * @param {TTimelineStep} step
- * Timeline step configuration.
- *
- * @param {TTargetMode} targetMode
- * Current target mode.
- *
- * @param {Element} [defaultTrigger]
- * Contextual Element used when `scrollTrigger.trigger` is omitted.
- *
- * @returns {{
- *   vars: TGsapVars,
- *   fromVars: TGsapVars,
- *   scrollTrigger: TScrollTriggerParams | undefined,
- * }}
- * Prepared vars used by the step builders.
- *
- * @sample
- * const prepared = prepareStepVars(
- *   {
- *     target: ".title",
- *     type: "from",
- *     vars: {
- *       opacity: 0,
- *       y: 40,
- *     },
- *     scrollTrigger: {
- *       start: "top 80%",
- *     },
- *   },
- *   "single",
- *   titleElement
- * );
- *
- * // prepared.vars contains:
- * // {
- * //   opacity: 0,
- * //   y: 40,
- * //   scrollTrigger: {
- * //     start: "top 80%",
- * //     trigger: titleElement
- * //   }
- * // }
- *
- * @sample
- * const prepared = prepareStepVars(
- *   {
- *     target: ".title",
- *     type: "fromTo",
- *     fromVars: {
- *       opacity: 0,
- *     },
- *     vars: {
- *       opacity: 1,
- *     },
- *   },
- *   "single"
- * );
- *
- * // prepared.fromVars → { opacity: 0 }
- * // prepared.vars     → { opacity: 1 }
- */
-function prepareStepVars(step, targetMode, defaultTrigger) {
-  const scrollTrigger = resolveScrollTrigger(step.scrollTrigger, targetMode, defaultTrigger);
-  const vars = createStepVars(step.vars, scrollTrigger);
-  const fromVars = createStepVars(step.fromVars);
-  return {
-    vars,
-    fromVars,
-    scrollTrigger
-  };
-}
-
-/**
- * addSetStep
- *
- * Adds one `set()` operation to an existing GSAP Timeline.
- *
- * All generic configuration processing is delegated to ${@link prepareStepVars()}
- * This function is therefore responsible
- * only for the GSAP-specific `timeline.set()` call.
- *
- * @param {TTimeline} timeline
- * GSAP Timeline instance.
- *
- * @param {Element | Element[]} target
- * Element or collection of Elements animated by this step.
- *
- * @param {TTimelineStep} step
- * Timeline step configuration.
- *
- * @param {TTargetMode} targetMode
- * Current target mode.
- *
- * @param {Element} [defaultTrigger]
- * Contextual Element used as an implicit ScrollTrigger trigger.
- *
- * @returns {void}
- *
- * @sample
- * addSetStep(
- *   timeline,
- *   heroElement,
- *   {
- *     target: ".hero",
- *     type: "set",
- *     vars: {
- *       opacity: 0,
- *     },
- *   },
- *   "single",
- *   heroElement
- * );
- *
- * @sample
- * addSetStep(
- *   timeline,
- *   cards,
- *   {
- *     target: ".card",
- *     type: "set",
- *     vars: {
- *       y: 40,
- *     },
- *     scrollTrigger: {
- *       trigger: ".cards-section",
- *       start: "top 80%",
- *     },
- *   },
- *   "group"
- * );
- */
-function addSetStep(timeline, target, step, targetMode, defaultTrigger) {
-  const {
-    vars
-  } = prepareStepVars(step, targetMode, defaultTrigger);
-  timeline.set(target, vars, step.position);
-}
-
-/**
- * addFromStep
- *
- * Adds one `from()` operation to an existing GSAP Timeline.
- *
- * @param {TTimeline} timeline
- * GSAP Timeline instance.
- *
- * @param {Element | Element[]} target
- * Element or collection of Elements animated by this step.
- *
- * @param {TTimelineStep} step
- * Timeline step configuration.
- *
- * @param {TTargetMode} targetMode
- * Current target mode.
- *
- * @param {Element} [defaultTrigger]
- * Contextual Element used as an implicit ScrollTrigger trigger.
- *
- * @returns {void}
- *
- * @sample
- * addFromStep(
- *   timeline,
- *   titleElement,
- *   {
- *     target: ".title",
- *     type: "from",
- *     vars: {
- *       opacity: 0,
- *       y: 50,
- *       duration: 0.8,
- *     },
- *   },
- *   "single",
- *   titleElement
- * );
- *
- * @sample
- * addFromStep(
- *   timeline,
- *   textElements,
- *   {
- *     target: ".text",
- *     type: "from",
- *     vars: {
- *       opacity: 0,
- *     },
- *     scrollTrigger: {
- *       start: "top 80%",
- *     },
- *   },
- *   "each",
- *   cardElement
- * );
- */
-function addFromStep(timeline, target, step, targetMode, defaultTrigger) {
-  const {
-    vars
-  } = prepareStepVars(step, targetMode, defaultTrigger);
-  timeline.from(target, vars, step.position);
-}
-
-/**
- * addToStep
- *
- * Adds one `to()` operation to an existing GSAP Timeline.
- *
- * @param {TTimeline} timeline
- * GSAP Timeline instance.
- *
- * @param {Element | Element[]} target
- * Element or collection of Elements animated by this step.
- *
- * @param {TTimelineStep} step
- * Timeline step configuration.
- *
- * @param {TTargetMode} targetMode
- * Current target mode.
- *
- * @param {Element} [defaultTrigger]
- * Contextual Element used as an implicit ScrollTrigger trigger.
- *
- * @returns {void}
- *
- * @sample
- * addToStep(
- *   timeline,
- *   buttonElement,
- *   {
- *     target: ".button",
- *     type: "to",
- *     vars: {
- *       scale: 1.1,
- *       duration: 0.4,
- *     },
- *   },
- *   "single",
- *   buttonElement
- * );
- *
- * @sample
- * addToStep(
- *   timeline,
- *   cards,
- *   {
- *     target: ".card",
- *     type: "to",
- *     vars: {
- *       opacity: 1,
- *     },
- *     scrollTrigger: {
- *       trigger: ".cards",
- *       start: "top 80%",
- *     },
- *   },
- *   "group"
- * );
- */
-function addToStep(timeline, target, step, targetMode, defaultTrigger) {
-  const {
-    vars
-  } = prepareStepVars(step, targetMode, defaultTrigger);
-  timeline.to(target, vars, step.position);
-}
-
-/**
- * addFromToStep
- *
- * Adds one `fromTo()` operation to an existing GSAP Timeline.
- *
- * `fromVars` defines the initial animation state and `vars`
- * defines the destination state.
- *
- * ScrollTrigger configuration is attached to the destination
- * vars object through `prepareStepVars()`.
- *
- * @param {TTimeline} timeline
- * GSAP Timeline instance.
- *
- * @param {Element | Element[]} target
- * Element or collection of Elements animated by this step.
- *
- * @param {TTimelineStep} step
- * Timeline step configuration.
- *
- * @param {TTargetMode} targetMode
- * Current target mode.
- *
- * @param {Element} [defaultTrigger]
- * Contextual Element used as an implicit ScrollTrigger trigger.
- *
- * @returns {void}
- *
- * @sample
- * addFromToStep(
- *   timeline,
- *   heroElement,
- *   {
- *     target: ".hero",
- *     type: "fromTo",
- *     fromVars: {
- *       opacity: 0,
- *       y: 80,
- *     },
- *     vars: {
- *       opacity: 1,
- *       y: 0,
- *       duration: 1,
- *     },
- *   },
- *   "single",
- *   heroElement
- * );
- *
- * @sample
- * addFromToStep(
- *   timeline,
- *   cardElement,
- *   {
- *     target: ".card__image",
- *     type: "fromTo",
- *     fromVars: {
- *       scale: 0.8,
- *     },
- *     vars: {
- *       scale: 1,
- *       duration: 0.7,
- *     },
- *     scrollTrigger: {
- *       start: "top 80%",
- *     },
- *   },
- *   "each",
- *   cardElement
- * );
- */
-function addFromToStep(timeline, target, step, targetMode, defaultTrigger) {
-  const {
-    fromVars,
-    vars
-  } = prepareStepVars(step, targetMode, defaultTrigger);
-  timeline.fromTo(target, fromVars, vars, step.position);
-}
-
-//////////////////// GSAP ANIMATIONS ////////////////////////////
-/**
- * Initializes all page animations and animation-related event handlers.
- *
- * The function is the main runtime entry point for the site's animation system.
- * It lazily loads GSAP and ScrollTrigger, resolves the current page names,
- * creates shared burger-navigation handlers, and runs both common and
- * page-specific animation builders.
- *
- * Animation execution is delegated to {@link runPageAnimations}, which
- * determines which page-specific animations should run based on the
- * resolved page names.
- *
- * If GSAP or ScrollTrigger cannot be loaded, initialization is aborted
- * and the error is reported through {@link logInitError}.
- *
- * @async
- * @returns {Promise<void>}
- */
-async function initAnimations() {
-  const gsapAll = await (0,_gsap_loader_js__WEBPACK_IMPORTED_MODULE_1__.getGSAP)();
-  if (!gsapAll) {
-    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.logInitError)({
-      component: "initAnimations",
-      message: `gsap is not loaded... omitting...`,
-      details: gsapAll
-    });
-    return;
-  }
-  const {
-    gsap,
-    ScrollTrigger
-  } = gsapAll;
-
-  /**
-   * Runtime collection of valid page names.
-   *
-   * The collection is derived from the page navigation anchors and is used
-   * by {@link runPageAnimations} to determine which page-specific
-   * animations should be initialized.
-   *
-   * @type {Set<TPageName>}
-   */
-  const pageNames = createPageNameSet(_initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.linkAnchors);
-
-  /**
-   * Animation builders available for the current application.
-   *
-   * `common` contains animations and interaction handlers shared by all pages.
-   * Page-specific builders are keyed by {@link TPageName}.
-   *
-   * @type {TPageAnimations}
-   */
-  const pageAnimations = {
-    automation: () => {
-      /*			buildParallax(
-      				gsap,
-      				SELECTORS.automationParallaxBg,
-      				SELECTORS.automationParallax
-      			);*/
-    },
-    common: () => {
-      //Hero section priority...
-      buildHeroTimeline(gsap, "heroAnimation", _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.heroTimelineParams);
-
-      //initializing burger handlers, build and register animation timeline...
-      /*			initBurgerMenu(
-      				gsap,
-      				navMenuSelectorsData,
-      				burgerNavTimelineParams
-      			);*/
-
-      /*		buildParallax(gsap, SELECTORS.servicesParallaxBg, SELECTORS.servicesParallax);
-      		buildFadeAnimations(gsap, SELECTORS.fadeInLeft, "fadeInLeft", {
-      			x: -60,
-      			y: 40,
-      			duration: 1,
-      			ease: "circ.out"
-      		});
-      		buildFadeAnimations(gsap, SELECTORS.fadeInRight, "fadeInRight", {
-      			x: 60,
-      			y: 40,
-      			duration: 1,
-      			ease: "circ.out"
-      		});
-      		buildFadeAnimations(gsap, SELECTORS.scaleIn, "scaleIn", {
-      			scale: 0.7,
-      			duration: 1.2,
-      			ease: "back.out(1)"
-      		});
-      		buildFadeAnimations(gsap, SELECTORS.fadeInUp, "fadeInUp", {
-      			y: 40,
-      			duration: 1,
-      			ease: "circ.out"
-      		});
-      		buildScrolledNav(gsap);*/
-    }
-  };
-  runPageAnimations(pageAnimations, pageNames);
-}
-
-/**
- * Initializes common and page-specific animations.
- *
- * Common animations are always executed.
- * Page-specific animations are executed only when a corresponding
- * animation function has been registered for the current page.
- *
- * @param {TPageAnimations} animations
- * @param {ReadonlySet<string>} pageNames
- *
- * @returns {void}
- */
-function runPageAnimations(animations, pageNames) {
-  const pageName = getCurrentPageName(pageNames);
-
-  // Common animations are mandatory.
-  animations.common();
-
-  // Stop when the current page name is missing or invalid.
-  if (!pageName) {
-    return;
-  }
-  const pageAnimation = animations[pageName];
-
-  // Page-specific animations are optional.
-  if (!pageAnimation) {
-    return;
-  }
-  pageAnimation();
-}
-
-/**
- * Initializes the complete Burger navigation subsystem.
- *
- * This function acts as the composition layer for Burger navigation.
- *
- * It coordinates:
- *
- * 1. DOM dependency resolution;
- * 2. Timeline construction;
- * 3. Event callback creation;
- * 4. Burger listener attachment;
- * 5. Outside-click listener attachment.
- *
- * The individual responsibilities remain delegated:
- *
- *     requireElements()
- *         → resolves DOM dependencies
- *
- *     buildTimeline()
- *         → builds and registers the animation
- *
- *     initBurgerHandlers()
- *         → creates event callbacks
- *
- *     initBurgerListener()
- *         → handles Burger trigger interaction
- *
- *     closeBurgerClickHandler()
- *         → handles outside-click behavior
- *
- * This function intentionally contains no animation implementation
- * and no event-handling logic of its own.
- *
- * @param {TGsap} gsap
- * Initialized GSAP instance.
- *
- * @param {TNavMenuSelector[]} selectors
- * Selector configuration for Burger navigation DOM dependencies.
- *
- * @param {TSingleTimelineParams} timelineParams
- * Declarative configuration for the Burger navigation Timeline.
- *
- * @returns {void}
- */
-function initBurgerMenu(gsap, selectors, timelineParams) {
-  /**
-   * Resolve all Burger-related DOM dependencies once.
-   *
-   * The type assertion is intentionally placed at the boundary
-   * between the generic DOM utility and the Burger-specific subsystem.
-   */
-  const burgerElementsData = /** @type {TBurgerElements} */
-  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.requireElements)(selectors);
-
-  /**
-   * Extract the Burger trigger collection.
-   *
-   * These Elements are needed only to attach the callbacks created
-   * by initBurgerHandlers().
-   */
-  const {
-    burgerNavAll
-  } = burgerElementsData;
-
-  /**
-   * Build the Burger navigation Timeline.
-   *
-   * The Timeline is already configured with its declared initial
-   * runtime state and registered in the animation cache by the builder.
-   */
-  const navMenuAnime = buildSingleTimeline(gsap, timelineParams);
-
-  /**
-   * Initialize callbacks that control the Burger navigation.
-   *
-   * initBurgerHandlers() does not attach listeners itself.
-   * It only creates callback functions with the required dependencies
-   * closed over.
-   */
-  const {
-    closeBurgerHandler,
-    attachBurgerListener
-  } = initBurgerHandlers(burgerElementsData, navMenuAnime);
-
-  /**
-   * Attach the Burger click handler to every resolved trigger.
-   *
-   * DOM lookup is not repeated here because all required Elements
-   * were resolved once at the beginning of this function.
-   */
-  burgerNavAll.forEach(burger => attachBurgerListener(burger));
-
-  /**
-   * Attach the document-level outside-click handler.
-   */
-  document.addEventListener("click", closeBurgerHandler);
-}
-
-/**
- * Initializes Burger navigation event callbacks.
- *
- * This function is intentionally limited to event-handler composition.
- * It does not:
- *
- * - resolve DOM elements;
- * - create GSAP animations;
- * - register animations in the animation cache;
- * - attach event listeners.
- *
- * All required runtime dependencies are supplied by the caller.
- *
- * The function creates closures around `burgerElementsData` and
- * `navMenuAnime`, allowing the returned callbacks to be used directly
- * with DOM event APIs.
- *
- * @param {TBurgerElements} burgerElementsData
- * Resolved DOM elements required by Burger navigation.
- *
- * @param {TTimeline} navMenuAnime
- * GSAP Timeline controlling the fixed navigation menu.
- *
- * @returns {{
- *     closeBurgerHandler: (e: MouseEvent) => void,
- *     attachBurgerListener: (burger: Element) => void
- * }}
- * Event callbacks used by the Burger navigation initializer.
- */
-function initBurgerHandlers(burgerElementsData, navMenuAnime) {
-  /**
-   * Creates the document-level click callback.
-   *
-   * The callback delegates the actual behavior to
-   * `closeBurgerClickHandler()`.
-   *
-   * @param {MouseEvent} e
-   * Mouse click event.
-   *
-   * @returns {void}
-   */
-  const closeBurgerHandler = e => {
-    closeBurgerClickHandler(e, burgerElementsData, navMenuAnime);
-  };
-
-  /**
-   * Creates a callback that attaches the Burger click handler
-   * to one specific Burger trigger.
-   *
-   * The actual interaction logic remains inside
-   * `initBurgerListener()`.
-   *
-   * @param {Element} burger
-   * Burger navigation trigger.
-   *
-   * @returns {void}
-   */
-  const attachBurgerListener = burger => {
-    initBurgerListener(burger, burgerElementsData, navMenuAnime);
-  };
-  return {
-    closeBurgerHandler,
-    attachBurgerListener
-  };
+function createPageNameSet(anchors) {
+  return new Set(/** @type {TPageName[]} */
+  Object.keys(anchors));
 }
 
 /**
@@ -4828,190 +4421,382 @@ function closeBurgerClickHandler(e, burgerElementsData, navMenuAnime) {
 }
 
 /**
- * Creates a runtime collection of registered page names.
+ * Initializes Burger navigation event callbacks.
  *
- * The type assertion is intentionally localized here because
- * `Object.keys()` widens its result to `string[]`.
+ * This function is intentionally limited to event-handler composition.
+ * It does not:
  *
- * @param {typeof linkAnchors} anchors
+ * - resolve DOM elements;
+ * - create GSAP animations;
+ * - register animations in the animation cache;
+ * - attach event listeners.
  *
- * @returns {Set<TPageName>}
+ * All required runtime dependencies are supplied by the caller.
+ *
+ * The function creates closures around `burgerElementsData` and
+ * `navMenuAnime`, allowing the returned callbacks to be used directly
+ * with DOM event APIs.
+ *
+ * @param {TBurgerElements} burgerElementsData
+ * Resolved DOM elements required by Burger navigation.
+ *
+ * @param {TTimeline} navMenuAnime
+ * GSAP Timeline controlling the fixed navigation menu.
+ *
+ * @returns {{
+ *     closeBurgerHandler: (e: MouseEvent) => void,
+ *     attachBurgerListener: (burger: Element) => void
+ * }}
+ * Event callbacks used by the Burger navigation initializer.
  */
-function createPageNameSet(anchors) {
-  return new Set(/** @type {TPageName[]} */
-  Object.keys(anchors));
+function initBurgerHandlers(burgerElementsData, navMenuAnime) {
+  /**
+   * Creates the document-level click callback.
+   *
+   * The callback delegates the actual behavior to
+   * `closeBurgerClickHandler()`.
+   *
+   * @param {MouseEvent} e
+   * Mouse click event.
+   *
+   * @returns {void}
+   */
+  const closeBurgerHandler = e => {
+    closeBurgerClickHandler(e, burgerElementsData, navMenuAnime);
+  };
+
+  /**
+   * Creates a callback that attaches the Burger click handler
+   * to one specific Burger trigger.
+   *
+   * The actual interaction logic remains inside
+   * `initBurgerListener()`.
+   *
+   * @param {Element} burger
+   * Burger navigation trigger.
+   *
+   * @returns {void}
+   */
+  const attachBurgerListener = burger => {
+    initBurgerListener(burger, burgerElementsData, navMenuAnime);
+  };
+  return {
+    closeBurgerHandler,
+    attachBurgerListener
+  };
 }
 
 /**
- * Builds and registers the Hero section entrance animation Timeline.
+ * Initializes the complete Burger navigation subsystem.
+ *
+ * This function acts as the composition layer for Burger navigation.
+ *
+ * It coordinates:
+ *
+ * 1. DOM dependency resolution;
+ * 2. Timeline construction;
+ * 3. Event callback creation;
+ * 4. Burger listener attachment;
+ * 5. Outside-click listener attachment.
+ *
+ * The individual responsibilities remain delegated:
+ *
+ *     requireElements()
+ *         → resolves DOM dependencies
+ *
+ *     buildTimeline()
+ *         → builds and registers the animation
+ *
+ *     initBurgerHandlers()
+ *         → creates event callbacks
+ *
+ *     initBurgerListener()
+ *         → handles Burger trigger interaction
+ *
+ *     closeBurgerClickHandler()
+ *         → handles outside-click behavior
+ *
+ * This function intentionally contains no animation implementation
+ * and no event-handling logic of its own.
  *
  * @param {TGsap} gsap
- * @param {string} key
- * @param {TGroupTimelineParams} params
- * @returns {TTimeline}
- */
-function buildHeroTimeline(gsap, key, params) {
-  return buildGroupTimeline(gsap, key, params);
-}
-
-// ============================================
-// BUILDER FUNCTIONS (accept gsap instance)
-// ============================================
-
-/**
- * Builds and registers the hero section entrance animation timeline.
+ * Initialized GSAP instance.
  *
- * The builder assumes that GSAP has already been successfully initialized.
- * DOM target resolution is delegated to GSAP.
+ * @param {TNavMenuSelector[]} selectors
+ * Selector configuration for Burger navigation DOM dependencies.
  *
- * @param {TGsap} gsap - Initialized GSAP instance.
- * @param {string} tlName - Cache key for the created animation.
- * @returns {TTimeline}
- */
-function buildHeroTimelineVer(gsap, tlName) {
-  const tlHero = gsap.timeline();
-  tlHero.to(_initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.SELECTORS.headingAccentHero, {
-    opacity: 1,
-    duration: 2,
-    delay: 0.3
-  });
-  tlHero.from(_initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.SELECTORS.headingAccentHero, {
-    x: 80,
-    duration: 0.8,
-    ease: "circ.out"
-  }, "<");
-  tlHero.to(_initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.SELECTORS.headingHeroRest, {
-    opacity: 1,
-    duration: 2
-  }, "<");
-  tlHero.from(_initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.SELECTORS.headingHeroRest, {
-    x: -80,
-    duration: 0.8,
-    ease: "circ.out"
-  }, "<");
-  tlHero.to(_initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.SELECTORS.textBlockHero, {
-    opacity: 1,
-    duration: 2
-  }, "-=1.5");
-  tlHero.from(_initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.SELECTORS.textBlockHero, {
-    y: 80,
-    duration: 0.8,
-    ease: "circ.out"
-  }, "<");
-  tlHero.to(_initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.SELECTORS.biddingBlockHero, {
-    opacity: 1,
-    duration: 2
-  }, "<+0.3");
-  tlHero.from(_initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.SELECTORS.biddingBlockHero, {
-    y: 40,
-    duration: 0.8,
-    ease: "circ.out"
-  }, "<");
-  tlHero.to(_initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.SELECTORS.iconWrapperHero, {
-    scale: 1,
-    duration: 1.5,
-    ease: "elastic.out"
-  }, "<+0.2");
-  (0,_gsap_loader_js__WEBPACK_IMPORTED_MODULE_1__.registerAnimation)(tlName, tlHero);
-  return tlHero;
-}
-
-/**
- * Builds the scrolled navigation show/hide animation.
+ * @param {TSingleTimelineParams} timelineParams
+ * Declarative configuration for the Burger navigation Timeline.
  *
- * @param {TGsap} gsap - GSAP instance
- * @throws {Error} if the Element with the given selector is not found in DOM...
- * @returns {TTween}
+ * @returns {void}
  */
-function buildScrolledNav(gsap) {
+function initBurgerMenu(gsap, selectors, timelineParams) {
   /**
-   * target is used for registering animation with {@link registerAnimation} args: (Element|string, core.Tween)
-   * we cannot use selector as the key because of multiple Elements with the same selector...
-   * therefore we use separate Element as the key for the current animation
-   * in order to avoid the Element which is not found in DOM we throw Error
-   * finally buildScrolledNav
+   * Resolve all Burger-related DOM dependencies once.
+   *
+   * The type assertion is intentionally placed at the boundary
+   * between the generic DOM utility and the Burger-specific subsystem.
    */
-  const target = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.getDOMElement)(_initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.SELECTORS.scrolledNav);
-  if (!target) {
-    throw TypeError(`[buildScrolledNav]: target ${_initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.SELECTORS.scrolledNav} not found in DOM...`);
+  const burgerElementsData = /** @type {TBurgerElements} */
+  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.requireElements)(selectors);
+
+  /**
+   * Extract the Burger trigger collection.
+   *
+   * These Elements are needed only to attach the callbacks created
+   * by initBurgerHandlers().
+   */
+  const {
+    burgerNavAll
+  } = burgerElementsData;
+
+  /**
+   * Build the Burger navigation Timeline.
+   *
+   * The Timeline is already configured with its declared initial
+   * runtime state and registered in the animation cache by the builder.
+   */
+  const navMenuAnime = buildSingleTimeline(gsap, timelineParams);
+
+  /**
+   * Initialize callbacks that control the Burger navigation.
+   *
+   * initBurgerHandlers() does not attach listeners itself.
+   * It only creates callback functions with the required dependencies
+   * closed over.
+   */
+  const {
+    closeBurgerHandler,
+    attachBurgerListener
+  } = initBurgerHandlers(burgerElementsData, navMenuAnime);
+
+  /**
+   * Attach the Burger click handler to every resolved trigger.
+   *
+   * DOM lookup is not repeated here because all required Elements
+   * were resolved once at the beginning of this function.
+   */
+  burgerNavAll.forEach(burger => attachBurgerListener(burger));
+
+  /**
+   * Attach the document-level outside-click handler.
+   */
+  document.addEventListener("click", closeBurgerHandler);
+}
+
+/**
+ * Initializes all page animations and animation-related event handlers.
+ *
+ * The function is the main runtime entry point for the site's animation system.
+ * It lazily loads GSAP and ScrollTrigger, resolves the current page names,
+ * creates shared burger-navigation handlers, and runs both common and
+ * page-specific animation builders.
+ *
+ * Animation execution is delegated to {@link runPageAnimations}, which
+ * determines which page-specific animations should run based on the
+ * resolved page names.
+ *
+ * If GSAP or ScrollTrigger cannot be loaded, initialization is aborted
+ * and the error is reported through {@link logInitError}.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
+async function initAnimations() {
+  const gsapAll = await (0,_gsap_loader_js__WEBPACK_IMPORTED_MODULE_1__.getGSAP)();
+  if (!gsapAll) {
+    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.logInitError)({
+      component: "initAnimations",
+      message: `gsap is not loaded... omitting...`,
+      details: gsapAll
+    });
+    return;
   }
-  const tween = gsap.to(_initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.SELECTORS.scrolledNav, {
-    top: -10,
+  const {
+    gsap,
+    ScrollTrigger
+  } = gsapAll;
+
+  /**
+   * Runtime collection of valid page names.
+   *
+   * The collection is derived from the page navigation anchors and is used
+   * by {@link runPageAnimations} to determine which page-specific
+   * animations should be initialized.
+   *
+   * @type {Set<TPageName>}
+   */
+  const pageNames = createPageNameSet(_initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.linkAnchors);
+
+  /**
+   * Animation builders available for the current application.
+   *
+   * `common` contains animations and interaction handlers shared by all pages.
+   * Page-specific builders are keyed by {@link TPageName}.
+   *
+   * @type {TPageAnimations}
+   */
+  const pageAnimations = {
+    automation: () => {
+      //parallax at gates-rollers-automation.html
+      buildSingleTimeline(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.automationParallaxTimelineParams);
+    },
+    common: () => {
+      //Hero section priority...
+      buildGroupTimeline(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.heroTimelineParams, "heroAnimation");
+
+      //initializing burger handlers, build and register animation timeline...
+      initBurgerMenu(gsap, _initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.navMenuSelectorsData, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.burgerNavTimelineParams);
+
+      // parallax on services section on all pages
+      buildSingleTimeline(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.servicesParallaxTimelineParams);
+
+      // separate timelines of Elements with common selector: fade-in-left
+      buildEachTimelines(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.fadeInLeftTimelineParams);
+
+      // separate timelines of Elements with common selector: fade-in-right
+      buildEachTimelines(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.fadeInRightTimelineParams);
+
+      // separate timelines of Elements with common selector: scale-in
+      buildEachTimelines(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.scaleInTimelineParams);
+
+      // separate timelines of Elements with common selector: fade-in-up
+      buildEachTimelines(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.fadeInUpTimelineParams);
+
+      //the navigation panel show-on-scroll Timeline
+      buildSingleTimeline(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.scrolledNavTimelineParams);
+    }
+  };
+  runPageAnimations(pageAnimations, pageNames);
+}
+
+/**
+ * Initializes common and page-specific animations.
+ *
+ * Common animations are always executed.
+ * Page-specific animations are executed only when a corresponding
+ * animation function has been registered for the current page.
+ *
+ * @param {TPageAnimations} animations
+ * @param {ReadonlySet<string>} pageNames
+ *
+ * @returns {void}
+ */
+function runPageAnimations(animations, pageNames) {
+  const pageName = getCurrentPageName(pageNames);
+
+  // Common animations are mandatory.
+  animations.common();
+
+  // Stop when the current page name is missing or invalid.
+  if (!pageName) {
+    return;
+  }
+  const pageAnimation = animations[pageName];
+
+  // Page-specific animations are optional.
+  if (!pageAnimation) {
+    return;
+  }
+  pageAnimation();
+}
+
+// TODO: LOWER IS TO REMAKE
+
+/**
+ * Builds fade-in animations for elements matching a selector.
+ * Each element's timeline is cached individually.
+ *
+ * @param {typeof import('gsap').gsap} gsap - GSAP instance
+ * @param {string} selector - CSS selector for target elements
+ * @param {string} propKey - Key prefix for timeline references
+ * @param {Object} fromParams - gsap.from parameters (entrance motion)
+ * @returns {Object.<string, gsap.core.Timeline>} Timeline references object
+ */
+function buildFadeAnimations(gsap, selector, propKey, fromParams) {
+  return getAllScrollTwoTweens(gsap, gsap.utils.toArray(document.querySelectorAll(selector)), null, propKey, {
+    opacity: 1,
     duration: 0.7,
-    ease: "back.out(1.5)",
-    delay: 0.5,
+    delay: 0.2
+  }, fromParams);
+}
+
+/**
+ * Creates multiple scroll-triggered timelines for an array of elements.
+ * Each timeline is cached against its element via gsap-loader.js.
+ *
+ * @param {typeof import('gsap').gsap} gsap - GSAP instance
+ * @param {HTMLElement[]} elemsArr - Array of target elements
+ * @param {HTMLElement|null} triggerElem - Common trigger element (or null for per-element)
+ * @param {string} propKey - Prefix for timeline keys in result object
+ * @param {Object} gsapToParams - Parameters for gsap.to
+ * @param {Object} gsapFromParams - Parameters for gsap.from
+ * @param {string} [nextAnimePos="<"] - Timeline position
+ * @returns {Object.<string, gsap.core.Timeline>} Object with timeline references
+ */
+function getAllScrollTwoTweens(gsap, elemsArr, triggerElem, propKey = "tlKey", gsapToParams = {}, gsapFromParams = {}, nextAnimePos = "<") {
+  const tlObj = {};
+  let trigger = null;
+  if (!Array.isArray(elemsArr)) {
+    console.error(`getAllScrollTwoTweens: elemsArr is not an Array`);
+    return tlObj;
+  }
+  if (triggerElem !== null) {
+    if (!(triggerElem instanceof HTMLElement) || !document.body.contains(triggerElem)) {
+      console.error(`getAllScrollTwoTweens: invalid trigger element`);
+      return tlObj;
+    }
+    trigger = triggerElem;
+  }
+  elemsArr.forEach((elem, index) => {
+    if (!(elem instanceof HTMLElement) || !document.body.contains(elem)) {
+      console.warn(`getAllScrollTwoTweens: element at index ${index} is invalid`);
+      return;
+    }
+    const tlKey = `${propKey}_${index}`;
+    const tl = getScrollTimelineTwoTweens(gsap, elem, trigger || elem, gsapToParams, gsapFromParams, nextAnimePos);
+    if (tl && hasRealAnimations(tl)) {
+      tlObj[tlKey] = tl;
+    }
+  });
+  return tlObj;
+}
+
+/**
+ * Creates a scroll-triggered timeline with fade-in from opacity 0.
+ * The resulting timeline is automatically cached via gsap-loader.js.
+ *
+ * @param {typeof import('gsap').gsap} gsap - GSAP instance
+ * @param {HTMLElement} elem - Target element
+ * @param {HTMLElement} triggerElem - ScrollTrigger trigger element
+ * @param {Object} gsapToParams - Parameters for gsap.to (fade in)
+ * @param {Object} gsapFromParams - Parameters for gsap.from (entrance motion)
+ * @param {string} [nextAnimePos="<"] - Timeline position for second tween
+ * @returns {gsap.core.Timeline|false} Created timeline or false if invalid
+ */
+function getScrollTimelineTwoTweens(gsap, elem, triggerElem, gsapToParams = {}, gsapFromParams = {}, nextAnimePos = "<") {
+  if (!(elem instanceof HTMLElement) || !(triggerElem instanceof HTMLElement)) {
+    console.warn(`getScrollTimelineTwoTweens: invalid element (${elem}) or trigger (${triggerElem})`);
+    return false;
+  }
+  const tl = gsap.timeline({
     scrollTrigger: {
-      trigger: _initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.SELECTORS.benefitsSection,
-      start: "top 5%",
+      trigger: triggerElem,
+      start: "top 80%",
       toggleActions: "play none none reverse",
       preventOverlaps: true
     }
   });
-  (0,_gsap_loader_js__WEBPACK_IMPORTED_MODULE_1__.registerAnimation)(target, tween);
-  return tween;
-}
-
-/**
- * Builds a parallax background effect using GSAP's ScrollTrigger plugin.
- *
- * ScrollTrigger must be registered with GSAP before this function is called.
- * The created tween is registered in the animation cache using the target
- * element as its key.
- *
- * @param {TGsap} gsap - GSAP instance.
- * @param {string} targetSelector - Selector for the parallax target.
- * @param {string} triggerSelector - Selector for the ScrollTrigger container.
- *
- * @throws {Error} if target with the given selector is not in DOM
- *
- * @returns {TTween}
- */
-function buildParallax(gsap, targetSelector, triggerSelector) {
-  /**
-   * Use the target Element as the animation identity.
-   * Parallax animations are created by a generic builder, so a unique
-   * application-level name is neither required nor naturally available.
-   */
-  const target = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.getDOMElement)(targetSelector);
-  if (!target) {
-    throw new Error(`[buildParallax]: target selector "${targetSelector}" does not exist in DOM.`);
-  }
-  const tween = gsap.fromTo(target, {
-    yPercent: 10
-  }, {
-    yPercent: -10,
-    ease: "none",
-    scrollTrigger: {
-      trigger: triggerSelector,
-      start: "top bottom",
-      end: "bottom top",
-      scrub: 1.5,
-      invalidateOnRefresh: true
-    }
+  tl.to(elem, {
+    ...gsapToParams
   });
+  tl.from(elem, {
+    ...gsapFromParams
+  }, nextAnimePos);
 
-  //caching Tween to js/partials/gsap-loader.js
-  (0,_gsap_loader_js__WEBPACK_IMPORTED_MODULE_1__.registerAnimation)(target, tween);
-  return tween;
-}
-
-/**
- * Builds fade-in animations for elements matching a selector.
- * Each element's timeline is cached individually to js/partials/gsap-loader.js
- *
- * @param {TGsap} gsap - GSAP instance
- * @param {string} targetSelector - CSS selector for target elements
- * @param {Object} fromParams - gsap.from parameters (entrance motion)
- * @returns {TTimeline[]}
- */
-function buildFadeAnimations(gsap, targetSelector, fromParams) {
-  return initAllTimelinesFromTo(gsap, targetSelector, {
-    gsapFrom: fromParams
-  }, {
-    opacity: 1,
-    duration: 0.7,
-    delay: 0.2
-  });
+  // Register in gsap-loader cache; kills previous animation for this element automatically
+  cacheAnimation(tl, elem);
+  return tl;
 }
 
 /**
@@ -5241,18 +5026,14 @@ async function getGSAP() {
  * @returns {void}
  */
 function registerAnimation(key, animation) {
+  if (isRegisteredAnimation(key)) {
+    throw new Error(`[registerAnimation]: the given key ${key} is already registered by another timeline`);
+  }
   if (typeof key !== "string" && !(key instanceof Element)) {
     throw TypeError(`[registerAnimation]: the given key must be string or Element... given key: ${key}`);
   }
   if (typeof key === "string" && !key) {
     throw new TypeError(`[registerAnimation]: the given key: ${key} has no length: ${key.length}`);
-  }
-
-  //testing registered animations...
-  if (isRegisteredAnimation(key)) {
-    console.count("Animation is already registered:");
-    console.log(key, "key: ");
-    console.log(animation, "animation: ");
   }
   if (typeof key === "string") {
     namedAnimations.set(key, animation);

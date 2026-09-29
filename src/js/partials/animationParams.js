@@ -13,13 +13,12 @@ import {SELECTORS} from "./initialSelectors.js";
  *
  * Generic GSAP vars object.
  *
- * `Record<string, any>` is intentionally used here because this
- * configuration represents generic GSAP vars and may contain
- * properties provided by GSAP core, plugins, or ScrollTrigger.
+ * `Record<string, any>` is intentionally used at this abstraction layer
+ * because animation configuration may contain properties provided by
+ * GSAP core, plugins, or ScrollTrigger.
  *
- * The type is kept generic at this abstraction layer instead of
- * coupling the application-specific animation configuration to
- * every possible GSAP plugin type.
+ * Keeping this type generic prevents the animation builder API from being
+ * coupled to every possible GSAP plugin configuration.
  *
  * @typedef {Record<string, any>} TGsapVars
  */
@@ -45,7 +44,7 @@ import {SELECTORS} from "./initialSelectors.js";
  *
  * Common GSAP animation type.
  *
- * This includes both Tween and Timeline instances.
+ * Includes both Tween and Timeline instances.
  *
  * @typedef {gsap.core.Animation} TAnimation
  */
@@ -53,13 +52,13 @@ import {SELECTORS} from "./initialSelectors.js";
 /**
  * TAnimationKey
  *
- * Cache key used to identify a registered animation.
+ * Cache identity used to register a GSAP animation.
  *
- * Element keys are used when the animation belongs to a concrete
- * DOM Element.
+ * String keys are used for named application-level animations,
+ * such as shared group Timelines.
  *
- * String keys are used for application-level animations such as
- * grouped animations.
+ * Element keys are used when an animation belongs to a concrete
+ * DOM Element, such as a single root or an individual `each` scope.
  *
  * @typedef {string | Element} TAnimationKey
  */
@@ -67,17 +66,16 @@ import {SELECTORS} from "./initialSelectors.js";
 /**
  * TTargetMode
  *
- * Defines how target Elements are associated with timelines.
+ * Defines how DOM targets are associated with GSAP Timelines.
  *
  * `single`
- *     One primary Element and one Timeline.
+ *     One root Element → one Timeline.
  *
  * `group`
- *     Multiple Elements and one shared Timeline.
+ *     Document → one shared Timeline.
  *
  * `each`
- *     Multiple scope Elements and one independent Timeline
- *     for every scope.
+ *     Multiple scope Elements → one independent Timeline per scope.
  *
  * @typedef {"single" | "group" | "each"} TTargetMode
  */
@@ -85,18 +83,24 @@ import {SELECTORS} from "./initialSelectors.js";
 /**
  * TScrollTriggerParams
  *
- * ScrollTrigger configuration for a single timeline step.
+ * Configuration for a ScrollTrigger attached to a Timeline.
  *
- * `trigger` is optional because the builder may resolve it from
- * the current animation context.
+ * `trigger` defines the Element whose scroll position controls
+ * the Timeline. It is independent from the DOM search root used
+ * to resolve Timeline step targets.
  *
- * The resolution rules are:
+ * Therefore:
  *
- * - Explicit `trigger` has the highest priority.
- * - `single` may use its primary target Element.
- * - `each` may use its current scope Element.
- * - `group` does not have an implicit trigger and therefore
- *   requires an explicit `trigger`.
+ *     root
+ *       ↓
+ *     resolves step targets
+ *
+ *     trigger
+ *       ↓
+ *     controls Timeline playback
+ *
+ * These may refer to the same Element, but one must not be
+ * implicitly inferred from the other.
  *
  * @typedef {{
  *   trigger?: string | Element,
@@ -108,86 +112,184 @@ import {SELECTORS} from "./initialSelectors.js";
  *   markers?: boolean,
  *   scrub?: boolean | number,
  *   pin?: boolean | string | Element,
+ *   invalidateOnRefresh?: boolean,
  * }} TScrollTriggerParams
+ */
+
+/**
+ * TTimelineOperationType
+ *
+ * Supported GSAP Timeline operations.
+ *
+ * @typedef {"set" | "from" | "to" | "fromTo"} TTimelineOperationType
  */
 
 /**
  * TTimelineStep
  *
- * Declarative description of one operation in a GSAP Timeline.
- *
- * The order of objects inside the `steps` array is significant:
- * it defines the order in which operations are added to the
- * Timeline.
+ * Declarative configuration of one operation added to a GSAP Timeline.
  *
  * `target`
- *     CSS selector of the Elements animated by this step.
+ *     CSS selector used to resolve the target Elements within
+ *     the Timeline's search root.
  *
  * `type`
- *     GSAP operation used to build the step.
+ *     GSAP Timeline operation to execute.
  *
  * `vars`
- *     Vars used by `set()`, `from()`, and `to()`, and as the
- *     destination vars for `fromTo()`.
+ *     GSAP vars used by `set()`, `from()`, and `to()`.
+ *     For `fromTo()`, these are the destination vars.
  *
  * `fromVars`
- *     Initial vars used only by `fromTo()`.
+ *     Initial GSAP vars used by `fromTo()`.
  *
  * `position`
  *     GSAP Timeline position parameter.
  *
- * `scrollTrigger`
- *     Optional ScrollTrigger configuration attached to the
- *     current GSAP tween.
+ * ScrollTrigger configuration intentionally does not belong to an
+ * individual step. It is configured at the Timeline level.
  *
  * @typedef {{
  *   target: string,
- *   type: "set" | "from" | "to" | "fromTo",
+ *   type: TTimelineOperationType,
  *   vars?: TGsapVars,
  *   fromVars?: TGsapVars,
  *   position?: string | number,
- *   scrollTrigger?: TScrollTriggerParams,
  * }} TTimelineStep
  */
 
 /**
- * TSingleTimelineParams Configuration for a single-target Timeline.
+ * TTimelineStepVars
+ *
+ * Normalized GSAP vars used internally when adding a Timeline step.
+ *
+ * Unlike `TTimelineStep`, both properties are always present after
+ * normalization.
+ *
+ * `vars` contains the destination or primary vars.
+ *
+ * `fromVars` contains the initial vars used only by `fromTo()`.
+ *
+ * @typedef {{
+ *   vars: TGsapVars,
+ *   fromVars: TGsapVars,
+ * }} TTimelineStepVars
+ */
+
+/**
+ * TBaseTimelineParams
+ *
+ * Common Timeline configuration shared by all target modes.
+ *
+ * `paused`
+ *     Controls the initial playback state of the Timeline.
+ *
+ * `scrollTrigger`
+ *     Optional ScrollTrigger configuration attached to the complete
+ *     Timeline.
+ *
+ * `steps`
+ *     Declarative operations that are added to the Timeline.
+ *
+ * The DOM search root is intentionally not defined here because
+ * different target modes derive their search context differently:
+ *
+ *     single → explicit `root`
+ *     group  → `document`
+ *     each   → each matched `scope` Element
+ *
+ * @typedef {{
+ *   paused?: boolean,
+ *   scrollTrigger?: TScrollTriggerParams,
+ *   steps: TTimelineStep[],
+ * }} TBaseTimelineParams
+ */
+
+/**
+ * TSingleTimelineParams
+ *
+ * Configuration for one independent Timeline.
+ *
+ * `root` is required because a single Timeline must have exactly
+ * one explicit DOM search root.
+ *
+ * The resolved root Element is also used as the default cache
+ * identity when no explicit key is supplied to `buildSingleTimeline()`.
  *
  * @typedef {{
  *   targetMode: "single",
- *   paused?: boolean,
- *   steps: TTimelineStep[],
- * }} TSingleTimelineParams
+ *   root: string,
+ * } & TBaseTimelineParams} TSingleTimelineParams
  */
 
 /**
- * TGroupTimelineParams Configuration for a grouped Timeline.
+ * TGroupTimelineParams
+ *
+ * Configuration for one shared Timeline.
+ *
+ * Group mode resolves all step selectors against the Document.
+ * Therefore, no explicit DOM `root` is required or accepted.
+ *
+ * The Timeline represents the complete group and must therefore
+ * be registered under an explicit string cache key.
  *
  * @typedef {{
  *   targetMode: "group",
- *   paused?: boolean,
- *   steps: TTimelineStep[],
- * }} TGroupTimelineParams
+ * } & TBaseTimelineParams} TGroupTimelineParams
  */
 
 /**
- * TEachTimelineParams Configuration for per-element Timelines.
+ * TEachTimelineParams
+ *
+ * Configuration for independent Timelines created for every Element
+ * matching `scope`.
+ *
+ * `scope` defines the Elements that establish independent Timeline
+ * instances.
+ *
+ * For each matched scope Element:
+ *
+ *     scope Element
+ *         ↓
+ *     DOM search root
+ *         ↓
+ *     one Timeline
+ *         ↓
+ *     scope Element as cache identity
+ *
+ * The scope Element is used as the Timeline search context and
+ * cache identity. ScrollTrigger configuration remains independent
+ * and is not implicitly modified by this type.
  *
  * @typedef {{
  *   targetMode: "each",
  *   scope: string,
- *   paused?: boolean,
- *   steps: TTimelineStep[],
- * }} TEachTimelineParams
+ * } & TBaseTimelineParams} TEachTimelineParams
  */
 
 /**
- * TTimelineParams Complete configuration accepted by buildTimeline().
+ * TTimelineParams
+ *
+ * Discriminated union containing the complete configuration accepted
+ * by the Timeline builder system.
+ *
+ * `targetMode` determines which specialized builder is used:
+ *
+ *     "single" → TSingleTimelineParams
+ *     "group"  → TGroupTimelineParams
+ *     "each"   → TEachTimelineParams
  *
  * @typedef {TSingleTimelineParams | TGroupTimelineParams | TEachTimelineParams} TTimelineParams
  */
 
-///////// FUNCTIONS //////////
+///////// ANIMATION CONFIGURATION //////////
+
+const defaultParallaxScrollTrigger = {
+	start: "top bottom",
+	end: "bottom top",
+	scrub: 1.5,
+	invalidateOnRefresh: true,
+}
 
 /**
  * Configuration for the Burger navigation Timeline.
@@ -195,13 +297,16 @@ import {SELECTORS} from "./initialSelectors.js";
  * The Timeline is created in its initial paused state because it is
  * controlled interactively by Burger event handlers.
  *
+ * `root` identifies the navigation Element that provides the DOM
+ * search context for the Timeline steps.
+ *
  * @type {TSingleTimelineParams}
  */
 export const burgerNavTimelineParams = {
 	targetMode: "single",
 
+	root: SELECTORS.navMenuFixed,
 	paused: true,
-
 	steps: [
 		{
 			target: SELECTORS.navMenuFixed,
@@ -215,12 +320,14 @@ export const burgerNavTimelineParams = {
 	],
 };
 
-
 /**
- * Configuration for the Hero section entrance animation Timeline.
+ * Configuration for the Hero section entrance Timeline.
  *
- * The Timeline coordinates multiple independent DOM targets and is
- * therefore configured with `targetMode: "group"`.
+ * The Timeline coordinates multiple independent Hero Elements
+ * through one shared Timeline and is therefore configured with
+ * `targetMode: "group"`.
+ *
+ * Group mode resolves all step selectors against the Document.
  *
  * @type {TGroupTimelineParams}
  */
@@ -326,5 +433,308 @@ export const heroTimelineParams = {
 	],
 };
 
+/**
+ * Configuration for the Automation section parallax Timeline.
+ *
+ * The section Element is used as the Timeline DOM search root,
+ * while the same selector is explicitly used as the ScrollTrigger
+ * trigger.
+ *
+ * These two settings intentionally remain independent even when
+ * they reference the same Element.
+ *
+ * @type {TSingleTimelineParams}
+ */
+export const automationParallaxTimelineParams = {
+	targetMode: "single",
 
+	root: SELECTORS.automationParallax,
 
+	scrollTrigger: {
+		trigger: SELECTORS.automationParallax,
+		...defaultParallaxScrollTrigger,
+	},
+
+	steps: [
+		{
+			target: SELECTORS.automationParallaxBg,
+			type: "fromTo",
+			fromVars: {
+				yPercent: 10,
+			},
+			vars: {
+				yPercent: -10,
+				ease: "none",
+			},
+		},
+	],
+};
+
+/**
+ * Configuration for the Services section parallax Timeline.
+ *
+ * The section Element is used as the Timeline DOM search root,
+ * while the same selector is explicitly used as the ScrollTrigger
+ * trigger.
+ *
+ * These two settings intentionally remain independent even when
+ * they reference the same Element.
+ *
+ * @type {TSingleTimelineParams}
+ */
+export const servicesParallaxTimelineParams = {
+	targetMode: "single",
+
+	root: SELECTORS.servicesParallax,
+
+	scrollTrigger: {
+		trigger: SELECTORS.servicesParallax,
+		...defaultParallaxScrollTrigger
+	},
+
+	steps: [
+		{
+			target: SELECTORS.servicesParallaxBg,
+			type: "fromTo",
+			fromVars: {
+				yPercent: 10,
+			},
+			vars: {
+				yPercent: -10,
+				ease: "none",
+			},
+		},
+	],
+};
+
+/**
+ * Configuration for independent fade-in-from-left Timelines.
+ *
+ * One Timeline is created for every Element matching `scope`.
+ * Each scope Element becomes:
+ *
+ * - the DOM search root for its Timeline steps;
+ * - the Timeline cache identity;
+ * - the default ScrollTrigger trigger when the trigger selector
+ *   resolves to the scope selector.
+ *
+ * @type {TEachTimelineParams}
+ */
+export const fadeInLeftTimelineParams = {
+	targetMode: "each",
+
+	scope: SELECTORS.fadeInLeft,
+	scrollTrigger: {  //will be used for each scope Element
+		trigger: SELECTORS.fadeInLeft,
+		start: "top 80%",
+		toggleActions: "play none none reverse",
+		preventOverlaps: true
+	},
+
+	steps: [
+		{
+			target: SELECTORS.fadeInLeft,
+			type: "to",
+			vars: {
+				opacity: 1,
+				duration: 0.8,
+				delay: 0.2,
+			},
+		},
+		{
+			target: SELECTORS.fadeInLeft,
+			type: "from",
+			vars: {
+				x: -60,
+				y: 40,
+				duration: 1,
+				ease: "circ.out",
+			},
+			position: "<",
+		},
+	],
+};
+
+/**
+ * Configuration for independent fade-in-from-right Timelines.
+ *
+ * One Timeline is created for every Element matching `scope`.
+ * Each scope Element becomes:
+ *
+ * - the DOM search root for its Timeline steps;
+ * - the Timeline cache identity;
+ * - the default ScrollTrigger trigger when the trigger selector
+ *   resolves to the scope selector.
+ *
+ * @type {TEachTimelineParams}
+ */
+export const fadeInRightTimelineParams = {
+	targetMode: "each",
+
+	scope: SELECTORS.fadeInRight,
+	scrollTrigger: {  //will be used for each scope Element
+		trigger: SELECTORS.fadeInRight,
+		start: "top 80%",
+		toggleActions: "play none none reverse",
+		preventOverlaps: true
+	},
+
+	steps: [
+		{
+			target: SELECTORS.fadeInRight,
+			type: "to",
+			vars: {
+				opacity: 1,
+				duration: 0.8,
+				delay: 0.2,
+			},
+		},
+		{
+			target: SELECTORS.fadeInRight,
+			type: "from",
+			vars: {
+				x: 60,
+				y: 40,
+				duration: 1,
+				ease: "circ.out",
+			},
+			position: "<",
+		},
+	],
+};
+
+/**
+ * Configuration for independent scale-in Timelines.
+ *
+ * One Timeline is created for every Element matching `scope`.
+ * Each scope Element becomes:
+ *
+ * - the DOM search root for its Timeline steps;
+ * - the Timeline cache identity;
+ * - the default ScrollTrigger trigger when the trigger selector
+ *   resolves to the scope selector.
+ *
+ * @type {TEachTimelineParams}
+ */
+export const scaleInTimelineParams = {
+	targetMode: "each",
+
+	scope: SELECTORS.scaleIn,
+	scrollTrigger: {  //will be used for each scope Element
+		trigger: SELECTORS.scaleIn,
+		start: "top 80%",
+		toggleActions: "play none none reverse",
+		preventOverlaps: true
+	},
+
+	steps: [
+		{
+			target: SELECTORS.scaleIn,
+			type: "to",
+			vars: {
+				opacity: 1,
+				duration: 0.8,
+			},
+		},
+		{
+			target: SELECTORS.scaleIn,
+			type: "from",
+			vars: {
+				scale: 0.7,
+				duration: 1.2,
+				ease: "back.out(1)",
+			},
+			position: "<",
+		},
+	],
+};
+
+/**
+ * Configuration for independent fade-in-up Timelines.
+ *
+ * One Timeline is created for every Element matching `scope`.
+ * Each scope Element becomes:
+ *
+ * - the DOM search root for its Timeline steps;
+ * - the Timeline cache identity;
+ * - the default ScrollTrigger trigger when the trigger selector
+ *   resolves to the scope selector.
+ *
+ * @type {TEachTimelineParams}
+ */
+export const fadeInUpTimelineParams = {
+	targetMode: "each",
+
+	scope: SELECTORS.fadeInUp,
+	scrollTrigger: {  //will be used for each scope Element
+		trigger: SELECTORS.fadeInUp,
+		start: "top 80%",
+		toggleActions: "play none none reverse",
+		preventOverlaps: true
+	},
+
+	steps: [
+		{
+			target: SELECTORS.fadeInUp,
+			type: "to",
+			vars: {
+				opacity: 1,
+				duration: 0.8,
+				delay: 0.2,
+			},
+		},
+		{
+			target: SELECTORS.fadeInUp,
+			type: "from",
+			vars: {
+				y: 40,
+				duration: 1,
+				ease: "circ.out",
+			},
+			position: "<",
+		},
+	],
+};
+
+/**
+ * Configuration for the navigation panel show-on-scroll Timeline.
+ *
+ * The Timeline is triggered when the Benefits section reaches 5% from
+ * the top of the viewport and plays the navigation panel entrance
+ * animation. The animation is reversed when the ScrollTrigger leaves
+ * the active range.
+ *
+ * `root` identifies the navigation panel Element used as the Timeline
+ * DOM search root and animation cache identity.
+ *
+ * The ScrollTrigger trigger is intentionally independent from `root`:
+ * the navigation panel is animated, while the Benefits section controls
+ * when the Timeline is activated.
+ *
+ * @type {TSingleTimelineParams}
+ */
+export const scrolledNavTimelineParams = {
+	targetMode: "single",
+
+	root: SELECTORS.scrolledNav,
+
+	scrollTrigger: {
+		trigger: SELECTORS.benefitsSection,
+		start: "top 5%",
+		toggleActions: "play none none reverse",
+		preventOverlaps: true,
+	},
+
+	steps: [
+		{
+			target: SELECTORS.scrolledNav,
+			type: "to",
+			vars: {
+				top: -10,
+				duration: 0.7,
+				ease: "back.out(1.5)",
+				delay: 0.5,
+			},
+		},
+	],
+};
