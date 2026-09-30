@@ -4585,6 +4585,88 @@ function initBurgerMenu(gsap, selectors, timelineParams) {
 }
 
 /**
+ * Checks whether a string is a registered page name.
+ *
+ * This function also acts as a TypeScript type guard and narrows
+ * the value from `string` to `TPageName`.
+ *
+ * @param {string} value
+ * @param {ReadonlySet<string>} pageNames intentionally wider
+ *
+ * @returns {value is TPageName}
+ */
+function isPageName(value, pageNames) {
+  return pageNames.has(value);
+}
+
+/**
+ * Returns the current page name from the `<body data-type="...">`
+ * attribute.
+ *
+ * The value is validated against the supplied runtime collection
+ * of registered page names.
+ *
+ * @param {ReadonlySet<string>} pageNames
+ *
+ * @returns {TPageName | null}
+ */
+function getCurrentPageName(pageNames) {
+  const pageName = document.body?.dataset?.type || null;
+  if (!pageName) {
+    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.logInitError)({
+      component: "getCurrentPageName",
+      message: "<body> does not have a data-type attribute.",
+      details: {
+        dataset: document.body?.dataset
+      }
+    });
+    return null;
+  }
+  if (!isPageName(pageName, pageNames)) {
+    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.logInitError)({
+      component: "getCurrentPageName",
+      message: `Unknown page name "${pageName}".`,
+      details: {
+        registeredPages: [...pageNames]
+      }
+    });
+    return null;
+  }
+  return pageName;
+}
+
+/**
+ * Initializes common and page-specific animations.
+ *
+ * Common animations are always executed.
+ * Page-specific animations are executed only when a corresponding
+ * animation function has been registered for the current page.
+ *
+ * @param {TPageAnimations} animations
+ * @param {ReadonlySet<string>} pageNames
+ *
+ * @returns {void}
+ */
+function runPageAnimations(animations, pageNames) {
+  const pageName = getCurrentPageName(pageNames);
+
+  // Common animations are mandatory.
+  animations.common();
+
+  // Stop when the current page name is missing or invalid.
+  if (!pageName) {
+    return;
+  }
+  const pageAnimation = animations[pageName];
+
+  // Page-specific animations are optional.
+  if (!pageAnimation) {
+    return;
+  }
+  pageAnimation();
+}
+
+/**
  * Initializes all page animations and animation-related event handlers.
  *
  * The function is the main runtime entry point for the site's animation system.
@@ -4670,37 +4752,6 @@ async function initAnimations() {
   runPageAnimations(pageAnimations, pageNames);
 }
 
-/**
- * Initializes common and page-specific animations.
- *
- * Common animations are always executed.
- * Page-specific animations are executed only when a corresponding
- * animation function has been registered for the current page.
- *
- * @param {TPageAnimations} animations
- * @param {ReadonlySet<string>} pageNames
- *
- * @returns {void}
- */
-function runPageAnimations(animations, pageNames) {
-  const pageName = getCurrentPageName(pageNames);
-
-  // Common animations are mandatory.
-  animations.common();
-
-  // Stop when the current page name is missing or invalid.
-  if (!pageName) {
-    return;
-  }
-  const pageAnimation = animations[pageName];
-
-  // Page-specific animations are optional.
-  if (!pageAnimation) {
-    return;
-  }
-  pageAnimation();
-}
-
 // TODO: LOWER IS TO REMAKE
 
 /**
@@ -4713,13 +4764,16 @@ function runPageAnimations(animations, pageNames) {
  * @param {Object} fromParams - gsap.from parameters (entrance motion)
  * @returns {Object.<string, gsap.core.Timeline>} Timeline references object
  */
-function buildFadeAnimations(gsap, selector, propKey, fromParams) {
-  return getAllScrollTwoTweens(gsap, gsap.utils.toArray(document.querySelectorAll(selector)), null, propKey, {
-    opacity: 1,
-    duration: 0.7,
-    delay: 0.2
-  }, fromParams);
-}
+/*function buildFadeAnimations(gsap, selector, propKey, fromParams) {
+	return getAllScrollTwoTweens(
+		gsap,
+		gsap.utils.toArray(document.querySelectorAll(selector)),
+		null,
+		propKey,
+		{ opacity: 1, duration: 0.7, delay: 0.2 },
+		fromParams
+	);
+}*/
 
 /**
  * Creates multiple scroll-triggered timelines for an array of elements.
@@ -4734,33 +4788,39 @@ function buildFadeAnimations(gsap, selector, propKey, fromParams) {
  * @param {string} [nextAnimePos="<"] - Timeline position
  * @returns {Object.<string, gsap.core.Timeline>} Object with timeline references
  */
-function getAllScrollTwoTweens(gsap, elemsArr, triggerElem, propKey = "tlKey", gsapToParams = {}, gsapFromParams = {}, nextAnimePos = "<") {
-  const tlObj = {};
-  let trigger = null;
-  if (!Array.isArray(elemsArr)) {
-    console.error(`getAllScrollTwoTweens: elemsArr is not an Array`);
-    return tlObj;
-  }
-  if (triggerElem !== null) {
-    if (!(triggerElem instanceof HTMLElement) || !document.body.contains(triggerElem)) {
-      console.error(`getAllScrollTwoTweens: invalid trigger element`);
-      return tlObj;
-    }
-    trigger = triggerElem;
-  }
-  elemsArr.forEach((elem, index) => {
-    if (!(elem instanceof HTMLElement) || !document.body.contains(elem)) {
-      console.warn(`getAllScrollTwoTweens: element at index ${index} is invalid`);
-      return;
-    }
-    const tlKey = `${propKey}_${index}`;
-    const tl = getScrollTimelineTwoTweens(gsap, elem, trigger || elem, gsapToParams, gsapFromParams, nextAnimePos);
-    if (tl && hasRealAnimations(tl)) {
-      tlObj[tlKey] = tl;
-    }
-  });
-  return tlObj;
-}
+/*function getAllScrollTwoTweens(gsap, elemsArr, triggerElem, propKey = "tlKey", gsapToParams = {}, gsapFromParams = {}, nextAnimePos = "<") {
+	const tlObj = {};
+	let trigger = null;
+
+	if (!Array.isArray(elemsArr)) {
+		console.error(`getAllScrollTwoTweens: elemsArr is not an Array`);
+		return tlObj;
+	}
+
+	if (triggerElem !== null) {
+		if (!(triggerElem instanceof HTMLElement) || !document.body.contains(triggerElem)) {
+			console.error(`getAllScrollTwoTweens: invalid trigger element`);
+			return tlObj;
+		}
+		trigger = triggerElem;
+	}
+
+	elemsArr.forEach((elem, index) => {
+		if (!(elem instanceof HTMLElement) || !document.body.contains(elem)) {
+			console.warn(`getAllScrollTwoTweens: element at index ${index} is invalid`);
+			return;
+		}
+
+		const tlKey = `${propKey}_${index}`;
+		const tl = getScrollTimelineTwoTweens(gsap, elem, trigger || elem, gsapToParams, gsapFromParams, nextAnimePos);
+
+		if (tl && hasRealAnimations(tl)) {
+			tlObj[tlKey] = tl;
+		}
+	});
+
+	return tlObj;
+}*/
 
 /**
  * Creates a scroll-triggered timeline with fade-in from opacity 0.
@@ -4774,49 +4834,46 @@ function getAllScrollTwoTweens(gsap, elemsArr, triggerElem, propKey = "tlKey", g
  * @param {string} [nextAnimePos="<"] - Timeline position for second tween
  * @returns {gsap.core.Timeline|false} Created timeline or false if invalid
  */
-function getScrollTimelineTwoTweens(gsap, elem, triggerElem, gsapToParams = {}, gsapFromParams = {}, nextAnimePos = "<") {
-  if (!(elem instanceof HTMLElement) || !(triggerElem instanceof HTMLElement)) {
-    console.warn(`getScrollTimelineTwoTweens: invalid element (${elem}) or trigger (${triggerElem})`);
-    return false;
-  }
-  const tl = gsap.timeline({
-    scrollTrigger: {
-      trigger: triggerElem,
-      start: "top 80%",
-      toggleActions: "play none none reverse",
-      preventOverlaps: true
-    }
-  });
-  tl.to(elem, {
-    ...gsapToParams
-  });
-  tl.from(elem, {
-    ...gsapFromParams
-  }, nextAnimePos);
+/*function getScrollTimelineTwoTweens(gsap, elem, triggerElem, gsapToParams = {}, gsapFromParams = {}, nextAnimePos = "<") {
+	if (!(elem instanceof HTMLElement) || !(triggerElem instanceof HTMLElement)) {
+		console.warn(`getScrollTimelineTwoTweens: invalid element (${elem}) or trigger (${triggerElem})`);
+		return false;
+	}
 
-  // Register in gsap-loader cache; kills previous animation for this element automatically
-  cacheAnimation(tl, elem);
-  return tl;
-}
+	const tl = gsap.timeline({
+		scrollTrigger: {
+			trigger: triggerElem,
+			start: "top 80%",
+			toggleActions: "play none none reverse",
+			preventOverlaps: true,
+		}
+	});
+
+	tl.to(elem, { ...gsapToParams });
+	tl.from(elem, { ...gsapFromParams }, nextAnimePos);
+
+	// Register in gsap-loader cache; kills previous animation for this element automatically
+	cacheAnimation(tl, elem);
+	return tl;
+}*/
 
 /**
  * Builds gallery image fade-in animations.
  *
  * @param {TGsap} gsap - GSAP instance
  * @param {HTMLElement[]} elemsArr - Gallery image elements
- * @returns {TTimeline} Timeline references
  */
-function buildGalleryFade(gsap, elemsArr) {
-  initAllTimelinesFromTo(gsap, elemsArr, document.querySelector(_initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.SELECTORS.galleryWork), {
-    opacity: 1,
-    duration: 0.8,
-    delay: 0.2
-  }, {
-    scale: 0.7,
-    duration: 1,
-    ease: "back.out"
-  });
-}
+/*function buildGalleryFade(gsap, elemsArr) {
+
+
+	initAllTimelinesFromTo(
+		gsap,
+		elemsArr,
+		document.querySelector(SELECTORS.galleryWork),  //"#gallery-work"
+		{ opacity: 1, duration: 0.8, delay: 0.2 },
+		{ scale: 0.7, duration: 1, ease: "back.out" }
+	);
+}*/
 
 // ============================================
 // BURGER MENU (returns handlers + tween)
@@ -4829,57 +4886,6 @@ function buildGalleryFade(gsap, elemsArr) {
 function closeBurger() {
 	document.removeEventListener("click", closeBurgerHandler);
 }*/
-
-/**
- * Returns the current page name from the `<body data-type="...">`
- * attribute.
- *
- * The value is validated against the supplied runtime collection
- * of registered page names.
- *
- * @param {ReadonlySet<string>} pageNames
- *
- * @returns {TPageName | null}
- */
-function getCurrentPageName(pageNames) {
-  const pageName = document.body?.dataset?.type || null;
-  if (!pageName) {
-    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.logInitError)({
-      component: "getCurrentPageName",
-      message: "<body> does not have a data-type attribute.",
-      details: {
-        dataset: document.body?.dataset
-      }
-    });
-    return null;
-  }
-  if (!isPageName(pageName, pageNames)) {
-    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.logInitError)({
-      component: "getCurrentPageName",
-      message: `Unknown page name "${pageName}".`,
-      details: {
-        registeredPages: [...pageNames]
-      }
-    });
-    return null;
-  }
-  return pageName;
-}
-
-/**
- * Checks whether a string is a registered page name.
- *
- * This function also acts as a TypeScript type guard and narrows
- * the value from `string` to `TPageName`.
- *
- * @param {string} value
- * @param {ReadonlySet<string>} pageNames intentionally wider
- *
- * @returns {value is TPageName}
- */
-function isPageName(value, pageNames) {
-  return pageNames.has(value);
-}
 
 //const imageItems = await createMasonry(gallerySelector, { gap: 20 });
 //fadeInGallery(imageItems);
@@ -4901,19 +4907,6 @@ function isPageName(value, pageNames) {
 /*  function animatePage() {
 		return onPageLoaded(pageAnimations);
 	}*/
-
-/**
- *
- * @param animationData
- * @return {void}
- */
-/*function onPageLoaded(animationData) {
-	const pageName = document.body.dataset.type || "";
-	const totalTl = {};
-	if (animationData.common) Object.assign(totalTl, animationData.common());
-	if (pageName in animation)....
-
- */
 
 /***/ }),
 
