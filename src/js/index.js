@@ -2,93 +2,108 @@
 
 /**
  * @file index.js
- * @description Entry point. Bootstraps non-GSAP UI first, then lazily loads
- * GSAP via gsap-loader.js, builds animations through animations.js, and
- * initializes the masonry gallery.
+ * @description
+ * Entry point. Initializes non-GSAP UI components,
+ * registers lazy Masonry layout handling, then initializes
+ * GSAP animations and the language switcher.
+ */
+
+
+/**
+ *! DOM type aliases used by this module.
+ *
+ * @typedef {import("./types/dom.types.js").TActivateNavlinkParams} TActivateNavlinkParams
+ * @typedef {import("./types/dom.types.js").TNavLinkParams} TNavLinkParams
+ *
  */
 
 import {
-  activateNavLink,
-  createMasonry,
-  initLangSwitcher,
-  lockedEventListener
+	activateNavLink,
+	initLangSwitcher,
+	initMasonry, getDOMElement, isHTMLElement
 } from "./helpers/funcsDOM.js";
 
 import {
-  linkAnchors,
-  linkClassNameActive,
-  navLinkSelector,
-  navHexagonSelector,
-  langSwitchData,
-  gallerySelector,
-  galleryThumbsFolderName
+	linkAnchors,
+	SELECTORS,
+	linkClassNameActive,
+	langSwitchData,
+	galleryThumbsFolderName,
+	masonryConfig
 } from "./partials/initialSelectors.js";
 
 import { initThumbs } from "./modulesPack/gallery-thumbs/index.js";
 import { initAnimations } from "./partials/animations.js";
 import { isKeyOf } from "./helpers/funcs.js";
 
+
+/**
+ *
+ * @param {TNavLinkParams} params
+ *
+ * @return {TActivateNavlinkParams}
+ */
+function getNavLinkParams(params) {
+	const { navLinkSelector, pageType, activeClass, anchorLink } = params;
+
+	return {
+		navLinkSelector,
+		pageType,
+		activeClass,
+		anchorLink,
+	}
+}
+
 // ============================================
 // DOM READY
 // ============================================
 document.addEventListener("DOMContentLoaded", async () => {
-  const pageType = document.body.dataset.type || "";
-  const isIn = isKeyOf(linkAnchors, pageType);
-  const navLinkParams = {
-    navLinkSelector,
-    pageType,
-    activeClass: linkClassNameActive,
-    anchorLink: isIn ? linkAnchors[pageType] : "#",
-  }
-  const navLinkParamsHexagon = {
-    navLinkSelector: navHexagonSelector,
-    pageType,
-    activeClass: linkClassNameActive,
-    anchorLink: isIn ? linkAnchors[pageType] : "#",
-  }
+	const pageType = document.body.dataset.type || "";
+	const isIn = isKeyOf(linkAnchors, pageType);
 
-  try {
-    // ------------------------------------------
-    // Navigation & Language (non-GSAP, immediate)
-    // ------------------------------------------
-    activateNavLink(navLinkParams);
-    activateNavLink(navLinkParamsHexagon);
+	const navLinkParams = getNavLinkParams({
+		navLinkSelector: SELECTORS.navLinkSelector,
+		pageType,
+		activeClass: linkClassNameActive,
+		anchorLink: isIn ? linkAnchors[pageType] : "#"
+	});
 
-    //initializing GSAP animations...
-    await initAnimations();
+	const navLinkParamsHexagon = getNavLinkParams({
+		navLinkSelector: SELECTORS.navHexagonSelector,
+		pageType,
+		activeClass: linkClassNameActive,
+		anchorLink: isIn ? linkAnchors[pageType] : "#",
+	});
 
 
-    //initializing language switcher...
-    initLangSwitcher(langSwitchData);
+	try {
+		// Navigation & Language (non-GSAP, immediate)
+		activateNavLink(navLinkParams);
+		activateNavLink(navLinkParamsHexagon);
 
+// Initialize Masonry (non-GSAP, lazy)
+		const galleryContainer = getDOMElement(
+			SELECTORS.gallerySelector,
+			document,
+			false,
+		);
 
-    //await initThumbs(gallerySelector, galleryThumbsFolderName);
-  } catch (error) {
-    console.error("[DOMContentLoaded]: initialization failed:", error);
-  }
+		if (isHTMLElement(galleryContainer)) {
+			initMasonry(
+				galleryContainer,
+				masonryConfig,
+			);
+		}
 
-  // ------------------------------------------
-  // Resize listener
-  // ------------------------------------------
+		//initializing GSAP animations...
+		await initAnimations();
 
-/*  TEMPORAL
-/*
-  lockedEventListener("resize", window, 1500)(async () => {
-    try {
-      await createMasonry(gallerySelector, { gap: 20 });
-    } catch (error) {
-      console.error("Resize masonry failed:", error);
-    }
-  });
+		//initializing language switcher...
+		initLangSwitcher(langSwitchData);
 
-  // ------------------------------------------
-  // Optional: full cleanup on page unload
-  // Useful for SPA navigation or hot-reload scenarios
-  // ------------------------------------------
-  window.addEventListener("beforeunload", () => {
-    killAllAnimations();
-    resetGsapCache();
-  });
-
-  */
+		//await initThumbs(gallerySelector, galleryThumbsFolderName);
+	}
+	catch (error) {
+		console.error("[DOMContentLoaded]: initialization failed:", error);
+	}
 });

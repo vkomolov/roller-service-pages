@@ -81,18 +81,31 @@
 }
 
 .section__img-wrapper {
-	width: 100%; //default
-	//! .section__img-wrapper must be used in combination with an added class with necessary width.
-	//! As the added class has only width, the browser will have to know the height from the image for
-	//! creating necessary space...
-	//! This simplifies the work by allowing to specify only the width of the container and to get
-	//! the height directly from the image using aspect ratio, calculated by browser...
-	//! For lazy loading the image MUST have inline width and height, for browser to calculate aspect ratio
-	//! beforehand, without preliminary loading of the image. Otherwise loading="lazy" will no work...
+	width: 100%; //default will be overwritten by added class to set target width...
+	/*
+   * `.section__img-wrapper` must be combined with a modifier class
+   * that defines the actual wrapper width.
+   *
+   * The image itself defines the wrapper height through its intrinsic
+   * aspect ratio. Therefore, every image must provide correct `width`
+   * and `height` attributes in the HTML.
+   *
+   * These attributes allow the browser to determine the image aspect
+   * ratio and reserve the required layout space before the image
+   * resource is loaded.
+   *
+   * This is especially important for lazy-loaded images because
+   * Masonry may measure the item before the image resource finishes
+   * loading. The reserved aspect ratio ensures that `offsetHeight`
+   * represents the expected image geometry during the initial layout.
+   *
+   * The CSS width is controlled by the wrapper, while the height is
+   * calculated automatically from the declared image aspect ratio.
+   */
 	img, svg {
 		width: 100%;
 		height: auto;
-		display: block; //removes the strange gap under the image
+		display: block; //Prevents the default inline-image baseline gap
 	}
 }
 

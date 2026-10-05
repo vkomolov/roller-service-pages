@@ -748,6 +748,7 @@ h2, h3, h4, h5 {
   align-items: center;
   gap: 0.625rem 1.125rem;
   /* mobile (landscape): (max-width: 768px) and (min-width: 641px) */
+  /* mobile (portrait wide): (max-width: 640px) */
 }
 @media (max-width: 768px) and (min-width: 641px) {
   .header__contacts-block {
@@ -893,6 +894,14 @@ h2, h3, h4, h5 {
   background-color: rgba(255, 255, 255, 0.5);
   backdrop-filter: blur(0.2rem);
   transition: transform 0.3s ease;
+  /* mobile (landscape): (max-width: 768px)*/
+  /* mobile (portrait wide): (max-width: 640px) */
+  /* mobile (portrait narrow): (max-width: 480px)*/
+}
+@media (max-width: 480px) {
+  #nav-abs {
+    padding-top: 9.5rem;
+  }
 }
 #nav-abs .nav-list {
   width: 100%;
@@ -907,7 +916,6 @@ h2, h3, h4, h5 {
   align-items: center;
   /* mobile (landscape): (max-width: 768px)*/
   /* mobile (portrait wide): (max-width: 640px) */
-  /* mobile (medium): (max-width: 375px) */
 }
 @media (max-width: 768px) {
   #nav-abs .nav-list {
@@ -923,12 +931,6 @@ h2, h3, h4, h5 {
 @media (max-width: 640px) {
   #nav-abs .nav-list {
     align-items: center;
-    padding-top: 3rem;
-  }
-}
-@media (max-width: 375px) {
-  #nav-abs .nav-list {
-    padding-top: 5rem;
   }
 }
 #nav-abs[aria-expanded=true] {
@@ -1080,18 +1082,15 @@ h2, h3, h4, h5 {
   gap: 0.4rem 1rem;
   /* mobile (portrait narrow): (max-width: 480px)*/
   /* mobile (medium): (max-width: 375px) */
+  /*  @include media.maxMobileMedium {
+      @include mix.flex-box(row, center, center, wrap);
+    }*/
 }
 @media (max-width: 480px) {
   .scrolledNav__contacts-block {
     gap: 0.4rem 0.7rem;
-  }
-}
-@media (max-width: 375px) {
-  .scrolledNav__contacts-block {
-    display: flex;
-    flex-flow: row wrap;
+    flex-direction: column;
     justify-content: center;
-    align-items: center;
   }
 }
 
@@ -1741,41 +1740,53 @@ h2, h3, h4, h5 {
 }
 
 #gallery-work {
+  position: relative;
   width: 100%;
   height: 45rem;
   overflow-x: hidden;
   overflow-y: auto;
   scroll-behavior: smooth;
   /* width */
-  /* Handle */
-  /* Track */
 }
 #gallery-work::-webkit-scrollbar {
   width: 0.45rem;
 }
-#gallery-work:hover::-webkit-scrollbar-thumb {
+#gallery-work::-webkit-scrollbar-thumb {
   background-color: rgb(255, 133, 2);
 }
-#gallery-work:hover::-webkit-scrollbar-track {
+#gallery-work::-webkit-scrollbar-track {
   background-color: rgba(255, 133, 2, 0.5);
 }
 
 .gallery__item {
+  position: absolute;
   width: clamp(12rem, 30%, 20.625rem);
-  will-change: transform, opacity;
+  /*
+   * Initial visual state.
+   *
+   * The item remains in its calculated Masonry position while
+   * waiting for the associated image to load.
+   */
+  opacity: 0;
+  transform: scale(0.8);
+  /*
+   * The browser handles interpolation between the initial and
+   * loaded visual states. JavaScript only toggles the state class.
+   */
+  transition: opacity 0.45s linear, transform 0.5s cubic-bezier(0, 0.63, 0.4, 1.42);
   border-radius: 0.5rem;
   overflow: hidden;
   overflow: clip;
-  opacity: 0;
   box-shadow: 0.2rem 0.2rem 0.4rem rgba(0, 0, 0, 0.8);
 }
 .gallery__item:hover {
   cursor: pointer;
+  transform: scale(1.05) !important;
 }
-.gallery__item:hover img, .gallery__item:hover svg, .gallery__item:hover picture, .gallery__item:hover video, .gallery__item:hover object {
-  transform: scale(1.05);
+.gallery__item.image-loaded {
+  opacity: 1;
+  transform: scale(1);
 }
 .gallery__item img, .gallery__item svg, .gallery__item picture, .gallery__item video, .gallery__item object {
   border-radius: 0.5rem;
-  transition: transform 0.15s ease-in-out;
 }

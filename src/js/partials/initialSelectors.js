@@ -8,39 +8,18 @@
 //*** TYPE DEFINITIONS ***//
 
 /**
- * TBurgerElements DOM elements required by the navigation menu.
+ *! DOM type aliases used by this module.
  *
- * @typedef {Object} TBurgerElements
- * @property {Element} navMenuFixed
- * @property {Element} burgerHidden
- * @property {Element} burgerFixed
- * @property {Element[]} burgerNavAll
+ * @typedef {import("../types/dom.types.js").TBurgerElements} TBurgerElements
+ * @typedef {import("../types/dom.types.js").TDOMSelectorConfig} TDOMSelectorConfig
+ * @typedef {import("../types/dom.types.js").TNavMenuSelector} TNavMenuSelector
+ * @typedef {import("../types/animations.types.js").TPageName} TPageName
  */
 
 /**
- * TDOMSelectorConfig: Configuration for a generic DOM element lookup.
+ *! MASONRY type aliases used by this module.
  *
- * @typedef {Object} TDOMSelectorConfig
- * @property {string} key - Property name used in the resulting object.
- * @property {string} selector - CSS selector used to find the element(s).
- * @property {boolean} [multiple=false] - Whether all matching elements should be returned.
- */
-
-/**
- * TNavMenuSelector: Configuration for navigation menu DOM element lookup.
- *
- * Specializes the generic selector configuration by restricting `key`
- * to the known properties of `TBurgerElements`.
- *
- * @typedef {Omit<TDOMSelectorConfig, "key"> & {
- *     key: keyof TBurgerElements
- * }} TNavMenuSelector
- */
-
-/**
- * Page names defined by the linkAnchors registry.
- *
- * @typedef {keyof typeof linkAnchors} TPageName
+ * @typedef {import("../types/masonry.types.js").TMasonryConfig} TMasonryConfig
  */
 
 export const linkAnchors = {
@@ -54,10 +33,6 @@ export const linkAnchors = {
 	security: "#securitySurveillanceSection",
 };
 
-export const linkClassNameActive = "active";
-export const navLinkSelector = ".nav-link";
-export const navHexagonSelector = ".hexagon-comb-block__cell";
-
 export const langSwitchData = {
 	langSwitcherSelector: "#lang-switcher",
 	langSwitcherCurrent: ".lang-switcher__current",
@@ -69,8 +44,9 @@ export const langSwitchData = {
 	dataSetKey: "lang"
 };
 
-export const gallerySelector = "#gallery-work";
 export const galleryThumbsFolderName = "thumbs";
+
+export const linkClassNameActive = "active";
 
 // ============================================
 // ANIMATIONS SELECTORS
@@ -78,6 +54,9 @@ export const galleryThumbsFolderName = "thumbs";
 
 /** @type {Object.<string, string>} Animation selectors map */
 export const SELECTORS = {
+	gallerySelector: "#gallery-work",
+	navLinkSelector: ".nav-link",
+	navHexagonSelector: ".hexagon-comb-block__cell",
 	scrolledNav: "#scrolledNav",
 	burgerNav: ".burger_nav",  //for multiple elements
 	burgerFixed: ".burger_nav:not(.hidden)",
@@ -89,7 +68,6 @@ export const SELECTORS = {
 	textBlockHero: ".section__text-block--hero",
 	biddingBlockHero: ".section__bidding-block",
 	iconWrapperHero: ".section__img-wrapper--hero",
-	galleryWork: "#gallery-work",
 	automationParallax: ".section--roller-automation",
 	automationParallaxBg: "[data-anime=automation]",
 	servicesParallax: ".section--services",
@@ -128,4 +106,13 @@ export const navMenuSelectorsData = [
 	},
 ];
 
+/**
+ * Default configuration for the work gallery Masonry layout.
+ *
+ * @type {TMasonryConfig}
+ */
+export const masonryConfig = {
+	itemSelector: ".gallery__item",
+	gap: 16,
+};
 

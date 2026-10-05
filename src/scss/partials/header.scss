@@ -66,6 +66,11 @@
   @include media.rangeMobileLandscape {
     column-gap: 0.5rem;
   }
+
+  /* mobile (portrait wide): (max-width: 640px) */
+  @mixin maxMobilePortraitWide() {
+    flex-direction: column;
+  }
 }
 
 .icon-link {
@@ -227,6 +232,21 @@
 
   transition: transform .3s ease;
 
+  /* mobile (landscape): (max-width: 768px)*/
+  @include media.maxMobileLandscape {
+    //padding-top: 6.5rem;
+  }
+
+  /* mobile (portrait wide): (max-width: 640px) */
+  @mixin maxMobilePortraitWide() {
+
+  }
+
+  /* mobile (portrait narrow): (max-width: 480px)*/
+  @include media.maxMobilePortraitNarrow {
+    padding-top: 9.5rem;
+  }
+
   .nav-list {
     width: 100%;
     max-width: $maxContentWidth;
@@ -250,12 +270,6 @@
     /* mobile (portrait wide): (max-width: 640px) */
     @include media.maxMobilePortraitWide {
       align-items: center;
-      padding-top: 3rem;
-    }
-
-    /* mobile (medium): (max-width: 375px) */
-    @include media.maxMobileMedium {
-      padding-top: 5rem;
     }
   }
 
@@ -430,11 +444,13 @@
   /* mobile (portrait narrow): (max-width: 480px)*/
   @include media.maxMobilePortraitNarrow {
     gap: 0.4rem 0.7rem;
+    flex-direction: column;
+    justify-content: center;
   }
 
   /* mobile (medium): (max-width: 375px) */
-  @include media.maxMobileMedium {
+/*  @include media.maxMobileMedium {
     @include mix.flex-box(row, center, center, wrap);
-  }
+  }*/
 }
 

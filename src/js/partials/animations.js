@@ -13,7 +13,7 @@ import {
 	getElements,
 	getDOMElement,
 	requireElements,
-	logInitError,
+	initLog,
 	lockDocumentScroll,
 	restoreDocumentScroll,
 	checkHtmlElement,
@@ -33,7 +33,7 @@ import {
 } from "../helpers/funcs.js";
 
 
-import { gallerySelector, linkAnchors, SELECTORS, navMenuSelectorsData } from "./initialSelectors.js";
+import { linkAnchors, SELECTORS, navMenuSelectorsData } from "./initialSelectors.js";
 import {
 	burgerNavTimelineParams,
 	heroTimelineParams,
@@ -46,356 +46,54 @@ import {
 	scrolledNavTimelineParams
 } from "./animationParams.js";
 
-// ============================================
 //****** TYPE DEFINITIONS *******//
 
 /**
- * TBurgerElements: DOM elements required by the navigation menu.
+ *! DOM type aliases used by this module.
  *
- * @typedef {Object} TBurgerElements
- * @property {Element} navMenuFixed
- * @property {Element} burgerHidden
- * @property {Element} burgerFixed
- * @property {Element[]} burgerNavAll
+ * @typedef {import("../types/dom.types.js").TBurgerElements} TBurgerElements
+ * @typedef {import("../types/dom.types.js").TDOMSelectorConfig} TDOMSelectorConfig
+ * @typedef {import("../types/dom.types.js").TNavMenuSelector} TNavMenuSelector
+ * @typedef {import("../types/dom.types.js").TBurgerHandlersData} TBurgerHandlersData
+ *
  */
 
 /**
- * TDOMSelectorConfig: Configuration for a generic DOM element lookup.
+ *! GSAP ANIMATIONS type aliases used by this module.
  *
- * @typedef {Object} TDOMSelectorConfig
- * @property {string} key - Property name used in the resulting object.
- * @property {string} selector - CSS selector used to find the element(s).
- * @property {boolean} [multiple=false] - Whether all matching elements should be returned.
+ * @typedef {import("../types/animations.types.js").TPageName} TPageName
+ * @typedef {import("../types/animations.types.js").TLinkAnchors} TLinkAnchors
+ * @typedef {import("../types/animations.types.js").TPageAnimation} TPageAnimation
+ * @typedef {import("../types/animations.types.js").TPageAnimations} TPageAnimations
+ * @typedef {import("../types/animations.types.js").TGsap} TGsap
+ * @typedef {import("../types/animations.types.js").TGsapVars} TGsapVars
+ * @typedef {import("../types/animations.types.js").TTween} TTween
+ * @typedef {import("../types/animations.types.js").TTimeline} TTimeline
+ * @typedef {import("../types/animations.types.js").TAnimation} TAnimation
+ * @typedef {import("../types/animations.types.js").TAnimationKey} TAnimationKey
+ * @typedef {import("../types/animations.types.js").TTargetMode} TTargetMode
+ * @typedef {import("../types/animations.types.js").TScrollTriggerParams} TScrollTriggerParams
+ * @typedef {import("../types/animations.types.js").TTimelineOperationType} TTimelineOperationType
+ * @typedef {import("../types/animations.types.js").TTimelineStep} TTimelineStep
+ * @typedef {import("../types/animations.types.js").TTimelineStepVars} TTimelineStepVars
+ * @typedef {import("../types/animations.types.js").TBaseTimelineParams} TBaseTimelineParams
+ * @typedef {import("../types/animations.types.js").TSingleTimelineParams} TSingleTimelineParams
+ * @typedef {import("../types/animations.types.js").TGroupTimelineParams} TGroupTimelineParams
+ * @typedef {import("../types/animations.types.js").TEachTimelineParams} TEachTimelineParams
+ * @typedef {import("../types/animations.types.js").TTimelineParams} TTimelineParams
+ *
  */
 
 /**
- * TNavMenuSelector: Configuration for navigation menu DOM element lookup.
- *
- * Specializes the generic selector configuration by restricting `key`
- * to the known properties of `TBurgerElements`.
- *
- * @typedef {Omit<TDOMSelectorConfig, "key"> & {
- *     key: keyof TBurgerElements
- * }} TNavMenuSelector
- */
-
-/**
- * TBurgerHandlersData: Configuration for return {@link initBurgerHandlers}
- *
- * @typedef {{
- *   closeBurgerHandler: (e:MouseEvent) => void,
- *   attachBurgerListener: (burger: Element) => void,
- * }} TBurgerHandlersData
- */
-
-/**
- * TLinkAnchors is the type of the exported linkAnchors object.
- *
- * @typedef {typeof import("./initialSelectors.js").linkAnchors} TLinkAnchors
- */
-
-/**
- * TPageName is the page names defined by `linkAnchors`.
- *
- * @typedef {keyof TLinkAnchors} TPageName
- */
-
-/**
- * TPageAnimation: A function that initializes animations
- * for a page or common layout.
- *
- * @typedef {() => void} TPageAnimation
- */
-
-/**
- * TPageAnimations: Animation configuration for all pages.
- *
- * `common` is always required.
- * Page-specific animation functions are optional.
- *
- * @typedef {{
- *   common: TPageAnimation
- * } & Partial<Record<TPageName, TPageAnimation>>} TPageAnimations
- */
-
-/**
- * TGsap
- * GSAP instance.
- * @typedef {typeof import("gsap").gsap} TGsap
- */
-
-/**
- * TGsapVars
- *
- * Generic GSAP vars object.
- *
- * `Record<string, any>` is intentionally used at this abstraction layer
- * because animation configuration may contain properties provided by
- * GSAP core, plugins, or ScrollTrigger.
- *
- * Keeping this type generic prevents the animation builder API from being
- * coupled to every possible GSAP plugin configuration.
- *
- * @typedef {Record<string, any>} TGsapVars
- */
-
-/**
- * TTween
- *
- * GSAP Tween instance.
- *
- * @typedef {gsap.core.Tween} TTween
- */
-
-/**
- * TTimeline
- *
- * GSAP Timeline instance.
- *
- * @typedef {gsap.core.Timeline} TTimeline
- */
-
-/**
- * TAnimation
- *
- * Common GSAP animation type.
- *
- * Includes both Tween and Timeline instances.
- *
- * @typedef {gsap.core.Animation} TAnimation
- */
-
-/**
- * TAnimationKey
- *
- * Cache identity used to register a GSAP animation.
- *
- * String keys are used for named application-level animations,
- * such as shared group Timelines.
- *
- * Element keys are used when an animation belongs to a concrete
- * DOM Element, such as a single root or an individual `each` scope.
- *
- * @typedef {string | Element} TAnimationKey
- */
-
-/**
- * TTargetMode
- *
- * Defines how DOM targets are associated with GSAP Timelines.
- *
- * `single`
- *     One root Element → one Timeline.
- *
- * `group`
- *     Document → one shared Timeline.
- *
- * `each`
- *     Multiple scope Elements → one independent Timeline per scope.
- *
- * @typedef {"single" | "group" | "each"} TTargetMode
- */
-
-/**
- * TScrollTriggerParams
- *
- * Configuration for a ScrollTrigger attached to a Timeline.
- *
- * `trigger` defines the Element whose scroll position controls
- * the Timeline. It is independent from the DOM search root used
- * to resolve Timeline step targets.
- *
- * Therefore:
- *
- *     root
- *       ↓
- *     resolves step targets
- *
- *     trigger
- *       ↓
- *     controls Timeline playback
- *
- * These may refer to the same Element, but one must not be
- * implicitly inferred from the other.
- *
- * @typedef {{
- *   trigger?: string | Element,
- *   start?: string | number,
- *   end?: string | number,
- *   toggleActions?: string,
- *   preventOverlaps?: boolean | string,
- *   fastScrollEnd?: boolean | number,
- *   markers?: boolean,
- *   scrub?: boolean | number,
- *   pin?: boolean | string | Element,
- *   invalidateOnRefresh?: boolean,
- * }} TScrollTriggerParams
- */
-
-/**
- * TTimelineOperationType
- *
- * Supported GSAP Timeline operations.
- *
- * @typedef {"set" | "from" | "to" | "fromTo"} TTimelineOperationType
- */
-
-/**
- * TTimelineStep
- *
- * Declarative configuration of one operation added to a GSAP Timeline.
- *
- * `target`
- *     CSS selector used to resolve the target Elements within
- *     the Timeline's search root.
- *
- * `type`
- *     GSAP Timeline operation to execute.
- *
- * `vars`
- *     GSAP vars used by `set()`, `from()`, and `to()`.
- *     For `fromTo()`, these are the destination vars.
- *
- * `fromVars`
- *     Initial GSAP vars used by `fromTo()`.
- *
- * `position`
- *     GSAP Timeline position parameter.
- *
- * ScrollTrigger configuration intentionally does not belong to an
- * individual step. It is configured at the Timeline level.
- *
- * @typedef {{
- *   target: string,
- *   type: TTimelineOperationType,
- *   vars?: TGsapVars,
- *   fromVars?: TGsapVars,
- *   position?: string | number,
- * }} TTimelineStep
- */
-
-/**
- * TTimelineStepVars
- *
- * Normalized GSAP vars used internally when adding a Timeline step.
- *
- * Unlike `TTimelineStep`, both properties are always present after
- * normalization.
- *
- * `vars` contains the destination or primary vars.
- *
- * `fromVars` contains the initial vars used only by `fromTo()`.
- *
- * @typedef {{
- *   vars: TGsapVars,
- *   fromVars: TGsapVars,
- * }} TTimelineStepVars
- */
-
-/**
- * TBaseTimelineParams
- *
- * Common Timeline configuration shared by all target modes.
- *
- * `paused`
- *     Controls the initial playback state of the Timeline.
- *
- * `scrollTrigger`
- *     Optional ScrollTrigger configuration attached to the complete
- *     Timeline.
- *
- * `steps`
- *     Declarative operations that are added to the Timeline.
- *
- * The DOM search root is intentionally not defined here because
- * different target modes derive their search context differently:
- *
- *     single → explicit `root`
- *     group  → `document`
- *     each   → each matched `scope` Element
- *
- * @typedef {{
- *   paused?: boolean,
- *   scrollTrigger?: TScrollTriggerParams,
- *   steps: TTimelineStep[],
- * }} TBaseTimelineParams
- */
-
-/**
- * TSingleTimelineParams
- *
- * Configuration for one independent Timeline.
- *
- * `root` is required because a single Timeline must have exactly
- * one explicit DOM search root.
- *
- * The resolved root Element is also used as the default cache
- * identity when no explicit key is supplied to `buildSingleTimeline()`.
- *
- * @typedef {{
- *   targetMode: "single",
- *   root: string,
- * } & TBaseTimelineParams} TSingleTimelineParams
- */
-
-/**
- * TGroupTimelineParams
- *
- * Configuration for one shared Timeline.
- *
- * Group mode resolves all step selectors against the Document.
- * Therefore, no explicit DOM `root` is required or accepted.
- *
- * The Timeline represents the complete group and must therefore
- * be registered under an explicit string cache key.
- *
- * @typedef {{
- *   targetMode: "group",
- * } & TBaseTimelineParams} TGroupTimelineParams
- */
-
-/**
- * TEachTimelineParams
- *
- * Configuration for independent Timelines created for every Element
- * matching `scope`.
- *
- * `scope` defines the Elements that establish independent Timeline
- * instances.
- *
- * For each matched scope Element:
- *
- *     scope Element
- *         ↓
- *     DOM search root
- *         ↓
- *     one Timeline
- *         ↓
- *     scope Element as cache identity
- *
- * The scope Element is used as the Timeline search context and
- * cache identity. ScrollTrigger configuration remains independent
- * and is not implicitly modified by this type.
- *
- * @typedef {{
- *   targetMode: "each",
- *   scope: string,
- * } & TBaseTimelineParams} TEachTimelineParams
- */
-
-/**
- * TTimelineParams
- *
- * Discriminated union containing the complete configuration accepted
- * by the Timeline builder system.
- *
- * `targetMode` determines which specialized builder is used:
- *
- *     "single" → TSingleTimelineParams
- *     "group"  → TGroupTimelineParams
- *     "each"   → TEachTimelineParams
- *
- * @typedef {TSingleTimelineParams | TGroupTimelineParams | TEachTimelineParams} TTimelineParams
+ *! MASONRY type aliases used by this module.
+ *
+ * @typedef {import("../types/masonry.types.js").TMasonryOptions} TMasonryOptions
+ * @typedef {import("../types/masonry.types.js").TMasonryConfig} TMasonryConfig
+ * @typedef {import("../types/masonry.types.js").TMasonryItemMeasurement} TMasonryItemMeasurement
+ * @typedef {import("../types/masonry.types.js").TMasonryColumnCalculation} TMasonryColumnCalculation
+ * @typedef {import("../types/masonry.types.js").TMasonryColumns} TMasonryColumns
+ * @typedef {import("../types/masonry.types.js").TMasonryItemLayout} TMasonryItemLayout
+ * @typedef {import("../types/masonry.types.js").TMasonryLayout} TMasonryLayout
  */
 
 
@@ -964,9 +662,9 @@ function buildAndRegisterTimeline(
 		"buildAndRegisterTimeline",
 	);
 
-const timelineParams  = resolveTimelineParams(params, searchRoot);
+	const timelineParams = resolveTimelineParams(params, searchRoot);
 
-	const timeline = createTimeline(gsap, timelineParams );
+	const timeline = createTimeline(gsap, timelineParams);
 
 	addTimelineSteps(
 		timeline,
@@ -1652,7 +1350,7 @@ function getCurrentPageName(pageNames) {
 	const pageName = document.body?.dataset?.type || null;
 
 	if (!pageName) {
-		logInitError({
+		initLog("error",{
 			component: "getCurrentPageName",
 			message: "<body> does not have a data-type attribute.",
 			details: {
@@ -1664,7 +1362,7 @@ function getCurrentPageName(pageNames) {
 	}
 
 	if (!isPageName(pageName, pageNames)) {
-		logInitError({
+		initLog("error", {
 			component: "getCurrentPageName",
 			message: `Unknown page name "${pageName}".`,
 			details: {
@@ -1724,7 +1422,7 @@ function runPageAnimations(animations, pageNames) {
  * resolved page names.
  *
  * If GSAP or ScrollTrigger cannot be loaded, initialization is aborted
- * and the error is reported through {@link logInitError}.
+ * and the error is reported through {@link initLog}.
  *
  * @async
  * @returns {Promise<void>}
@@ -1733,7 +1431,7 @@ export async function initAnimations() {
 	const gsapAll = await getGSAP();
 
 	if (!gsapAll) {
-		logInitError({
+		iniLog("error", {
 			component: "initAnimations",
 			message: `gsap is not loaded... omitting...`,
 			details: gsapAll
@@ -1831,8 +1529,6 @@ export async function initAnimations() {
 
 	runPageAnimations(pageAnimations, pageNames);
 }
-
-
 
 
 // TODO: LOWER IS TO REMAKE

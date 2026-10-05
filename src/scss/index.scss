@@ -690,34 +690,58 @@
 
 /////////////////// gallery ///////////////////
 #gallery-work {
+  position: relative;
   width: 100%;
   height: 45rem;
+  //overflow-y: auto; //will be rewritten by mixin scroll-init to overflow-y: auto;
+  //overflow-x: hidden; //will be rewritten by mixin scroll-init to overflow-x: hidden;
+
   @include root.scroll-init(0.45rem, rgba(255, 133, 2, 1), rgba(255, 133, 2, .5));
 }
-
+//Target Element: <div class="section__img-wrapper gallery__item">
 .gallery__item {
+  position: absolute;
+  //!it sets the width, and img will have the same width but height auto
+  //! with known aspect-ratio from inline dimensions...
   width: clamp(12rem, 30%, 20.625rem);
 
-  will-change: transform, opacity;
+  /*
+   * Initial visual state.
+   *
+   * The item remains in its calculated Masonry position while
+   * waiting for the associated image to load.
+   */
+  opacity: 0;
+  transform: scale(0.8);
+
+  //Having a persistent `will-change` on every item might no longer be optimal in terms of compositor memory.
+  //will-change: transform, opacity;
+
+  /*
+   * The browser handles interpolation between the initial and
+   * loaded visual states. JavaScript only toggles the state class.
+   */
+  transition: opacity 0.45s linear, transform 0.5s cubic-bezier(0,.63,.4,1.42);
+
   border-radius: 0.5rem;
   overflow: hidden;
   overflow: clip;
-  opacity: 0;
 
   @include root.box-shadow(0.2rem, 0.4rem);
 
   &:hover {
     cursor: pointer;
 
-    img, svg, picture, video, object {
-      transform: scale(1.05);
-    }
+    transform: scale(1.05) !important;
+  }
+
+  &.image-loaded {
+    opacity: 1;
+    transform: scale(1);
   }
 
   img, svg, picture, video, object {
     border-radius: 0.5rem;
-
-    @include root.transition(transform, 0.15s);
   }
 }
 

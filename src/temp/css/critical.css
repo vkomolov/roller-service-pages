@@ -514,6 +514,7 @@ h2, h3, h4, h5 {
   align-items: center;
   gap: 0.625rem 1.125rem;
   /* mobile (landscape): (max-width: 768px) and (min-width: 641px) */
+  /* mobile (portrait wide): (max-width: 640px) */
 }
 @media (max-width: 768px) and (min-width: 641px) {
   .header__contacts-block {
@@ -659,6 +660,14 @@ h2, h3, h4, h5 {
   background-color: rgba(255, 255, 255, 0.5);
   backdrop-filter: blur(0.2rem);
   transition: transform 0.3s ease;
+  /* mobile (landscape): (max-width: 768px)*/
+  /* mobile (portrait wide): (max-width: 640px) */
+  /* mobile (portrait narrow): (max-width: 480px)*/
+}
+@media (max-width: 480px) {
+  #nav-abs {
+    padding-top: 9.5rem;
+  }
 }
 #nav-abs .nav-list {
   width: 100%;
@@ -673,7 +682,6 @@ h2, h3, h4, h5 {
   align-items: center;
   /* mobile (landscape): (max-width: 768px)*/
   /* mobile (portrait wide): (max-width: 640px) */
-  /* mobile (medium): (max-width: 375px) */
 }
 @media (max-width: 768px) {
   #nav-abs .nav-list {
@@ -689,12 +697,6 @@ h2, h3, h4, h5 {
 @media (max-width: 640px) {
   #nav-abs .nav-list {
     align-items: center;
-    padding-top: 3rem;
-  }
-}
-@media (max-width: 375px) {
-  #nav-abs .nav-list {
-    padding-top: 5rem;
   }
 }
 #nav-abs[aria-expanded=true] {
@@ -846,18 +848,15 @@ h2, h3, h4, h5 {
   gap: 0.4rem 1rem;
   /* mobile (portrait narrow): (max-width: 480px)*/
   /* mobile (medium): (max-width: 375px) */
+  /*  @include media.maxMobileMedium {
+      @include mix.flex-box(row, center, center, wrap);
+    }*/
 }
 @media (max-width: 480px) {
   .scrolledNav__contacts-block {
     gap: 0.4rem 0.7rem;
-  }
-}
-@media (max-width: 375px) {
-  .scrolledNav__contacts-block {
-    display: flex;
-    flex-flow: row wrap;
+    flex-direction: column;
     justify-content: center;
-    align-items: center;
   }
 }
 
@@ -932,6 +931,26 @@ h2, h3, h4, h5 {
 
 .section__img-wrapper {
   width: 100%;
+  /*
+    * `.section__img-wrapper` must be combined with a modifier class
+    * that defines the actual wrapper width.
+    *
+    * The image itself defines the wrapper height through its intrinsic
+    * aspect ratio. Therefore, every image must provide correct `width`
+    * and `height` attributes in the HTML.
+    *
+    * These attributes allow the browser to determine the image aspect
+    * ratio and reserve the required layout space before the image
+    * resource is loaded.
+    *
+    * This is especially important for lazy-loaded images because
+    * Masonry may measure the item before the image resource finishes
+    * loading. The reserved aspect ratio ensures that `offsetHeight`
+    * represents the expected image geometry during the initial layout.
+    *
+    * The CSS width is controlled by the wrapper, while the height is
+    * calculated automatically from the declared image aspect ratio.
+    */
 }
 .section__img-wrapper img, .section__img-wrapper svg {
   width: 100%;

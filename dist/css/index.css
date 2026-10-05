@@ -1173,16 +1173,17 @@ h2,h3,h4,h5{
   height:45rem;
   overflow-x:hidden;
   overflow-y:auto;
+  position:relative;
   scroll-behavior:smooth;
   width:100%;
 }
 #gallery-work::-webkit-scrollbar{
   width:.45rem;
 }
-#gallery-work:hover::-webkit-scrollbar-thumb{
+#gallery-work::-webkit-scrollbar-thumb{
   background-color:#ff8502;
 }
-#gallery-work:hover::-webkit-scrollbar-track{
+#gallery-work::-webkit-scrollbar-track{
   background-color:rgba(255,133,2,.5);
 }
 
@@ -1192,18 +1193,21 @@ h2,h3,h4,h5{
   opacity:0;
   overflow:hidden;
   overflow:clip;
+  position:absolute;
+  transform:scale(.8);
+  transition:opacity .45s linear,transform .5s cubic-bezier(0, .63, .4, 1.42);
   width:clamp(12rem, 30%, 20.625rem);
-  will-change:transform, opacity;
 }
 .gallery__item:hover{
   cursor:pointer;
+  transform:scale(1.05) !important;
 }
-.gallery__item:hover img,.gallery__item:hover object,.gallery__item:hover picture,.gallery__item:hover svg,.gallery__item:hover video{
-  transform:scale(1.05);
+.gallery__item.image-loaded{
+  opacity:1;
+  transform:scale(1);
 }
 .gallery__item img,.gallery__item object,.gallery__item picture,.gallery__item svg,.gallery__item video{
   border-radius:.5rem;
-  transition:transform .15s ease-in-out;
 }
 @media (max-width:1280px){
   .header{
@@ -1324,7 +1328,6 @@ h2,h3,h4,h5{
   }
   #nav-abs .nav-list{
     align-items:center;
-    padding-top:3rem;
   }
   .section__content-block--pair{
     gap:3rem;
@@ -1392,8 +1395,13 @@ h2,h3,h4,h5{
     min-height:740px;
   }}
 @media (max-width:480px){
+  #nav-abs{
+    padding-top:9.5rem;
+  }
   .scrolledNav__contacts-block{
+    flex-direction:column;
     gap:.4rem .7rem;
+    justify-content:center;
   }
   .section__text-block--pair{
     font-size:.938rem;
@@ -1414,15 +1422,6 @@ h2,h3,h4,h5{
     min-height:705px;
   }}
 @media (max-width:375px){
-  #nav-abs .nav-list{
-    padding-top:5rem;
-  }
-  .scrolledNav__contacts-block{
-    align-items:center;
-    display:flex;
-    flex-flow:row wrap;
-    justify-content:center;
-  }
   .section--services{
     min-height:1255px;
   }

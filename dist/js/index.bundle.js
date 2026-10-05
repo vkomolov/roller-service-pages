@@ -232,7 +232,9 @@ function isInSet(value, values) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   activateNavLink: function() { return /* binding */ activateNavLink; },
+/* harmony export */   applyMasonryLayout: function() { return /* binding */ applyMasonryLayout; },
 /* harmony export */   attachModalListeners: function() { return /* binding */ attachModalListeners; },
+/* harmony export */   calculateMasonryLayout: function() { return /* binding */ calculateMasonryLayout; },
 /* harmony export */   calculateNavIndex: function() { return /* binding */ calculateNavIndex; },
 /* harmony export */   canUseContextAsTarget: function() { return /* binding */ canUseContextAsTarget; },
 /* harmony export */   checkEventCurrentTarget: function() { return /* binding */ checkEventCurrentTarget; },
@@ -245,15 +247,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   detachModalListeners: function() { return /* binding */ detachModalListeners; },
 /* harmony export */   getDOMElement: function() { return /* binding */ getDOMElement; },
 /* harmony export */   getElements: function() { return /* binding */ getElements; },
-/* harmony export */   getImagesLoaded: function() { return /* binding */ getImagesLoaded; },
+/* harmony export */   getMasonryColumnsNumber: function() { return /* binding */ getMasonryColumnsNumber; },
 /* harmony export */   getSelectorName: function() { return /* binding */ getSelectorName; },
 /* harmony export */   initLangSwitcher: function() { return /* binding */ initLangSwitcher; },
 /* harmony export */   initLockScroll: function() { return /* binding */ initLockScroll; },
+/* harmony export */   initLog: function() { return /* binding */ initLog; },
+/* harmony export */   initMasonry: function() { return /* binding */ initMasonry; },
 /* harmony export */   isHTMLElement: function() { return /* binding */ isHTMLElement; },
 /* harmony export */   isStyleSupported: function() { return /* binding */ isStyleSupported; },
 /* harmony export */   lockDocumentScroll: function() { return /* binding */ lockDocumentScroll; },
 /* harmony export */   lockedEventListener: function() { return /* binding */ lockedEventListener; },
-/* harmony export */   logInitError: function() { return /* binding */ logInitError; },
+/* harmony export */   measureMasonryItems: function() { return /* binding */ measureMasonryItems; },
 /* harmony export */   migrateElement: function() { return /* binding */ migrateElement; },
 /* harmony export */   observeIntersection: function() { return /* binding */ observeIntersection; },
 /* harmony export */   replaceFilePath: function() { return /* binding */ replaceFilePath; },
@@ -262,123 +266,35 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   setAttributes: function() { return /* binding */ setAttributes; },
 /* harmony export */   toggleClassOnIntersection: function() { return /* binding */ toggleClassOnIntersection; }
 /* harmony export */ });
-/* harmony import */ var imagesloaded__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! imagesloaded */ "./node_modules/imagesloaded/imagesloaded.js");
-/* harmony import */ var _funcs_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./funcs.js */ "./src/js/helpers/funcs.js");
-
+/* harmony import */ var _funcs_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./funcs.js */ "./src/js/helpers/funcs.js");
 
 
 
 
 //////////////// TYPE DEFINITIONS /////////////////
-
 /**
- * TBurgerElements
- * DOM elements required by the navigation menu.
+ *! DOM type aliases used by this module.
  *
- * @typedef {Object} TBurgerElements
- * @property {Element} navMenuFixed
- * @property {Element} burgerHidden
- * @property {Element} burgerFixed
- * @property {Element[]} burgerNavAll
- */
-
-/**
- * TDOMSelectorConfig
- * Configuration for a generic DOM element lookup.
- *
- * @typedef {Object} TDOMSelectorConfig
- * @property {string} key - Property name used in the resulting object.
- * @property {string} selector - CSS selector used to find the element(s).
- * @property {boolean} [multiple=false] - Whether all matching elements should be returned.
- */
-
-/**
- * TNavMenuSelector
- * Configuration for navigation menu DOM element lookup.
- *
- * Specializes the generic selector configuration by restricting `key`
- * to the known properties of `TBurgerElements`.
- *
- * @typedef {Omit<TDOMSelectorConfig, "key"> & {
- *     key: keyof TBurgerElements
- * }} TNavMenuSelector
- */
-
-/**
- * ImageSize
- *
- * @typedef {Record<string, number>} ImageSize
- * @property {number} naturalWidth - Original image width in pixels
- * @property {number} naturalHeight - Original image height in pixels
- * @property {number} offsetWidth - Rendered width including padding/borders
- * @property {number} offsetHeight - Rendered height including padding/borders
- */
-
-/**
- * LoadedImageResult
- *
- * @typedef {Record<string, unknown>} LoadedImageResult
- * @property {HTMLElement} element - The parent element containing the image
- * @property {ImageSize} size - Dimension information
- */
-
-/**
- * TActivateNavlinkParams
- * Type definition for arguments of {@link activateNavLink}
- *
- * @typedef {Object} TActivateNavlinkParams
- * @property {string} navLinkSelector - The CSS selector to find the navigation link items.
- * @property {string} pageType - The type of the page to match with the pagesVersions attribute of the navigation items.
- * @property {string} activeClass - The class name to add to the matched navigation link items.
- * @property {string} anchorLink - The URL to set as the `href` attribute for the matched navigation items.
- */
-
-/**
- * TInitLangSwitcherParams
- * Type definition for arguments of {@link initLangSwitcher}
- *
- * @typedef {Object} TInitLangSwitcherParams
- * @property {string} langSwitcherSelector - Selector for the root container.
- * @property {string} langSwitcherCurrent - Selector for language button to open dropDown lang menu...
- * @property {string} langSwitcherButton - Selector for language button.
- * @property {string} langSwitcherItem - Selector for <li> in the drop-down list of not active language vers...
- * @property {string} langActiveSelector - Selector for active language element.
- * @property {string} langListSelector - Selector for options container.
- * @property {string[]} langOptionArr - Supported language codes.
- * @property {string} dataSetKey - Dataset parameter name.
+ * @typedef {import("../types/dom.types.js").TDOMSelectorConfig} TDOMSelectorConfig
+ * @typedef {import("../types/dom.types.js").ImageSize} ImageSize
+ * @typedef {import("../types/dom.types.js").LoadedImageResult} LoadedImageResult
+ * @typedef {import("../types/dom.types.js").TActivateNavlinkParams} TActivateNavlinkParams
+ * @typedef {import("../types/dom.types.js").TInitLangSwitcherParams} TInitLangSwitcherParams
+ * @typedef {import("../types/dom.types.js").TGetLangItemsParams} TGetLangItemsParams
+ * @typedef {import("../types/dom.types.js").TLogMessageParams} TLogMessageParams
+ * @typedef {import("../types/dom.types.js").ModalState} ModalState
  *
  */
 
 /**
- * TGetLangItemsParams
+ * ! MASONRY type aliases used by this module.
  *
- * @description - the type of argument "params" for the function {@link getLangItems}
- *
- * @typedef {Record<string, string>} TGetLangItemsParams
- * @property {string} langSwitcherItem - className of the language list item <li>
- * @property {string} langSwitcherButton - className of the buttons <button>
- * @property {string} dataSetKey - the key of the dataset
- *
- */
-
-/**
- * TLogErrorParams
- *
- * @typedef {{
- *   component: string, //Component or module name.
- *   message: string, //Error description
- *   details?: unknown,  //Optional data
- * }} TLogErrorParams
- */
-
-/**
- * ModalState
- *
- * @typedef {Object} ModalState
- * @property {number|null} currentIndex
- * @property {boolean} isOpen
- * @property {boolean} isLoading
- * @property {HTMLElement|null} currentImage
+ * @typedef {import("../types/masonry.types.js").TMasonryItemMeasurement} TMasonryItemMeasurement
+ * @typedef {import("../types/masonry.types.js").TMasonryColumnCalculation} TMasonryColumnCalculation
+ * @typedef {import("../types/masonry.types.js").TMasonryLayout} TMasonryLayout
+ * @typedef {import("../types/masonry.types.js").TMasonryColumns} TMasonryColumns
+ * @typedef {import("../types/masonry.types.js").TMasonryItemLayout} TMasonryItemLayout
+ * @typedef {import("../types/masonry.types.js").TMasonryConfig} TMasonryConfig
  */
 
 //////////////// END OF TYPE DEFINITIONS /////////////////
@@ -592,7 +508,7 @@ function setAttributes(elements = [], targetAttr = {}) {
   elements.forEach((element, i) => {
     if (!(element instanceof Element)) {
       const errorMessage = `one of the elements at index ${i} is not the instance of HTMLElement...`;
-      logInitError({
+      initLog("error", {
         component: "setAttributes",
         message: errorMessage,
         details: {
@@ -736,7 +652,7 @@ function checkHtmlElement(element) {
   if (!isHTMLElem) {
     // Cast to any type inside JSDoc comment so TS allows reading properties
     const unsafeTarget = /** @type {*} */element;
-    logInitError({
+    initLog("error", {
       component: "checkHtmlElement",
       message: `Expected HTMLElement, but got ${element?.constructor?.name || typeof element}`,
       details: {
@@ -783,6 +699,7 @@ function canUseContextAsTarget(context, targetSelector, includeContextSelector) 
  * @template {Element} T - Expected element type (e.g., HTMLButtonElement)
  * @param {string} selector - CSS selector to search for
  * @param {Document | Element | DocumentFragment} [context=document] - Search context.
+ * @param {boolean} [useLog=true]
  * @returns {T | undefined} Returns the element or null (to safely exit the function)
  *
  * @sample
@@ -791,14 +708,14 @@ function canUseContextAsTarget(context, targetSelector, includeContextSelector) 
  *
  * @sample
  * above:@template {HTMLFormElement}
- * const form = getDOMElement('#login-form');
+ * const form = getDOMElement('#login-form', document, false);
  * if (!form) return;
 *
  */
-function getDOMElement(selector, context = document) {
+function getDOMElement(selector, context = document, useLog = true) {
   const element = context.querySelector(selector);
   if (!element) {
-    logInitError({
+    useLog && initLog("error", {
       component: "getDOMElement",
       message: `Element with selector "${selector}" was not found in the DOM.`,
       details: {
@@ -888,11 +805,10 @@ function getElements(selector, context = document, multiple = true, includeConte
    * no descendant targets.
    */
   if (!targets.length && canUseContextAsTarget(context, selector, includeContextAsTarget) && context instanceof Element) {
-    console.log(`using canUseContextAsTarget with context: ${context.className}`);
     targets.push(/** @type {T} */context);
   }
   if (!targets.length) {
-    logInitError({
+    initLog("error", {
       component: "getElements",
       message: `Element with selector "${selector}" ` + "was not found in DOM.",
       details: {
@@ -988,7 +904,7 @@ function requireElements(selectors, context = document) {
      */
     if (!result.length) {
       const errorMessage = `Required DOM element missing. ` + `Key: "${key}", Selector: "${selector}"`;
-      logInitError({
+      initLog("error", {
         component: "requireElements",
         message: errorMessage
       });
@@ -1184,173 +1100,899 @@ async function processImageResults(instance, parentMap) {
   return results.filter(r => r.size !== null);
 }
 
+//!////// MASONRY ///////////
 /**
- * Waits for all images within a container to finish loading.
- * Collects dimensions of successfully loaded images and removes broken images.
+ * `items` and `columns` are expected to be validated
+ * by the preceding masonry calculation stages.
  *
- * @param {HTMLElement} container - The DOM element containing images to be processed.
- * @param {Object} [options={}] - Configuration options passed to imagesLoaded library.
- * @param {boolean|string} [options.background] - Background image detection strategy:
- *   - `true`: Detect background images on all elements
- *   - `string` (CSS selector): Detect background images only on matching elements
- * @returns {Promise<Array<LoadedImageResult>>} Resolves with loaded image data
- * @throws {Error} When container is invalid or processing fails
+ * In particular:
+ * - all item widths are equal to `columns.width`;
+ * - item dimensions are positive finite numbers;
+ * - columns.count is a positive integer;
+ * - columns.gap and columns.leftOffset are non-negative.
  */
-async function getImagesLoaded(container, options = {}) {
-  // Validate container or throws error...
-  checkInDOM(container);
 
-  // Return a promise that resolves when imagesLoaded completes
-  return new Promise((resolve, reject) => {
-    try {
-      imagesloaded__WEBPACK_IMPORTED_MODULE_0__(container, options, async instance => {
-        try {
-          const parentMap = buildImageParentMap(container, options);
-          const results = await processImageResults(instance, parentMap);
-          resolve(results);
-        } catch (error) {
-          reject(new Error(`[getImagesLoaded] Processing error: ${error.message}`));
-        }
-      });
-    } catch (error) {
-      reject(new Error(`[getImagesLoaded] Initialization error: ${error.message}`));
+/**
+ * Validates the external input contract of the masonry layout calculation.
+ *
+ * This function validates only the calculation arguments themselves.
+ * Individual item dimensions are validated separately by
+ * `getMasonryItemWidth()`.
+ *
+ * @param {number} containerWidth
+ * Available width of the masonry container, in pixels.
+ *
+ * @param {TMasonryItemMeasurement[]} items
+ * Measured masonry item geometry.
+ *
+ * @param {number} gap
+ * Horizontal and vertical gap between masonry items, in pixels.
+ *
+ * @throws {TypeError}
+ * When `containerWidth` or `gap` is not a number,
+ * or when `items` is not an array.
+ *
+ * @throws {RangeError}
+ * When `containerWidth` is not greater than zero,
+ * when `gap` is negative,
+ * or when `items` is empty.
+ */
+function validateMasonryLayoutInput(containerWidth, items, gap) {
+  if (!Number.isFinite(containerWidth)) {
+    throw new TypeError(`[validateMasonryLayoutInput]: containerWidth must be a finite number, but received: ${containerWidth}`);
+  }
+  if (containerWidth <= 0) {
+    throw new RangeError(`[validateMasonryLayoutInput]: containerWidth must be greater than zero, but received: ${containerWidth}`);
+  }
+  if (!Array.isArray(items)) {
+    throw new TypeError('[validateMasonryLayoutInput]: items must be an array.');
+  }
+  if (items.length === 0) {
+    throw new RangeError('[validateMasonryLayoutInput]: items must not be empty.');
+  }
+  if (!Number.isFinite(gap)) {
+    throw new TypeError(`[validateMasonryLayoutInput]: gap must be a finite number, but received ${gap}`);
+  }
+  if (gap < 0) {
+    throw new RangeError(`[validateMasonryLayoutInput]: gap must be greater than or equal to zero, but received ${gap}`);
+  }
+}
+const IMAGE_RATIO_TOLERANCE = 0.001;
+
+/**
+ * Validates the declared image aspect ratio against the actual
+ * intrinsic aspect ratio of the loaded image resource.
+ *
+ * The declared ratio is read directly from the HTML `width` and
+ * `height` attributes. The actual ratio is calculated from
+ * `naturalWidth` and `naturalHeight`.
+ *
+ * This function is diagnostic only. It does not modify the image
+ * or trigger Masonry recalculation.
+ *
+ * @param {HTMLImageElement} image
+ * Loaded image element to validate.
+ *
+ * @param {number} index
+ * Zero-based index of the image within the Masonry collection.
+ *
+ * @returns {void}
+ */
+function validateImageAspectRatio(image, index) {
+  /*
+   * Read the dimensions declared explicitly in the HTML attributes.
+   *
+   * Do not use `image.width` or `image.height` here because those
+   * properties represent the current rendered CSS dimensions.
+   */
+  const declaredWidth = Number(image.getAttribute("width"));
+  const declaredHeight = Number(image.getAttribute("height"));
+
+  /*
+   * Read the intrinsic dimensions of the loaded image resource.
+   */
+  const actualWidth = image.naturalWidth;
+  const actualHeight = image.naturalHeight;
+
+  /*
+   * The declared dimensions and intrinsic dimensions must both be
+   * valid before an aspect ratio comparison can be performed.
+   */
+  if (!Number.isFinite(declaredWidth) || !Number.isFinite(declaredHeight) || declaredWidth <= 0 || declaredHeight <= 0 || !Number.isFinite(actualWidth) || !Number.isFinite(actualHeight) || actualWidth <= 0 || actualHeight <= 0) {
+    return;
+  }
+  const declaredRatio = declaredWidth / declaredHeight;
+  const actualRatio = actualWidth / actualHeight;
+
+  /*
+   * Compare aspect ratios instead of absolute dimensions.
+   *
+   * The tolerance prevents insignificant floating-point differences
+   * from being reported as image dimension mismatches.
+   */
+  const ratioDifference = Math.abs(declaredRatio - actualRatio);
+  if (ratioDifference <= IMAGE_RATIO_TOLERANCE) {
+    return;
+  }
+  initLog("warn", {
+    component: "validateImageAspectRatio",
+    message: `Image at index ${index} has a different declared ` + "and intrinsic aspect ratio.",
+    details: {
+      index,
+      image,
+      declaredWidth,
+      declaredHeight,
+      declaredRatio,
+      actualWidth,
+      actualHeight,
+      actualRatio,
+      ratioDifference,
+      tolerance: IMAGE_RATIO_TOLERANCE
     }
   });
 }
 
 /**
- * Initializes a masonry grid layout for the specified container, positioning its child image elements.
- * The function calculates the number of columns based on the container's width and the image item's width,
- * and positions the images in a masonry style with specified gaps between them.
- * If a free space in a row exists then it places the columns in the center position...
+ * Resolves image elements contained inside Masonry items.
  *
- * @async
- * @function createMasonry
- * @param {string} containerSelector - The CSS selector of the container element where the masonry grid will be applied.
- * @param {Object} [params={}] - Optional configuration parameters for masonry initialization.
- * @param {number} [params.gap=0] - The gap (in pixels) between the items in the masonry grid. Defaults to 0.
+ * @param {TMasonryItemLayout[]} items
+ * Calculated Masonry item layouts.
  *
- * @returns {Promise<HTMLElement[]>} - A promise that resolves to an array of positioned image elements.
- *
- * @throws {Error} - If the specified container is not found in the DOM or if there is an issue with loading the images.
- *
- * @example
- * // Initialize masonry grid with a 20px gap
- * createMasonry('#gallery', { gap: 20 }).then((imageItems) => {
- *   console.log('Masonry initialized and images positioned:', imageItems);
- * });
+ * @returns {HTMLImageElement[]}
+ * Image elements found inside the supplied Masonry items.
  */
-async function createMasonry(containerSelector, params = {}) {
-  const options = {
-    gap: 0,
-    ...params
-  };
-  try {
-    const container = document.querySelector(containerSelector);
-    if (!container?.isConnected) {
-      throw new Error(`[createMasonry]: Container with selector "${containerSelector}" not found in DOM`);
-    }
-
-    // Get loaded images data
-    const imagesArr = await getImagesLoaded(container);
-
-    // Validate that we have images
-    if (!Array.isArray(imagesArr) || imagesArr.length === 0) {
-      throw new Error(`[createMasonry]: No images found in container "${containerSelector}"`);
-    }
-
-    // Validate first image data structure and get dimensions
-    const firstImage = imagesArr[0];
-    if (!firstImage?.element || !firstImage?.size) {
-      throw new Error('[createMasonry]: Invalid image data structure returned from getImagesLoaded');
-    }
-    const itemWidth = firstImage.size.offsetWidth;
-    const containerWidth = container.clientWidth;
-
-    // Validate dimensions
-    if (!itemWidth || itemWidth === 0) {
-      throw new Error('[createMasonry]: Image width is zero or undefined');
-    }
-    const {
-      gap
-    } = options;
-    const {
-      columns,
-      freeWidth
-    } = getColumnsNumber(containerWidth, itemWidth, gap);
-    const leftOffset = freeWidth / 2;
-
-    // Set container styles
-    container.style.position = 'relative';
-    container.style.overflowX = 'hidden';
-
-    // Initialize position arrays
-    const posLeftArr = Array.from({
-      length: columns
-    }, (_, i) => leftOffset + i * (itemWidth + gap));
-    const posTopArr = new Array(columns).fill(0);
-    const imageItems = [];
-
-    // Position each image
-    for (let i = 0; i < imagesArr.length; i++) {
-      const imageData = imagesArr[i];
-
-      // Validate image data
-      if (!imageData?.element || !imageData?.size) {
-        console.warn(`[createMasonry]: Skipping invalid image at index ${i}`);
-        continue;
-      }
-      const item = imageData.element;
-      const itemHeight = imageData.size.offsetHeight;
-
-      // Find column with minimum height
-      const minHeight = Math.min(...posTopArr);
-      const minColumnIndex = posTopArr.indexOf(minHeight);
-      if (minColumnIndex === -1) {
-        throw new Error('[createMasonry]: Failed to find valid column index');
-      }
-
-      // Apply positioning
-      item.style.position = 'absolute';
-      item.style.top = `${Math.round(posTopArr[minColumnIndex])}px`;
-      item.style.left = `${Math.round(posLeftArr[minColumnIndex])}px`;
-
-      // Update column height
-      posTopArr[minColumnIndex] += itemHeight + gap;
-      imageItems.push(item);
-    }
-    return imageItems;
-  } catch (error) {
-    // whether `error` is an actual error object
-    if (error instanceof Error) {
-      console.error('[createMasonry]:', error.message);
+function getMasonryImages(items) {
+  /** @type {HTMLImageElement[]} */
+  const images = [];
+  for (const {
+    element
+  } of items) {
+    const image = element.querySelector('img');
+    if (image instanceof HTMLImageElement) {
+      images.push(image);
     } else {
-      console.error('[createMasonry]: Unknown error', error);
+      initLog("warn", {
+        component: "getMasonryImages",
+        message: "Masonry item does not contain an HTMLImageElement.",
+        details: {
+          image,
+          searchedTag: "img",
+          parent: element
+        }
+      });
+    }
+  }
+  return images;
+}
+
+/**
+ * Handles a successfully loaded Masonry image.
+ *
+ * Image diagnostics and visual reveal are intentionally kept
+ * together here because both actions must happen after the image
+ * has successfully acquired its intrinsic dimensions.
+ *
+ * @param {HTMLImageElement} image
+ * Loaded Masonry image.
+ *
+ * @param {number} index
+ * Zero-based image index.
+ *
+ * @returns {void}
+ */
+function handleMasonryImageLoaded(image, index) {
+  validateImageAspectRatio(image, index);
+  const parentElem = image.parentElement;
+  if (!parentElem || !parentElem.classList.contains('gallery__item')) {
+    initLog("error", {
+      component: "validateMasonryImages",
+      message: "Could not find the Masonry item parent element.",
+      details: {
+        imgIndex: index,
+        image,
+        parent: parentElem
+      }
+    });
+    return;
+  }
+  revealMasonryItem(parentElem, 500);
+}
+
+/**
+ * Registers Masonry images for asynchronous validation and reveal.
+ *
+ * Each image is registered at most once during the lifecycle of the
+ * current Masonry instance.
+ *
+ * Already completed images are processed immediately. Images that
+ * have not completed loading yet are processed through a one-time
+ * `load` event listener.
+ *
+ * @param {HTMLImageElement[]} images
+ * Masonry image elements to process.
+ *
+ * @param {WeakSet<HTMLImageElement>} validatedImages
+ * Images already registered during the current Masonry lifecycle.
+ *
+ * @returns {void}
+ */
+function validateMasonryImages(images, validatedImages) {
+  if (!Array.isArray(images)) {
+    throw new TypeError('[validateMasonryImages]: images must be an array.');
+  }
+  for (const [index, image] of images.entries()) {
+    /*
+     * Prevent duplicate registration during subsequent Masonry
+     * recalculations triggered by ResizeObserver.
+     */
+    if (validatedImages.has(image)) {
+      continue;
+    }
+    validatedImages.add(image);
+
+    /*
+     * `complete` means that the browser has finished processing
+     * the image request. It does not guarantee successful loading.
+     *
+     * `naturalWidth > 0` confirms that a valid intrinsic image
+     * resource is available.
+     */
+    if (image.complete) {
+      if (image.naturalWidth > 0 && image.naturalHeight > 0) {
+        handleMasonryImageLoaded(image, index);
+      }
+      continue;
     }
 
-    // Re-throw to allow caller to handle
-    throw error;
+    /*
+     * The image has not completed loading yet.
+     *
+     * The `load` event is the correct event for successful image
+     * loading. The listener is automatically removed after firing.
+     */
+    image.addEventListener('load', () => {
+      handleMasonryImageLoaded(image, index);
+    }, {
+      once: true
+    });
+    image.addEventListener('error', () => {
+      initLog("error", {
+        component: "validateMasonryImages",
+        message: "Masonry image failed to load.",
+        details: {
+          index,
+          image
+        }
+      });
+    }, {
+      once: true
+    });
   }
 }
 
 /**
- * Calculates the number of columns and free space for masonry layout
- * @param {number} containerWidth - Width of the container
- * @param {number} itemWidth - Width of a single item
- * @param {number} gap - Gap between items
- * @returns {{columns: number, freeWidth: number}} Column count and remaining space
+ * Measures the current layout dimensions of masonry items.
+ *
+ * The function assumes that the input collection has already been
+ * resolved from the DOM by `getElements()`.
+ *
+ * Each connected element is measured using `offsetWidth` and
+ * `offsetHeight`. Elements with invalid DOM state or invalid dimensions
+ * are skipped and reported through the initialization error logger.
+ *
+ * The function does not:
+ * - resolve DOM selectors;
+ * - wait for image loading;
+ * - calculate masonry columns;
+ * - calculate item positions;
+ * - mutate the DOM.
+ *
+ * @param {HTMLElement[]} items
+ * Masonry item elements resolved from the DOM.
+ *
+ * @returns {TMasonryItemMeasurement[]}
+ * Measured dimensions of all valid masonry items.
+ *
+ * @throws {TypeError}
+ * If `items` is not an array.
+ *
+ * @throws {Error}
+ * If the input array is empty or no valid masonry items remain
+ * after measurement.
  */
-function getColumnsNumber(containerWidth, itemWidth, gap) {
-  const itemGapWidth = itemWidth + gap;
-  const maxColumns = Math.floor(containerWidth / itemGapWidth);
-  const usedWidth = maxColumns * itemGapWidth;
-  const remainingSpace = containerWidth - usedWidth;
-  const columns = remainingSpace >= itemWidth ? maxColumns + 1 : maxColumns;
-  const freeWidth = containerWidth - (columns * itemWidth + (columns - 1) * gap);
+function measureMasonryItems(items) {
+  /*
+   * The function receives the result of getElements(), therefore
+   * the collection itself must be a valid array before processing.
+   */
+  if (!Array.isArray(items)) {
+    throw new TypeError('[measureMasonryItems]: items must be an array.');
+  }
+  if (items.length === 0) {
+    throw new RangeError('[measureMasonryItems]: items must not be empty.');
+  }
+
+  /** @type {TMasonryItemMeasurement[]} */
+  const measurements = [];
+  for (const [index, element] of items.entries()) {
+    /*
+     * A disconnected element no longer participates in the current
+     * document layout and therefore cannot provide a meaningful
+     * masonry measurement.
+     */
+    if (!element.isConnected) {
+      initLog("error", {
+        component: 'measureMasonryItems',
+        message: 'Masonry item is not connected to the DOM and ' + 'will be skipped.',
+        details: {
+          element,
+          index
+        }
+      });
+      continue;
+    }
+    const width = element.offsetWidth;
+    const height = element.offsetHeight;
+
+    /*
+     * A masonry item must have positive layout dimensions.
+     *
+     * Zero dimensions can occur when an element is hidden,
+     * detached from the rendered layout, or otherwise prevented
+     * from participating in normal layout calculation.
+     */
+    if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+      initLog("error", {
+        component: 'measureMasonryItems',
+        message: 'Masonry item has invalid layout dimensions ' + 'and will be skipped.',
+        details: {
+          element,
+          index,
+          width,
+          height
+        }
+      });
+      continue;
+    }
+    measurements.push({
+      element,
+      width,
+      height
+    });
+  }
+
+  /*
+   * An empty measurement result means that masonry cannot be
+   * calculated. At this point the problem is no longer related
+   * to an individual item, but to the complete input collection.
+   */
+  if (measurements.length === 0) {
+    throw new Error('[measureMasonryItems]: no valid masonry items remain after measurement.');
+  }
+  return measurements;
+}
+
+/**
+ * Calculates the number of masonry columns that fit inside
+ * the available container width.
+ *
+ * The function also returns the horizontal free space remaining
+ * after fitting the calculated columns and their inter-column gaps.
+ *
+ * This function performs no DOM access and does not mutate anything.
+ * Horizontal distribution of the remaining space is intentionally
+ * handled by a separate stage.
+ *
+ * Layout invariant:
+ *
+ *     containerWidth >= itemWidth
+ *
+ * At least one complete masonry item must physically fit inside
+ * the container. If this invariant is violated, the function throws
+ * instead of producing a negative `freeWidth`.
+ *
+ * @param {number} containerWidth
+ * Available masonry container width, in pixels.
+ *
+ * @param {number} itemWidth
+ * Width of a single masonry item/column, in pixels.
+ *
+ * @param {number} gap
+ * Horizontal gap between masonry columns, in pixels.
+ *
+ * @returns {TMasonryColumnCalculation}
+ * Calculated column count and remaining horizontal space.
+ *
+ * @throws {TypeError}
+ * If any argument is not a finite number.
+ *
+ * @throws {RangeError}
+ * If `containerWidth` or `itemWidth` is not greater than zero,
+ * if `gap` is negative, or if the item does not fit inside
+ * the container.
+ */
+function getMasonryColumnsNumber(containerWidth, itemWidth, gap) {
+  if (!Number.isFinite(containerWidth) || !Number.isFinite(itemWidth) || !Number.isFinite(gap)) {
+    throw new TypeError('[getMasonryColumnsNumber]: all arguments must be finite numbers.');
+  }
+  if (containerWidth <= 0) {
+    throw new RangeError('[getMasonryColumnsNumber]: containerWidth must be greater than zero.');
+  }
+  if (itemWidth <= 0) {
+    throw new RangeError('[getMasonryColumnsNumber]: itemWidth must be greater than zero.');
+  }
+  if (gap < 0) {
+    throw new RangeError('[getMasonryColumnsNumber]: gap must be greater than or equal to zero.');
+  }
+
+  /*
+   * Layout invariant:
+   *
+   * At least one complete masonry item must fit inside
+   * the available container width.
+   *
+   * Do not clamp the resulting freeWidth to zero.
+   * A negative freeWidth indicates an invalid layout state
+   * and should be reported explicitly.
+   */
+  if (containerWidth < itemWidth) {
+    throw new RangeError('[getMasonryColumnsNumber]: itemWidth must not exceed ' + 'containerWidth.');
+  }
+
+  /*
+   * N columns require:
+   *
+   * N * itemWidth + (N - 1) * gap <= containerWidth
+   *
+   * Therefore:
+   *
+   * N = floor(
+   *   (containerWidth + gap) /
+   *   (itemWidth + gap)
+   * )
+   *
+   * Math.max(1, ...) guarantees that at least one column
+   * is returned when the item itself fits inside the container.
+   */
+  const count = Math.max(1, Math.floor((containerWidth + gap) / (itemWidth + gap)));
+
+  /*
+   * Calculate the exact horizontal space occupied by
+   * all columns and the gaps between them.
+   *
+   * There are N - 1 gaps for N columns.
+   */
+  const usedWidth = count * itemWidth + (count - 1) * gap;
+
+  /*
+   * Because containerWidth >= itemWidth and `count` was calculated
+   * using the fitting formula, freeWidth cannot be negative.
+   */
+  const freeWidth = containerWidth - usedWidth;
   return {
-    columns,
+    count,
     freeWidth
   };
+}
+
+/**
+ * Creates the complete horizontal configuration of the masonry columns.
+ *
+ * This function transforms the narrow result of
+ * `getMasonryColumnsNumber()` into the complete `TMasonryColumns`
+ * model required by the item positioning stage.
+ *
+ * The remaining horizontal space is distributed equally between
+ * the left and right sides of the masonry layout.
+ *
+ * This function performs no DOM access and does not mutate anything.
+ *
+ * @param {number} containerWidth
+ * Available masonry container width, in pixels.
+ *
+ * @param {number} itemWidth
+ * Common masonry item width, in pixels.
+ *
+ * @param {number} gap
+ * Horizontal and vertical gap between masonry items, in pixels.
+ *
+ * @returns {TMasonryColumns}
+ * Complete horizontal masonry column configuration.
+ *
+ * @throws {TypeError}
+ * If any numeric argument is not finite.
+ *
+ * @throws {RangeError}
+ * If the supplied dimensions violate the masonry layout invariants.
+ */
+function createMasonryColumns(containerWidth, itemWidth, gap) {
+  const {
+    count,
+    freeWidth
+  } = getMasonryColumnsNumber(containerWidth, itemWidth, gap);
+  return {
+    count,
+    width: itemWidth,
+    gap,
+    leftOffset: freeWidth / 2
+  };
+}
+
+/**
+ * Resolves the common width of masonry items.
+ *
+ * Masonry columns are based on a single shared item width.
+ * Therefore, every measured item must have the same positive width.
+ *
+ * This function performs no DOM access and does not mutate its input.
+ *
+ * @param {TMasonryItemMeasurement[]} items
+ * Measured masonry item geometry.
+ *
+ * @returns {number}
+ * Common masonry item width in pixels.
+ *
+ * @throws {TypeError}
+ * If `items` is not an array.
+ *
+ * @throws {Error}
+ * If `items` is empty or an item has invalid dimensions.
+ *
+ * @throws {RangeError}
+ * If masonry items have different widths.
+ */
+function getMasonryItemWidth(items) {
+  if (!Array.isArray(items)) {
+    throw new TypeError('[getMasonryItemWidth]: items must be an array.');
+  }
+  if (items.length === 0) {
+    throw new Error('[getMasonryItemWidth]: items must not be empty.');
+  }
+  const itemWidth = items[0]?.width;
+  if (!Number.isFinite(itemWidth) || itemWidth <= 0) {
+    throw new Error('[getMasonryItemWidth]: first masonry item has an invalid width.');
+  }
+  for (const [index, item] of items.entries()) {
+    if (!Number.isFinite(item.width) || item.width <= 0 || !Number.isFinite(item.height) || item.height <= 0) {
+      throw new Error(`[getMasonryItemWidth]: masonry item at index ${index} ` + 'must have valid positive width and height.');
+    }
+    if (item.width !== itemWidth) {
+      throw new RangeError(`[getMasonryItemWidth]: all masonry items must have the same width. ` + `Expected ${itemWidth}px, but item at index ${index} ` + `has width ${item.width}px.`);
+    }
+  }
+  return itemWidth;
+}
+
+/**
+ * Calculates the position of every masonry item.
+ *
+ * Items are distributed using the shortest-column algorithm.
+ *
+ * The function assumes that its inputs have already been validated
+ * by the masonry calculation pipeline.
+ *
+ * This function performs no DOM access and does not mutate the DOM.
+ *
+ * @param {TMasonryItemMeasurement[]} items
+ * Validated masonry item measurements.
+ *
+ * @param {TMasonryColumns} columns
+ * Validated masonry column configuration.
+ *
+ * @returns {TMasonryItemLayout[]}
+ * Calculated layout state for every masonry item.
+ */
+function calculateMasonryItemLayouts(items, columns) {
+  const columnHeights = new Array(columns.count).fill(0);
+  return items.map(item => {
+    let columnIndex = 0;
+    for (let index = 1; index < columnHeights.length; index += 1) {
+      if (columnHeights[index] < columnHeights[columnIndex]) {
+        columnIndex = index;
+      }
+    }
+    const left = columns.leftOffset + columnIndex * (columns.width + columns.gap);
+    const top = columnHeights[columnIndex];
+    columnHeights[columnIndex] = top + item.height + columns.gap;
+    return {
+      element: item.element,
+      width: item.width,
+      height: item.height,
+      left,
+      top
+    };
+  });
+}
+
+/**
+ * Calculates the complete masonry layout from measured item geometry.
+ *
+ * The function determines the masonry column configuration and calculates
+ * the `left` and `top` position of every valid masonry item.
+ *
+ * Items are distributed using the shortest-column algorithm.
+ *
+ * This function performs no DOM access and does not mutate the DOM.
+ *
+ * @param {number} containerWidth
+ * Available width of the masonry container, in pixels.
+ *
+ * @param {TMasonryItemMeasurement[]} items
+ * Measured masonry item geometry.
+ *
+ * @param {number} gap
+ * Horizontal and vertical gap between masonry items, in pixels.
+ *
+ * @returns {TMasonryLayout}
+ * Complete calculated masonry layout.
+ *
+ * @throws {Error}
+ * When any input is invalid or when masonry items have inconsistent widths.
+ */
+function calculateMasonryLayout(containerWidth, items, gap) {
+  validateMasonryLayoutInput(containerWidth, items, gap);
+  const itemWidth = getMasonryItemWidth(items);
+  const columns = createMasonryColumns(containerWidth, itemWidth, gap);
+  const layoutItems = calculateMasonryItemLayouts(items, columns);
+  return {
+    containerWidth,
+    columns,
+    items: layoutItems
+  };
+}
+
+/**
+ * Applies a calculated masonry layout to the DOM.
+ *
+ * This function is the only masonry pipeline stage that mutates
+ * the DOM. It applies the calculated position of every masonry item.
+ *
+ * The function does not calculate layout geometry and does not modify
+ * item dimensions or visual properties unrelated to positioning.
+ *
+ * @param {TMasonryLayout} layout
+ * Calculated masonry layout to apply.
+ *
+ * @returns {void}
+ */
+function applyMasonryLayout(layout) {
+  for (const item of layout.items) {
+    const {
+      element,
+      left,
+      top
+    } = item;
+    element.style.left = `${left}px`;
+    element.style.top = `${top}px`;
+  }
+}
+
+/**
+ * Creates and applies the current Masonry layout.
+ *
+ * This function orchestrates one complete synchronous Masonry
+ * layout pass:
+ *
+ * 1. resolves Masonry items inside the container;
+ * 2. measures the current item dimensions;
+ * 3. reads the current container width;
+ * 4. calculates the complete Masonry layout;
+ * 5. applies the calculated positions to the DOM.
+ *
+ * The function delegates calculation to the pure Masonry
+ * calculation pipeline and DOM mutation to `applyMasonryLayout()`.
+ *
+ * This function does not:
+ * - wait for image loading;
+ * - validate image intrinsic dimensions;
+ * - observe container changes;
+ * - manage observers;
+ * - calculate columns directly;
+ * - calculate item positions directly;
+ * - animate Masonry items.
+ *
+ * @param {HTMLElement} container
+ * Masonry container element.
+ *
+ * @param {TMasonryConfig} config
+ * Normalized Masonry configuration.
+ *
+ * @returns {TMasonryLayout}
+ * Snapshot of the Masonry layout that was calculated and applied.
+ *
+ * @throws {Error}
+ * If Masonry items cannot be measured, the container has an invalid
+ * width, or the Masonry layout calculation fails.
+ */
+function createMasonry(container, config) {
+  /** @type {HTMLElement[]} */
+  const items = getElements(config.itemSelector, container);
+  const measurements = measureMasonryItems(items);
+  const containerWidth = container.offsetWidth;
+  if (!Number.isFinite(containerWidth) || containerWidth <= 0) {
+    throw new RangeError(`[createMasonry]: masonry container must have a positive finite width: ${containerWidth}`);
+  }
+  const layout = calculateMasonryLayout(containerWidth, measurements, config.gap);
+  applyMasonryLayout(layout);
+  return layout;
+}
+
+/**
+ * Recalculates Masonry layout after the container size changes.
+ *
+ * Errors are isolated from the ResizeObserver callback so that
+ * a failed recalculation does not escape the observer lifecycle.
+ *
+ * @param {HTMLElement} container
+ * Masonry container element.
+ *
+ * @param {TMasonryConfig} config
+ * Normalized masonry configuration.
+ *
+ * @returns {void}
+ */
+function handleMasonryResize(container, config) {
+  try {
+    createMasonry(container, config);
+  } catch (error) {
+    initLog("error", {
+      component: 'initMasonry',
+      message: 'Masonry resize recalculation failed.',
+      details: error
+    });
+  }
+}
+
+/**
+ * Initializes lazy Masonry layout activation and resize handling.
+ *
+ * Masonry is created when the container approaches the viewport.
+ * After successful initialization, container size changes are observed
+ * and the Masonry layout is recalculated automatically.
+ *
+ * Image validation is performed independently from the Masonry layout
+ * calculation. Each image is registered for validation at most once
+ * during the lifecycle of this Masonry instance.
+ *
+ * @param {HTMLElement} container
+ * Masonry container element.
+ *
+ * @param {TMasonryConfig} config
+ * Normalized Masonry configuration.
+ *
+ * @param {string} [rootMargin="300px 0px"]
+ * Distance from the viewport at which Masonry is initialized.
+ *
+ * @returns {{
+ *   destroy: () => void
+ * }}
+ * Masonry lifecycle controller.
+ */
+function initMasonry(container, config, rootMargin = '0px 0px') {
+  let isInitialized = false;
+  let isFirstResizeNotification = true;
+
+  /*
+   * Tracks images that have already been registered for validation
+   * during this Masonry lifecycle.
+   *
+   * WeakSet is used because image elements must not be kept alive
+   * solely by the validation registry after they leave the DOM.
+   */
+  const validatedImages = new WeakSet();
+  const resizeObserver = new ResizeObserver(() => {
+    /*
+     * ResizeObserver is created before the initial Masonry layout,
+     * but recalculation must not start until the first layout has
+     * been created successfully.
+     */
+    if (!isInitialized) {
+      return;
+    }
+    if (isFirstResizeNotification) {
+      /*
+      * ResizeObserver may report the current geometry immediately
+      * after observation starts.
+      *
+      * The initial Masonry layout has already been calculated just
+      * before observe() was called, so this first notification does
+      * not require another layout pass.
+      */
+      isFirstResizeNotification = false;
+      return;
+    }
+    handleMasonryResize(container, config);
+  });
+  const intersectionObserver = new IntersectionObserver(entries => {
+    const entry = entries[0];
+    if (!entry?.isIntersecting) {
+      return;
+    }
+    try {
+      /*
+       * Perform the initial Masonry layout synchronously.
+       *
+       * The Masonry lifecycle is marked as initialized only after
+       * the initial layout and image validation registration complete
+       * successfully.
+       */
+      const layout = createMasonry(container, config);
+      isInitialized = true;
+
+      /*
+       * The layout snapshot already contains the exact Masonry
+       * items used during the current layout pass.
+       *
+       * Therefore, resolving the Masonry item collection from
+       * the container again is unnecessary.
+       */
+      const images = getMasonryImages(layout.items);
+
+      /*
+       * Image validation is independent from Masonry layout
+       * creation and does not block the layout pipeline.
+       *
+       * validatedImages prevents the same image from being
+       * registered more than once during this lifecycle.
+       */
+      validateMasonryImages(images, validatedImages);
+
+      /*
+       * The initial layout has been created successfully,
+       * therefore the intersection observer is no longer needed.
+       */
+      intersectionObserver.unobserve(container);
+      intersectionObserver.disconnect();
+
+      /*
+       * Start observing container size changes only after
+       * successful Masonry initialization.
+       */
+      resizeObserver.observe(container);
+    } catch (error) {
+      /*
+       * Initialization errors are isolated from the observer
+       * callback and reported through the common initialization
+       * logging mechanism.
+       */
+      initLog("error", {
+        component: 'initMasonry',
+        message: 'Masonry initialization failed.',
+        details: error
+      });
+    }
+  }, {
+    rootMargin
+  });
+  intersectionObserver.observe(container);
+  return {
+    /**
+     * Destroys all observers associated with this Masonry instance.
+     *
+     * @returns {void}
+     */
+    destroy() {
+      intersectionObserver.disconnect();
+      resizeObserver.disconnect();
+    }
+  };
+}
+
+/**
+ * Reveals a Masonry item after its image has loaded.
+ *
+ * The visual transition itself is handled by CSS. JavaScript only
+ * changes the item's state by adding the corresponding CSS class.
+ *
+ * @param {HTMLElement} item
+ * @param {number} [delay=0]
+ *
+ * @returns {void}
+ */
+function revealMasonryItem(item, delay = 0) {
+  setTimeout(() => {
+    item.classList.add('image-loaded');
+  }, delay);
 }
 
 /**
@@ -1373,11 +2015,11 @@ function activateNavLink(params) {
   // Check if all necessary arguments are provided, otherwise, log a warning.
   /** @type {(keyof TActivateNavlinkParams)[]} */
   const requiredKeys = ["navLinkSelector", "pageType", "activeClass", "anchorLink"];
-  const missingKeys = (0,_funcs_js__WEBPACK_IMPORTED_MODULE_1__.getInvalidKeys)(params, requiredKeys, {
+  const missingKeys = (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.getInvalidKeys)(params, requiredKeys, {
     invalidValues: ["", undefined, null, 0]
   });
   if (missingKeys.length) {
-    logInitError({
+    initLog("error", {
       component: "activateNavLink",
       message: `Missing required parameters:\n${missingKeys.join("\n")}`,
       details: params
@@ -1408,36 +2050,26 @@ function activateNavLink(params) {
 }
 
 /**
- * Logs an initialization error with optional diagnostic details.
- *
- * @param {TLogErrorParams} params
+ * @param {"warn"|"log"|"error"} logType
+ * @param {TLogMessageParams} params
  * @returns {void}
- *
- * @example
- * logInitError({
- *     component: "initLangSwitcher",
- *     message: 'Element ".lang-switcher" was not found.'
- * });
- *
- * @example
- * logInitError({
- *     component: "initLangSwitcher",
- *     message: 'Button has no data-lang attribute.',
- *     details: button
- * });
  */
-function logInitError(params) {
+function initLog(logType, params) {
   const {
-    component,
-    message,
+    component = 'Unknown',
+    message = '',
     details
   } = params;
-  const prefix = `[${component}]`;
-  if (details !== undefined) {
-    console.error(`${prefix}: ${message}`, details);
-    return;
+  if (typeof console[logType] !== 'function') {
+    throw new TypeError(`[initLog]: unsupported log type "${logType}".`);
   }
-  console.error(`${prefix} ${message}`);
+  const formattedMessage = `[${component}]: ${message}`;
+  if (details !== undefined) {
+    // We pass them as separate arguments—modern browsers render this perfectly.
+    console[logType](formattedMessage, '\nDetails:', details);
+  } else {
+    console[logType](formattedMessage);
+  }
 }
 
 /**
@@ -1457,7 +2089,7 @@ function getLangClickHandler(dataSetKey, langActive) {
     if (!(eTarget instanceof Element)) {
       // Cast to any type inside JSDoc comment so TS allows reading properties
       const unsafeTarget = /** @type {*} */eTarget;
-      logInitError({
+      initLog("error", {
         component: "getLangClickHandler",
         message: `Expected Element, but got ${eTarget?.constructor?.name || typeof eTarget}`,
         details: {
@@ -1504,7 +2136,7 @@ function getClickedLanguage(eTarget, dataSetKey) {
   const dataSetLang = langElement.dataset;
   const clickedLang = dataSetLang[dataSetKey];
   if (!clickedLang) {
-    logInitError({
+    initLog("error", {
       component: "getLangClickHandler",
       message: `The given HTMLElement has no data-set attributes or not valid:`,
       details: {
@@ -1576,7 +2208,7 @@ function checkEventCurrentTarget(event) {
   if (!isHTMLElement(curTarget)) {
     // Cast to any type inside JSDoc comment so TS allows reading properties
     const unsafeTarget = /** @type {*} */curTarget;
-    logInitError({
+    initLog("error", {
       component: "checkEventCurrentTarget",
       message: `Expected HTMLElement, but got ${curTarget?.constructor?.name || typeof curTarget}`,
       details: {
@@ -1627,11 +2259,11 @@ function getHandlerOnCloseLanguageMenu(menuContainer, toggleButton) {
  */
 function initLangSwitcher(params) {
   const requiredKeys = ["langSwitcherSelector", "langSwitcherCurrent", "langSwitcherButton", "langSwitcherItem", "langActiveSelector", "langListSelector", "langOptionArr", "dataSetKey"];
-  const missingKeys = (0,_funcs_js__WEBPACK_IMPORTED_MODULE_1__.getInvalidKeys)(params, requiredKeys, {
+  const missingKeys = (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.getInvalidKeys)(params, requiredKeys, {
     invalidValues: ["", undefined, null]
   });
   if (missingKeys.length) {
-    logInitError({
+    initLog("error", {
       component: "initLangSwitcher",
       message: `Missing required parameters:\n${missingKeys.join("\n")}`
     });
@@ -1655,14 +2287,14 @@ function initLangSwitcher(params) {
   if (!langCurrentButton || !checkHtmlElement(langCurrentButton)) return;
   const langActive = langCurrentButton.dataset[dataSetKey];
   if (!langActive) {
-    logInitError({
+    initLog("error", {
       component: "initLangSwitcher",
       message: `Element with selector: ${langSwitcherCurrent}${langActiveSelector} has no data-${dataSetKey} value...`
     });
     return;
   }
   if (!Array.isArray(langOptionArr) || !langOptionArr.length) {
-    logInitError({
+    initLog("error", {
       component: "initLangSwitcher",
       message: `langOptionArr must be a non-empty array.`,
       details: langOptionArr
@@ -1912,9 +2544,18 @@ __webpack_require__.r(__webpack_exports__);
 
 /**
  * @file index.js
- * @description Entry point. Bootstraps non-GSAP UI first, then lazily loads
- * GSAP via gsap-loader.js, builds animations through animations.js, and
- * initializes the masonry gallery.
+ * @description
+ * Entry point. Initializes non-GSAP UI components,
+ * registers lazy Masonry layout handling, then initializes
+ * GSAP animations and the language switcher.
+ */
+
+/**
+ *! DOM type aliases used by this module.
+ *
+ * @typedef {import("./types/dom.types.js").TActivateNavlinkParams} TActivateNavlinkParams
+ * @typedef {import("./types/dom.types.js").TNavLinkParams} TNavLinkParams
+ *
  */
 
 
@@ -1922,30 +2563,55 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+/**
+ *
+ * @param {TNavLinkParams} params
+ *
+ * @return {TActivateNavlinkParams}
+ */
+function getNavLinkParams(params) {
+  const {
+    navLinkSelector,
+    pageType,
+    activeClass,
+    anchorLink
+  } = params;
+  return {
+    navLinkSelector,
+    pageType,
+    activeClass,
+    anchorLink
+  };
+}
+
 // ============================================
 // DOM READY
 // ============================================
 document.addEventListener("DOMContentLoaded", async () => {
   const pageType = document.body.dataset.type || "";
   const isIn = (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_4__.isKeyOf)(_partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.linkAnchors, pageType);
-  const navLinkParams = {
-    navLinkSelector: _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.navLinkSelector,
+  const navLinkParams = getNavLinkParams({
+    navLinkSelector: _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.SELECTORS.navLinkSelector,
     pageType,
     activeClass: _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.linkClassNameActive,
     anchorLink: isIn ? _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.linkAnchors[pageType] : "#"
-  };
-  const navLinkParamsHexagon = {
-    navLinkSelector: _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.navHexagonSelector,
+  });
+  const navLinkParamsHexagon = getNavLinkParams({
+    navLinkSelector: _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.SELECTORS.navHexagonSelector,
     pageType,
     activeClass: _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.linkClassNameActive,
     anchorLink: isIn ? _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.linkAnchors[pageType] : "#"
-  };
+  });
   try {
-    // ------------------------------------------
     // Navigation & Language (non-GSAP, immediate)
-    // ------------------------------------------
     (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.activateNavLink)(navLinkParams);
     (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.activateNavLink)(navLinkParamsHexagon);
+
+    // Initialize Masonry (non-GSAP, lazy)
+    const galleryContainer = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.getDOMElement)(_partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.SELECTORS.gallerySelector, document, false);
+    if ((0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.isHTMLElement)(galleryContainer)) {
+      (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.initMasonry)(galleryContainer, _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.masonryConfig);
+    }
 
     //initializing GSAP animations...
     await (0,_partials_animations_js__WEBPACK_IMPORTED_MODULE_3__.initAnimations)();
@@ -1957,31 +2623,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch (error) {
     console.error("[DOMContentLoaded]: initialization failed:", error);
   }
-
-  // ------------------------------------------
-  // Resize listener
-  // ------------------------------------------
-
-  /*  TEMPORAL
-  /*
-    lockedEventListener("resize", window, 1500)(async () => {
-      try {
-        await createMasonry(gallerySelector, { gap: 20 });
-      } catch (error) {
-        console.error("Resize masonry failed:", error);
-      }
-    });
-  
-    // ------------------------------------------
-    // Optional: full cleanup on page unload
-    // Useful for SPA navigation or hot-reload scenarios
-    // ------------------------------------------
-    window.addEventListener("beforeunload", () => {
-      killAllAnimations();
-      resetGsapCache();
-    });
-  
-    */
 });
 
 /***/ }),
@@ -2531,286 +3172,34 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _initialSelectors_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./initialSelectors.js */ "./src/js/partials/initialSelectors.js");
 
 
-
-
 /**
- * TGsap
- * GSAP instance.
- * @typedef {typeof import("gsap").gsap} TGsap
+ * src/js/partials/animationParams.js
+ *
+ * @file animationParams.js
+ * @description GSAP ANIMATION params
  */
 
-/**
- * TGsapVars
- *
- * Generic GSAP vars object.
- *
- * `Record<string, any>` is intentionally used at this abstraction layer
- * because animation configuration may contain properties provided by
- * GSAP core, plugins, or ScrollTrigger.
- *
- * Keeping this type generic prevents the animation builder API from being
- * coupled to every possible GSAP plugin configuration.
- *
- * @typedef {Record<string, any>} TGsapVars
- */
 
 /**
- * TTween
+ *! GSAP ANIMATIONS type aliases used by this module.
  *
- * GSAP Tween instance.
+ * @typedef {import("../types/animations.types.js").TGsap} TGsap
+ * @typedef {import("../types/animations.types.js").TGsapVars} TGsapVars
+ * @typedef {import("../types/animations.types.js").TTween} TTween
+ * @typedef {import("../types/animations.types.js").TTimeline} TTimeline
+ * @typedef {import("../types/animations.types.js").TAnimation} TAnimation
+ * @typedef {import("../types/animations.types.js").TAnimationKey} TAnimationKey
+ * @typedef {import("../types/animations.types.js").TTargetMode} TTargetMode
+ * @typedef {import("../types/animations.types.js").TScrollTriggerParams} TScrollTriggerParams
+ * @typedef {import("../types/animations.types.js").TTimelineOperationType} TTimelineOperationType
+ * @typedef {import("../types/animations.types.js").TTimelineStep} TTimelineStep
+ * @typedef {import("../types/animations.types.js").TTimelineStepVars} TTimelineStepVars
+ * @typedef {import("../types/animations.types.js").TBaseTimelineParams} TBaseTimelineParams
+ * @typedef {import("../types/animations.types.js").TSingleTimelineParams} TSingleTimelineParams
+ * @typedef {import("../types/animations.types.js").TGroupTimelineParams} TGroupTimelineParams
+ * @typedef {import("../types/animations.types.js").TEachTimelineParams} TEachTimelineParams
+ * @typedef {import("../types/animations.types.js").TTimelineParams} TTimelineParams
  *
- * @typedef {gsap.core.Tween} TTween
- */
-
-/**
- * TTimeline
- *
- * GSAP Timeline instance.
- *
- * @typedef {gsap.core.Timeline} TTimeline
- */
-
-/**
- * TAnimation
- *
- * Common GSAP animation type.
- *
- * Includes both Tween and Timeline instances.
- *
- * @typedef {gsap.core.Animation} TAnimation
- */
-
-/**
- * TAnimationKey
- *
- * Cache identity used to register a GSAP animation.
- *
- * String keys are used for named application-level animations,
- * such as shared group Timelines.
- *
- * Element keys are used when an animation belongs to a concrete
- * DOM Element, such as a single root or an individual `each` scope.
- *
- * @typedef {string | Element} TAnimationKey
- */
-
-/**
- * TTargetMode
- *
- * Defines how DOM targets are associated with GSAP Timelines.
- *
- * `single`
- *     One root Element → one Timeline.
- *
- * `group`
- *     Document → one shared Timeline.
- *
- * `each`
- *     Multiple scope Elements → one independent Timeline per scope.
- *
- * @typedef {"single" | "group" | "each"} TTargetMode
- */
-
-/**
- * TScrollTriggerParams
- *
- * Configuration for a ScrollTrigger attached to a Timeline.
- *
- * `trigger` defines the Element whose scroll position controls
- * the Timeline. It is independent from the DOM search root used
- * to resolve Timeline step targets.
- *
- * Therefore:
- *
- *     root
- *       ↓
- *     resolves step targets
- *
- *     trigger
- *       ↓
- *     controls Timeline playback
- *
- * These may refer to the same Element, but one must not be
- * implicitly inferred from the other.
- *
- * @typedef {{
- *   trigger?: string | Element,
- *   start?: string | number,
- *   end?: string | number,
- *   toggleActions?: string,
- *   preventOverlaps?: boolean | string,
- *   fastScrollEnd?: boolean | number,
- *   markers?: boolean,
- *   scrub?: boolean | number,
- *   pin?: boolean | string | Element,
- *   invalidateOnRefresh?: boolean,
- * }} TScrollTriggerParams
- */
-
-/**
- * TTimelineOperationType
- *
- * Supported GSAP Timeline operations.
- *
- * @typedef {"set" | "from" | "to" | "fromTo"} TTimelineOperationType
- */
-
-/**
- * TTimelineStep
- *
- * Declarative configuration of one operation added to a GSAP Timeline.
- *
- * `target`
- *     CSS selector used to resolve the target Elements within
- *     the Timeline's search root.
- *
- * `type`
- *     GSAP Timeline operation to execute.
- *
- * `vars`
- *     GSAP vars used by `set()`, `from()`, and `to()`.
- *     For `fromTo()`, these are the destination vars.
- *
- * `fromVars`
- *     Initial GSAP vars used by `fromTo()`.
- *
- * `position`
- *     GSAP Timeline position parameter.
- *
- * ScrollTrigger configuration intentionally does not belong to an
- * individual step. It is configured at the Timeline level.
- *
- * @typedef {{
- *   target: string,
- *   type: TTimelineOperationType,
- *   vars?: TGsapVars,
- *   fromVars?: TGsapVars,
- *   position?: string | number,
- * }} TTimelineStep
- */
-
-/**
- * TTimelineStepVars
- *
- * Normalized GSAP vars used internally when adding a Timeline step.
- *
- * Unlike `TTimelineStep`, both properties are always present after
- * normalization.
- *
- * `vars` contains the destination or primary vars.
- *
- * `fromVars` contains the initial vars used only by `fromTo()`.
- *
- * @typedef {{
- *   vars: TGsapVars,
- *   fromVars: TGsapVars,
- * }} TTimelineStepVars
- */
-
-/**
- * TBaseTimelineParams
- *
- * Common Timeline configuration shared by all target modes.
- *
- * `paused`
- *     Controls the initial playback state of the Timeline.
- *
- * `scrollTrigger`
- *     Optional ScrollTrigger configuration attached to the complete
- *     Timeline.
- *
- * `steps`
- *     Declarative operations that are added to the Timeline.
- *
- * The DOM search root is intentionally not defined here because
- * different target modes derive their search context differently:
- *
- *     single → explicit `root`
- *     group  → `document`
- *     each   → each matched `scope` Element
- *
- * @typedef {{
- *   paused?: boolean,
- *   scrollTrigger?: TScrollTriggerParams,
- *   steps: TTimelineStep[],
- * }} TBaseTimelineParams
- */
-
-/**
- * TSingleTimelineParams
- *
- * Configuration for one independent Timeline.
- *
- * `root` is required because a single Timeline must have exactly
- * one explicit DOM search root.
- *
- * The resolved root Element is also used as the default cache
- * identity when no explicit key is supplied to `buildSingleTimeline()`.
- *
- * @typedef {{
- *   targetMode: "single",
- *   root: string,
- * } & TBaseTimelineParams} TSingleTimelineParams
- */
-
-/**
- * TGroupTimelineParams
- *
- * Configuration for one shared Timeline.
- *
- * Group mode resolves all step selectors against the Document.
- * Therefore, no explicit DOM `root` is required or accepted.
- *
- * The Timeline represents the complete group and must therefore
- * be registered under an explicit string cache key.
- *
- * @typedef {{
- *   targetMode: "group",
- * } & TBaseTimelineParams} TGroupTimelineParams
- */
-
-/**
- * TEachTimelineParams
- *
- * Configuration for independent Timelines created for every Element
- * matching `scope`.
- *
- * `scope` defines the Elements that establish independent Timeline
- * instances.
- *
- * For each matched scope Element:
- *
- *     scope Element
- *         ↓
- *     DOM search root
- *         ↓
- *     one Timeline
- *         ↓
- *     scope Element as cache identity
- *
- * The scope Element is used as the Timeline search context and
- * cache identity. ScrollTrigger configuration remains independent
- * and is not implicitly modified by this type.
- *
- * @typedef {{
- *   targetMode: "each",
- *   scope: string,
- * } & TBaseTimelineParams} TEachTimelineParams
- */
-
-/**
- * TTimelineParams
- *
- * Discriminated union containing the complete configuration accepted
- * by the Timeline builder system.
- *
- * `targetMode` determines which specialized builder is used:
- *
- *     "single" → TSingleTimelineParams
- *     "group"  → TGroupTimelineParams
- *     "each"   → TEachTimelineParams
- *
- * @typedef {TSingleTimelineParams | TGroupTimelineParams | TEachTimelineParams} TTimelineParams
  */
 
 ///////// ANIMATION CONFIGURATION //////////
@@ -3257,356 +3646,54 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-// ============================================
 //****** TYPE DEFINITIONS *******//
 
 /**
- * TBurgerElements: DOM elements required by the navigation menu.
+ *! DOM type aliases used by this module.
  *
- * @typedef {Object} TBurgerElements
- * @property {Element} navMenuFixed
- * @property {Element} burgerHidden
- * @property {Element} burgerFixed
- * @property {Element[]} burgerNavAll
+ * @typedef {import("../types/dom.types.js").TBurgerElements} TBurgerElements
+ * @typedef {import("../types/dom.types.js").TDOMSelectorConfig} TDOMSelectorConfig
+ * @typedef {import("../types/dom.types.js").TNavMenuSelector} TNavMenuSelector
+ * @typedef {import("../types/dom.types.js").TBurgerHandlersData} TBurgerHandlersData
+ *
  */
 
 /**
- * TDOMSelectorConfig: Configuration for a generic DOM element lookup.
+ *! GSAP ANIMATIONS type aliases used by this module.
  *
- * @typedef {Object} TDOMSelectorConfig
- * @property {string} key - Property name used in the resulting object.
- * @property {string} selector - CSS selector used to find the element(s).
- * @property {boolean} [multiple=false] - Whether all matching elements should be returned.
+ * @typedef {import("../types/animations.types.js").TPageName} TPageName
+ * @typedef {import("../types/animations.types.js").TLinkAnchors} TLinkAnchors
+ * @typedef {import("../types/animations.types.js").TPageAnimation} TPageAnimation
+ * @typedef {import("../types/animations.types.js").TPageAnimations} TPageAnimations
+ * @typedef {import("../types/animations.types.js").TGsap} TGsap
+ * @typedef {import("../types/animations.types.js").TGsapVars} TGsapVars
+ * @typedef {import("../types/animations.types.js").TTween} TTween
+ * @typedef {import("../types/animations.types.js").TTimeline} TTimeline
+ * @typedef {import("../types/animations.types.js").TAnimation} TAnimation
+ * @typedef {import("../types/animations.types.js").TAnimationKey} TAnimationKey
+ * @typedef {import("../types/animations.types.js").TTargetMode} TTargetMode
+ * @typedef {import("../types/animations.types.js").TScrollTriggerParams} TScrollTriggerParams
+ * @typedef {import("../types/animations.types.js").TTimelineOperationType} TTimelineOperationType
+ * @typedef {import("../types/animations.types.js").TTimelineStep} TTimelineStep
+ * @typedef {import("../types/animations.types.js").TTimelineStepVars} TTimelineStepVars
+ * @typedef {import("../types/animations.types.js").TBaseTimelineParams} TBaseTimelineParams
+ * @typedef {import("../types/animations.types.js").TSingleTimelineParams} TSingleTimelineParams
+ * @typedef {import("../types/animations.types.js").TGroupTimelineParams} TGroupTimelineParams
+ * @typedef {import("../types/animations.types.js").TEachTimelineParams} TEachTimelineParams
+ * @typedef {import("../types/animations.types.js").TTimelineParams} TTimelineParams
+ *
  */
 
 /**
- * TNavMenuSelector: Configuration for navigation menu DOM element lookup.
- *
- * Specializes the generic selector configuration by restricting `key`
- * to the known properties of `TBurgerElements`.
- *
- * @typedef {Omit<TDOMSelectorConfig, "key"> & {
- *     key: keyof TBurgerElements
- * }} TNavMenuSelector
- */
-
-/**
- * TBurgerHandlersData: Configuration for return {@link initBurgerHandlers}
- *
- * @typedef {{
- *   closeBurgerHandler: (e:MouseEvent) => void,
- *   attachBurgerListener: (burger: Element) => void,
- * }} TBurgerHandlersData
- */
-
-/**
- * TLinkAnchors is the type of the exported linkAnchors object.
- *
- * @typedef {typeof import("./initialSelectors.js").linkAnchors} TLinkAnchors
- */
-
-/**
- * TPageName is the page names defined by `linkAnchors`.
- *
- * @typedef {keyof TLinkAnchors} TPageName
- */
-
-/**
- * TPageAnimation: A function that initializes animations
- * for a page or common layout.
- *
- * @typedef {() => void} TPageAnimation
- */
-
-/**
- * TPageAnimations: Animation configuration for all pages.
- *
- * `common` is always required.
- * Page-specific animation functions are optional.
- *
- * @typedef {{
- *   common: TPageAnimation
- * } & Partial<Record<TPageName, TPageAnimation>>} TPageAnimations
- */
-
-/**
- * TGsap
- * GSAP instance.
- * @typedef {typeof import("gsap").gsap} TGsap
- */
-
-/**
- * TGsapVars
- *
- * Generic GSAP vars object.
- *
- * `Record<string, any>` is intentionally used at this abstraction layer
- * because animation configuration may contain properties provided by
- * GSAP core, plugins, or ScrollTrigger.
- *
- * Keeping this type generic prevents the animation builder API from being
- * coupled to every possible GSAP plugin configuration.
- *
- * @typedef {Record<string, any>} TGsapVars
- */
-
-/**
- * TTween
- *
- * GSAP Tween instance.
- *
- * @typedef {gsap.core.Tween} TTween
- */
-
-/**
- * TTimeline
- *
- * GSAP Timeline instance.
- *
- * @typedef {gsap.core.Timeline} TTimeline
- */
-
-/**
- * TAnimation
- *
- * Common GSAP animation type.
- *
- * Includes both Tween and Timeline instances.
- *
- * @typedef {gsap.core.Animation} TAnimation
- */
-
-/**
- * TAnimationKey
- *
- * Cache identity used to register a GSAP animation.
- *
- * String keys are used for named application-level animations,
- * such as shared group Timelines.
- *
- * Element keys are used when an animation belongs to a concrete
- * DOM Element, such as a single root or an individual `each` scope.
- *
- * @typedef {string | Element} TAnimationKey
- */
-
-/**
- * TTargetMode
- *
- * Defines how DOM targets are associated with GSAP Timelines.
- *
- * `single`
- *     One root Element → one Timeline.
- *
- * `group`
- *     Document → one shared Timeline.
- *
- * `each`
- *     Multiple scope Elements → one independent Timeline per scope.
- *
- * @typedef {"single" | "group" | "each"} TTargetMode
- */
-
-/**
- * TScrollTriggerParams
- *
- * Configuration for a ScrollTrigger attached to a Timeline.
- *
- * `trigger` defines the Element whose scroll position controls
- * the Timeline. It is independent from the DOM search root used
- * to resolve Timeline step targets.
- *
- * Therefore:
- *
- *     root
- *       ↓
- *     resolves step targets
- *
- *     trigger
- *       ↓
- *     controls Timeline playback
- *
- * These may refer to the same Element, but one must not be
- * implicitly inferred from the other.
- *
- * @typedef {{
- *   trigger?: string | Element,
- *   start?: string | number,
- *   end?: string | number,
- *   toggleActions?: string,
- *   preventOverlaps?: boolean | string,
- *   fastScrollEnd?: boolean | number,
- *   markers?: boolean,
- *   scrub?: boolean | number,
- *   pin?: boolean | string | Element,
- *   invalidateOnRefresh?: boolean,
- * }} TScrollTriggerParams
- */
-
-/**
- * TTimelineOperationType
- *
- * Supported GSAP Timeline operations.
- *
- * @typedef {"set" | "from" | "to" | "fromTo"} TTimelineOperationType
- */
-
-/**
- * TTimelineStep
- *
- * Declarative configuration of one operation added to a GSAP Timeline.
- *
- * `target`
- *     CSS selector used to resolve the target Elements within
- *     the Timeline's search root.
- *
- * `type`
- *     GSAP Timeline operation to execute.
- *
- * `vars`
- *     GSAP vars used by `set()`, `from()`, and `to()`.
- *     For `fromTo()`, these are the destination vars.
- *
- * `fromVars`
- *     Initial GSAP vars used by `fromTo()`.
- *
- * `position`
- *     GSAP Timeline position parameter.
- *
- * ScrollTrigger configuration intentionally does not belong to an
- * individual step. It is configured at the Timeline level.
- *
- * @typedef {{
- *   target: string,
- *   type: TTimelineOperationType,
- *   vars?: TGsapVars,
- *   fromVars?: TGsapVars,
- *   position?: string | number,
- * }} TTimelineStep
- */
-
-/**
- * TTimelineStepVars
- *
- * Normalized GSAP vars used internally when adding a Timeline step.
- *
- * Unlike `TTimelineStep`, both properties are always present after
- * normalization.
- *
- * `vars` contains the destination or primary vars.
- *
- * `fromVars` contains the initial vars used only by `fromTo()`.
- *
- * @typedef {{
- *   vars: TGsapVars,
- *   fromVars: TGsapVars,
- * }} TTimelineStepVars
- */
-
-/**
- * TBaseTimelineParams
- *
- * Common Timeline configuration shared by all target modes.
- *
- * `paused`
- *     Controls the initial playback state of the Timeline.
- *
- * `scrollTrigger`
- *     Optional ScrollTrigger configuration attached to the complete
- *     Timeline.
- *
- * `steps`
- *     Declarative operations that are added to the Timeline.
- *
- * The DOM search root is intentionally not defined here because
- * different target modes derive their search context differently:
- *
- *     single → explicit `root`
- *     group  → `document`
- *     each   → each matched `scope` Element
- *
- * @typedef {{
- *   paused?: boolean,
- *   scrollTrigger?: TScrollTriggerParams,
- *   steps: TTimelineStep[],
- * }} TBaseTimelineParams
- */
-
-/**
- * TSingleTimelineParams
- *
- * Configuration for one independent Timeline.
- *
- * `root` is required because a single Timeline must have exactly
- * one explicit DOM search root.
- *
- * The resolved root Element is also used as the default cache
- * identity when no explicit key is supplied to `buildSingleTimeline()`.
- *
- * @typedef {{
- *   targetMode: "single",
- *   root: string,
- * } & TBaseTimelineParams} TSingleTimelineParams
- */
-
-/**
- * TGroupTimelineParams
- *
- * Configuration for one shared Timeline.
- *
- * Group mode resolves all step selectors against the Document.
- * Therefore, no explicit DOM `root` is required or accepted.
- *
- * The Timeline represents the complete group and must therefore
- * be registered under an explicit string cache key.
- *
- * @typedef {{
- *   targetMode: "group",
- * } & TBaseTimelineParams} TGroupTimelineParams
- */
-
-/**
- * TEachTimelineParams
- *
- * Configuration for independent Timelines created for every Element
- * matching `scope`.
- *
- * `scope` defines the Elements that establish independent Timeline
- * instances.
- *
- * For each matched scope Element:
- *
- *     scope Element
- *         ↓
- *     DOM search root
- *         ↓
- *     one Timeline
- *         ↓
- *     scope Element as cache identity
- *
- * The scope Element is used as the Timeline search context and
- * cache identity. ScrollTrigger configuration remains independent
- * and is not implicitly modified by this type.
- *
- * @typedef {{
- *   targetMode: "each",
- *   scope: string,
- * } & TBaseTimelineParams} TEachTimelineParams
- */
-
-/**
- * TTimelineParams
- *
- * Discriminated union containing the complete configuration accepted
- * by the Timeline builder system.
- *
- * `targetMode` determines which specialized builder is used:
- *
- *     "single" → TSingleTimelineParams
- *     "group"  → TGroupTimelineParams
- *     "each"   → TEachTimelineParams
- *
- * @typedef {TSingleTimelineParams | TGroupTimelineParams | TEachTimelineParams} TTimelineParams
+ *! MASONRY type aliases used by this module.
+ *
+ * @typedef {import("../types/masonry.types.js").TMasonryOptions} TMasonryOptions
+ * @typedef {import("../types/masonry.types.js").TMasonryConfig} TMasonryConfig
+ * @typedef {import("../types/masonry.types.js").TMasonryItemMeasurement} TMasonryItemMeasurement
+ * @typedef {import("../types/masonry.types.js").TMasonryColumnCalculation} TMasonryColumnCalculation
+ * @typedef {import("../types/masonry.types.js").TMasonryColumns} TMasonryColumns
+ * @typedef {import("../types/masonry.types.js").TMasonryItemLayout} TMasonryItemLayout
+ * @typedef {import("../types/masonry.types.js").TMasonryLayout} TMasonryLayout
  */
 
 /// UTILITY FUNCTIONS ///
@@ -4613,7 +4700,7 @@ function isPageName(value, pageNames) {
 function getCurrentPageName(pageNames) {
   const pageName = document.body?.dataset?.type || null;
   if (!pageName) {
-    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.logInitError)({
+    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
       component: "getCurrentPageName",
       message: "<body> does not have a data-type attribute.",
       details: {
@@ -4623,7 +4710,7 @@ function getCurrentPageName(pageNames) {
     return null;
   }
   if (!isPageName(pageName, pageNames)) {
-    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.logInitError)({
+    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
       component: "getCurrentPageName",
       message: `Unknown page name "${pageName}".`,
       details: {
@@ -4679,7 +4766,7 @@ function runPageAnimations(animations, pageNames) {
  * resolved page names.
  *
  * If GSAP or ScrollTrigger cannot be loaded, initialization is aborted
- * and the error is reported through {@link logInitError}.
+ * and the error is reported through {@link initLog}.
  *
  * @async
  * @returns {Promise<void>}
@@ -4687,7 +4774,7 @@ function runPageAnimations(animations, pageNames) {
 async function initAnimations() {
   const gsapAll = await (0,_gsap_loader_js__WEBPACK_IMPORTED_MODULE_1__.getGSAP)();
   if (!gsapAll) {
-    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.logInitError)({
+    iniLog("error", {
       component: "initAnimations",
       message: `gsap is not loaded... omitting...`,
       details: gsapAll
@@ -5099,13 +5186,11 @@ function isGsapLoaded() {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   SELECTORS: function() { return /* binding */ SELECTORS; },
-/* harmony export */   gallerySelector: function() { return /* binding */ gallerySelector; },
 /* harmony export */   galleryThumbsFolderName: function() { return /* binding */ galleryThumbsFolderName; },
 /* harmony export */   langSwitchData: function() { return /* binding */ langSwitchData; },
 /* harmony export */   linkAnchors: function() { return /* binding */ linkAnchors; },
 /* harmony export */   linkClassNameActive: function() { return /* binding */ linkClassNameActive; },
-/* harmony export */   navHexagonSelector: function() { return /* binding */ navHexagonSelector; },
-/* harmony export */   navLinkSelector: function() { return /* binding */ navLinkSelector; },
+/* harmony export */   masonryConfig: function() { return /* binding */ masonryConfig; },
 /* harmony export */   navMenuSelectorsData: function() { return /* binding */ navMenuSelectorsData; }
 /* harmony export */ });
 
@@ -5118,39 +5203,18 @@ __webpack_require__.r(__webpack_exports__);
 //*** TYPE DEFINITIONS ***//
 
 /**
- * TBurgerElements DOM elements required by the navigation menu.
+ *! DOM type aliases used by this module.
  *
- * @typedef {Object} TBurgerElements
- * @property {Element} navMenuFixed
- * @property {Element} burgerHidden
- * @property {Element} burgerFixed
- * @property {Element[]} burgerNavAll
+ * @typedef {import("../types/dom.types.js").TBurgerElements} TBurgerElements
+ * @typedef {import("../types/dom.types.js").TDOMSelectorConfig} TDOMSelectorConfig
+ * @typedef {import("../types/dom.types.js").TNavMenuSelector} TNavMenuSelector
+ * @typedef {import("../types/animations.types.js").TPageName} TPageName
  */
 
 /**
- * TDOMSelectorConfig: Configuration for a generic DOM element lookup.
+ *! MASONRY type aliases used by this module.
  *
- * @typedef {Object} TDOMSelectorConfig
- * @property {string} key - Property name used in the resulting object.
- * @property {string} selector - CSS selector used to find the element(s).
- * @property {boolean} [multiple=false] - Whether all matching elements should be returned.
- */
-
-/**
- * TNavMenuSelector: Configuration for navigation menu DOM element lookup.
- *
- * Specializes the generic selector configuration by restricting `key`
- * to the known properties of `TBurgerElements`.
- *
- * @typedef {Omit<TDOMSelectorConfig, "key"> & {
- *     key: keyof TBurgerElements
- * }} TNavMenuSelector
- */
-
-/**
- * Page names defined by the linkAnchors registry.
- *
- * @typedef {keyof typeof linkAnchors} TPageName
+ * @typedef {import("../types/masonry.types.js").TMasonryConfig} TMasonryConfig
  */
 const linkAnchors = {
   index: "#about-us",
@@ -5162,9 +5226,6 @@ const linkAnchors = {
   windows: "#windowSection",
   security: "#securitySurveillanceSection"
 };
-const linkClassNameActive = "active";
-const navLinkSelector = ".nav-link";
-const navHexagonSelector = ".hexagon-comb-block__cell";
 const langSwitchData = {
   langSwitcherSelector: "#lang-switcher",
   langSwitcherCurrent: ".lang-switcher__current",
@@ -5175,8 +5236,8 @@ const langSwitchData = {
   langOptionArr: ["uk", "ru"],
   dataSetKey: "lang"
 };
-const gallerySelector = "#gallery-work";
 const galleryThumbsFolderName = "thumbs";
+const linkClassNameActive = "active";
 
 // ============================================
 // ANIMATIONS SELECTORS
@@ -5184,6 +5245,9 @@ const galleryThumbsFolderName = "thumbs";
 
 /** @type {Object.<string, string>} Animation selectors map */
 const SELECTORS = {
+  gallerySelector: "#gallery-work",
+  navLinkSelector: ".nav-link",
+  navHexagonSelector: ".hexagon-comb-block__cell",
   scrolledNav: "#scrolledNav",
   burgerNav: ".burger_nav",
   //for multiple elements
@@ -5196,7 +5260,6 @@ const SELECTORS = {
   textBlockHero: ".section__text-block--hero",
   biddingBlockHero: ".section__bidding-block",
   iconWrapperHero: ".section__img-wrapper--hero",
-  galleryWork: "#gallery-work",
   automationParallax: ".section--roller-automation",
   automationParallaxBg: "[data-anime=automation]",
   servicesParallax: ".section--services",
@@ -5229,6 +5292,16 @@ const navMenuSelectorsData = [{
   selector: SELECTORS.burgerNav,
   multiple: true
 }];
+
+/**
+ * Default configuration for the work gallery Masonry layout.
+ *
+ * @type {TMasonryConfig}
+ */
+const masonryConfig = {
+  itemSelector: ".gallery__item",
+  gap: 16
+};
 
 /***/ })
 
