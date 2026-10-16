@@ -697,8 +697,15 @@
   //overflow-x: hidden; //will be rewritten by mixin scroll-init to overflow-x: hidden;
 
   @include root.scroll-init(0.45rem, rgba(255, 133, 2, 1), rgba(255, 133, 2, .5));
+
+  .gallery__item:hover {
+    cursor: pointer;
+
+    transform: scale(1.05);
+  }
 }
 //Target Element: <div class="section__img-wrapper gallery__item">
+//.gallery__item:hover is written in #gallery-work block to avoid !important
 .gallery__item {
   position: absolute;
   //!it sets the width, and img will have the same width but height auto
@@ -728,12 +735,6 @@
   overflow: clip;
 
   @include root.box-shadow(0.2rem, 0.4rem);
-
-  &:hover {
-    cursor: pointer;
-
-    transform: scale(1.05) !important;
-  }
 
   &.image-loaded {
     opacity: 1;

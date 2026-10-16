@@ -7,35 +7,27 @@
  * can register, retrieve, and kill tweens/timelines in one centralized place.
  */
 
-/*** TYPES ***/
+import {initLog} from "../helpers/funcs.js";
 
-
+/// TYPES ///
 /**
- * TAnimation - Tween or Timeline
- * @typedef {gsap.core.Tween | gsap.core.Timeline} TAnimation or use type: gsap.core.Animation for any GSAP Animation
- */
-
-/**
- * TAnimationKey - Key used to identify a cached animation.
+ *! GSAP ANIMATIONS type aliases used by this module.
  *
- * String keys are used for application-level animations,
- * while Element keys are used for element-bound animations.
+ * @typedef {import("../types/animations.types.js").TAnimation} TAnimation
+ * @typedef {import("../types/animations.types.js").TAnimationKey} TAnimationKey
+ * @typedef {import("../types/animations.types.js").TGsapModules} TGsapModules
  *
- * @typedef {string | Element} TAnimationKey
- */
-
-
-/**
- * @typedef {{
- *   gsap: typeof import('gsap').gsap,
- *   ScrollTrigger: typeof import('gsap/ScrollTrigger').ScrollTrigger,
- * }} TGsapModules
  */
 
 ///////////////
-
-/** @type {TGsapModules|null} */
-let gsapModules = null;
+/**
+ * @type {Promise<TGsapModules | null> | null}
+ * Cached Promise for the GSAP modules.
+ *
+ * The Promise is cached immediately, before the dynamic import resolves,
+ * so concurrent callers share the same initialization.
+ */
+let gsapPromise = null;
 
 // ============================================
 // CACHE & STATE
@@ -58,39 +50,58 @@ const namedAnimations = new Map();
 // ============================================
 
 /**
- * Loads and caches GSAP + ScrollTrigger as a single atomic chunk.
- * Returns the cached modules when called again.
+ * Loads and caches GSAP and ScrollTrigger as a single initialization.
+ *
+ * A failed load resolves to `null`, matching the caller's existing
+ * `if (!gsapAll)` guard.
  *
  * @returns {Promise<TGsapModules | null>}
  */
-export async function getGSAP() {
-	if (gsapModules) {
-		return gsapModules;
+export function getGSAP() {
+	if (!gsapPromise) {
+		// Cache the Promise, not only the resolved modules.
+		gsapPromise = loadGSAP().catch((error) => {
+			initLog("error", {
+				component: "getGSAP",
+				message: "Failed to load GSAP or ScrollTrigger.",
+				details: error,
+			});
+
+			gsapPromise = null;
+
+			// Allow a later call to retry initialization after a failure.
+			return null;
+		});
 	}
 
-	const { gsap, ScrollTrigger } =
-		await import(
-			/* webpackChunkName: "gsap" */
-			"./gsap-all.js"
-			);
+	return gsapPromise;
+}
 
-	if (!gsap || !ScrollTrigger) {
-		console.error(
-			"at getGSAP: no gsap or ScrollTrigger imported..."
+/**
+ * Dynamically imports GSAP modules and registers ScrollTrigger.
+ *
+ * @returns {Promise<TGsapModules>}
+ * @throws {Error} If GSAP or ScrollTrigger cannot be loaded.
+ */
+async function loadGSAP() {
+	const { gsap, ScrollTrigger } = await import(
+		/* webpackChunkName: "gsap" */
+		"./gsap-all.js"
 		);
 
-		return null;
+	if (!gsap || !ScrollTrigger) {
+		throw new Error(
+			"[getGSAP]: GSAP or ScrollTrigger was not imported."
+		);
 	}
 
+	// Register the plugin after both modules have loaded successfully.
 	gsap.registerPlugin(ScrollTrigger);
 
-	gsapModules = {
-		gsap,
-		ScrollTrigger,
-	};
-
-	return gsapModules;
+	return { gsap, ScrollTrigger };
 }
+
+
 
 
 
@@ -140,10 +151,10 @@ export function getAnimation(key) {
 }
 
 /**
- * Returns a registered animation.
+ * Checks whether an animation is registered under the given key.
  *
  * @param {TAnimationKey} key - Animation name or DOM element.
- * @returns {boolean}
+ * @returns {boolean} `true` when the key exists in the animation cache.
  */
 export function isRegisteredAnimation(key) {
 	if (typeof key === "string") {
@@ -174,12 +185,4 @@ export function killAnimation(key) {
 	} else {
 		elementAnimations.delete(key);
 	}
-}
-
-/**
- * Checks if GSAP is loaded.
- * @returns {boolean}
- */
-export function isGsapLoaded() {
-	return gsapModules !== null;
 }

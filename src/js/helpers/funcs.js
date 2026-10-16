@@ -1,6 +1,13 @@
 'use strict';
 
 /**** TYPE DEFINITIONS ****/
+
+/**
+ *! DOM type aliases used by this module.
+ *
+ * @typedef {import("../types/dom.types.js").TLogMessageParams} TLogMessageParams
+ */
+
 /**
  * for typing of argument params of {@link getInvalidKeys}
  * @typedef {{
@@ -8,8 +15,28 @@
  * }} TGetInvalidKeysParams
  */
 
-export function randomNum(max, min) {
-  return Math.floor(Math.random() * max) + min;
+////////////
+
+/**
+ * Returns a random integer in the inclusive range [min, max].
+ *
+ * @param {number} min - Lower bound (inclusive).
+ * @param {number} max - Upper bound (inclusive).
+ * @returns {number} Random integer between `min` and `max`.
+ *
+ * @throws {TypeError} When arguments are not finite numbers.
+ * @throws {RangeError} When `min` is greater than `max`.
+ */
+export function randomNum(min, max) {
+  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+    throw new TypeError("[randomNum]: both arguments must be finite numbers.");
+  }
+
+  if (min > max) {
+    throw new RangeError(`[randomNum]: min (${min}) must not exceed max (${max}).`);
+  }
+
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 /**
@@ -45,65 +72,112 @@ export function getMatchedFromArray(targetArr, ...values) {
 
 /**
  *  It randomly chooses the requested amount of elems from the given array
- * @param {Array} fromArray - target array
+ * @param {*[]} fromArray - target array
  * @param {number} [maxRandCount=1] max number of the random elems from the given array
- * @return {*[] | []} the array of the random elements from the given array
+ * @return {*[] | undefined} the array of the random elements from the given array
  */
 export function getRandomElemsfromArray(fromArray, maxRandCount = 1) {
   if (!Array.isArray(fromArray) || fromArray.length < maxRandCount) {
     console.error(`the length of the given array ${fromArray.length} should not be less than max random count ${maxRandCount}...`);
-    return [];
+    return;
   }
+  const innArray = [...fromArray];
 
   // Shuffle the array randomly (Fisher-Yates method)
-  for (let i = fromArray.length - 1; i > 0; i--) {
+  for (let i = innArray.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [fromArray[i], fromArray[j]] = [fromArray[j], fromArray[i]]; // Swapping elements
+    [innArray[i], innArray[j]] = [innArray[j], innArray[i]]; // Swapping elements
   }
 
   // Return the first maxRandCount numbers
-  return fromArray.slice(0, maxRandCount);
+  return innArray.slice(0, maxRandCount);
+}
+
+/**
+ * @typedef {{
+ *   data: Record<string, unknown>,
+ *   creationDate: number,
+ * }} TLocalStorageEntry
+ */
+
+/**
+ * Milliseconds in one day, used for TTL calculations.
+ * @type {number}
+ */
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+/**
+ * Reads a localStorage entry and validates it against a TTL in days.
+ *
+ * Returns `undefined` in every "no usable data" scenario:
+ * missing key, malformed JSON, unexpected data shape, or expired TTL.
+ *
+ * Absence of data is a normal state and is not logged as an error.
+ *
+ * @param {string} name - localStorage key.
+ * @param {number} [timeLimit=1] - Time-to-live in days.
+ * @returns {TLocalStorageEntry | undefined} The stored entry, or `undefined`.
+ */
+export function getLocalStorage(name, timeLimit = 1) {
+  let parsed;
+
+  try {
+    const storage = localStorage.getItem(name);
+
+    // Missing key is a normal first-visit state, not an error.
+    if (storage === null) {
+      return undefined;
+    }
+
+    parsed = JSON.parse(storage);
+  } catch (error) {
+    // Quota/security errors on read, or malformed JSON.
+    console.error(`[getLocalStorage]: failed to read "${name}":`, error);
+    return undefined;
+  }
+
+  // Validate the expected entry shape before trusting its fields.
+  if (
+    typeof parsed !== "object" ||
+    parsed === null ||
+    !Number.isFinite(parsed.creationDate)
+  ) {
+    console.warn(`[getLocalStorage]: entry "${name}" has an invalid shape.`);
+    return undefined;
+  }
+
+  const ageInDays = (Date.now() - parsed.creationDate) / MS_PER_DAY;
+
+  if (ageInDays > timeLimit) {
+    return undefined; // Expired entries are an expected state.
+  }
+
+  return /** @type {TLocalStorageEntry} */ (parsed);
 }
 
 
 /**
- * It gets the LocalStorage by name, validating by the time limit in days;
- * If the time limit is expired, then to return false;
- * If the LocalStorage does not exist then to return false;
- * Else to return the data;
- * @param { string } name of the LocalStorage data;
- * @param { number } [timeLimit=1]: number of days;
- * @returns { object | boolean } the data, stored in the LocalStorage...
- * or false, if its not found or expired by time
- * */
-export function getLocalStorage( name, timeLimit=1 ) {
-  const storage = localStorage.getItem( name );
-  let innData;
-  if ( storage ) {
-    innData = JSON.parse( storage );
-    const creationDate = innData.creationDate;
-    const currentDate = Date.now();
-    if (((currentDate - creationDate)/1000/60/60/24) > timeLimit) {
-      return false;
-    }
-    return innData;
-  }
-  return false;
-}
-
-/**@description it receives the data and update it with the current Date
- * and sets the localStorage;
- * @param {string} name The name of the LocalStorage to be set
- * @param {Object} data which is fetched
- * */
-export function setLocalStorage( name="localData", data ) {
-  //log(data, "setting localStorage Data");
-
-  const dataWithDate = {
+ * Writes data to localStorage wrapped with a creation timestamp,
+ * so that {@link getLocalStorage} can validate its TTL.
+ *
+ * @param {string} name - localStorage key.
+ * @param {Record<string, unknown>} data - Payload to store.
+ * @returns {boolean} `true` when the entry was written successfully.
+ */
+export function setLocalStorage(name, data) {
+  const entry = {
     data,
-    creationDate: Date.now()
+    creationDate: Date.now(),
   };
-  localStorage.setItem(name, JSON.stringify( dataWithDate ));
+
+  try {
+    localStorage.setItem(name, JSON.stringify(entry));
+    return true;
+  } catch (error) {
+    // QuotaExceededError or storage disabled (e.g. private mode).
+    console.error(`[setLocalStorage]: failed to write "${name}":`, error);
+    return false;
+  }
 }
 
 /**
@@ -194,7 +268,6 @@ export function createKeySet(object) {
   );
 }
 
-
 /**
  * Checks whether a string exists in a Set of valid values.
  *
@@ -210,4 +283,85 @@ export function createKeySet(object) {
  */
 export function isInSet(value, values) {
   return values.has(/** @type {T} */ (value));
+}
+
+/**
+ * @param {"warn"|"log"|"error"} logType
+ * @param {TLogMessageParams} params
+ * @returns {void}
+ */
+export function initLog(logType, params) {
+  const { component = 'Unknown', message = '', details } = params;
+
+  if (typeof console[logType] !== 'function') {
+    throw new TypeError(`[initLog]: unsupported log type "${logType}".`);
+  }
+
+  const formattedMessage = `[${component}]: ${message}`;
+
+  if (details !== undefined) {
+    // We pass them as separate arguments—modern browsers render this perfectly.
+    console[logType](formattedMessage, '\nDetails:', details);
+  }
+  else {
+    console[logType](formattedMessage);
+  }
+}
+
+/**
+ * Wraps a function to catch and log synchronous errors.
+ *
+ * @template {(...args: any[]) => any} T
+ *
+ * @param {T} func - The function to wrap.
+ * @param {string} [fallbackName] - Optional custom name for logging (useful for anonymous/arrow functions).
+ *
+ * @returns {(...args: Parameters<T>) => (ReturnType<T> | undefined)}
+ * A wrapped function that returns the original result or undefined if an error occurs.
+ *
+ * @throws {TypeError} If func is not a function.
+ *
+ * @example
+ * // Option 1: Named function (the name will be picked up automatically)
+ * function calculateTax(amount) { return amount * 0.2; }
+ * const safeTax = tryUse(calculateTax);
+ * safeTax(100);
+ *
+ * @example
+ * // Option 2: Arrow function with a custom name for logs
+ * const safeSum = tryUse((a, b) => a + b, 'sumOperation');
+ * console.log(safeSum(2, 3)); // 5
+ *
+ * @example
+ * const safeSum = tryUse((a, b) => a + b, 'sumOperation')(2, 3);
+ *
+ * @example
+ * const safeSum = tryUse(someFunc)(2, 3);
+ */
+export function tryUse(func, fallbackName) {
+  if (typeof func !== 'function') {
+    initLog('error', {
+      component: 'tryUse',
+      message: `Expected a function, received "${typeof func}".`,
+      details: new TypeError(`Received ${typeof func} instead of function`),
+    });
+
+    return () => undefined;
+  }
+
+  const component = func.name || fallbackName || 'AnonymousFunction';
+
+  return (/** @type {Parameters<T>} */ ...args) => {
+    try {
+      return func(...args);
+    } catch (error) {
+      initLog('error', {
+        component,
+        message: `An error occurred during animation initialization.`,
+        details: error,
+      });
+
+      return undefined;
+    }
+  };
 }

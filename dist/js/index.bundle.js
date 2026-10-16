@@ -15,22 +15,50 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   getLocalStorage: function() { return /* binding */ getLocalStorage; },
 /* harmony export */   getMatchedFromArray: function() { return /* binding */ getMatchedFromArray; },
 /* harmony export */   getRandomElemsfromArray: function() { return /* binding */ getRandomElemsfromArray; },
+/* harmony export */   initLog: function() { return /* binding */ initLog; },
 /* harmony export */   isInSet: function() { return /* binding */ isInSet; },
 /* harmony export */   isKeyOf: function() { return /* binding */ isKeyOf; },
 /* harmony export */   randomNum: function() { return /* binding */ randomNum; },
-/* harmony export */   setLocalStorage: function() { return /* binding */ setLocalStorage; }
+/* harmony export */   setLocalStorage: function() { return /* binding */ setLocalStorage; },
+/* harmony export */   tryUse: function() { return /* binding */ tryUse; }
 /* harmony export */ });
 
 
 /**** TYPE DEFINITIONS ****/
+
+/**
+ *! DOM type aliases used by this module.
+ *
+ * @typedef {import("../types/dom.types.js").TLogMessageParams} TLogMessageParams
+ */
+
 /**
  * for typing of argument params of {@link getInvalidKeys}
  * @typedef {{
  *   invalidValues?: unknown[]
  * }} TGetInvalidKeysParams
  */
-function randomNum(max, min) {
-  return Math.floor(Math.random() * max) + min;
+
+////////////
+
+/**
+ * Returns a random integer in the inclusive range [min, max].
+ *
+ * @param {number} min - Lower bound (inclusive).
+ * @param {number} max - Upper bound (inclusive).
+ * @returns {number} Random integer between `min` and `max`.
+ *
+ * @throws {TypeError} When arguments are not finite numbers.
+ * @throws {RangeError} When `min` is greater than `max`.
+ */
+function randomNum(min, max) {
+  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+    throw new TypeError("[randomNum]: both arguments must be finite numbers.");
+  }
+  if (min > max) {
+    throw new RangeError(`[randomNum]: min (${min}) must not exceed max (${max}).`);
+  }
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 /**
@@ -65,64 +93,101 @@ function getMatchedFromArray(targetArr, ...values) {
 
 /**
  *  It randomly chooses the requested amount of elems from the given array
- * @param {Array} fromArray - target array
+ * @param {*[]} fromArray - target array
  * @param {number} [maxRandCount=1] max number of the random elems from the given array
- * @return {*[] | []} the array of the random elements from the given array
+ * @return {*[] | undefined} the array of the random elements from the given array
  */
 function getRandomElemsfromArray(fromArray, maxRandCount = 1) {
   if (!Array.isArray(fromArray) || fromArray.length < maxRandCount) {
     console.error(`the length of the given array ${fromArray.length} should not be less than max random count ${maxRandCount}...`);
-    return [];
+    return;
   }
+  const innArray = [...fromArray];
 
   // Shuffle the array randomly (Fisher-Yates method)
-  for (let i = fromArray.length - 1; i > 0; i--) {
+  for (let i = innArray.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [fromArray[i], fromArray[j]] = [fromArray[j], fromArray[i]]; // Swapping elements
+    [innArray[i], innArray[j]] = [innArray[j], innArray[i]]; // Swapping elements
   }
 
   // Return the first maxRandCount numbers
-  return fromArray.slice(0, maxRandCount);
+  return innArray.slice(0, maxRandCount);
 }
 
 /**
- * It gets the LocalStorage by name, validating by the time limit in days;
- * If the time limit is expired, then to return false;
- * If the LocalStorage does not exist then to return false;
- * Else to return the data;
- * @param { string } name of the LocalStorage data;
- * @param { number } [timeLimit=1]: number of days;
- * @returns { object | boolean } the data, stored in the LocalStorage...
- * or false, if its not found or expired by time
- * */
+ * @typedef {{
+ *   data: Record<string, unknown>,
+ *   creationDate: number,
+ * }} TLocalStorageEntry
+ */
+
+/**
+ * Milliseconds in one day, used for TTL calculations.
+ * @type {number}
+ */
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+/**
+ * Reads a localStorage entry and validates it against a TTL in days.
+ *
+ * Returns `undefined` in every "no usable data" scenario:
+ * missing key, malformed JSON, unexpected data shape, or expired TTL.
+ *
+ * Absence of data is a normal state and is not logged as an error.
+ *
+ * @param {string} name - localStorage key.
+ * @param {number} [timeLimit=1] - Time-to-live in days.
+ * @returns {TLocalStorageEntry | undefined} The stored entry, or `undefined`.
+ */
 function getLocalStorage(name, timeLimit = 1) {
-  const storage = localStorage.getItem(name);
-  let innData;
-  if (storage) {
-    innData = JSON.parse(storage);
-    const creationDate = innData.creationDate;
-    const currentDate = Date.now();
-    if ((currentDate - creationDate) / 1000 / 60 / 60 / 24 > timeLimit) {
-      return false;
+  let parsed;
+  try {
+    const storage = localStorage.getItem(name);
+
+    // Missing key is a normal first-visit state, not an error.
+    if (storage === null) {
+      return undefined;
     }
-    return innData;
+    parsed = JSON.parse(storage);
+  } catch (error) {
+    // Quota/security errors on read, or malformed JSON.
+    console.error(`[getLocalStorage]: failed to read "${name}":`, error);
+    return undefined;
   }
-  return false;
+
+  // Validate the expected entry shape before trusting its fields.
+  if (typeof parsed !== "object" || parsed === null || !Number.isFinite(parsed.creationDate)) {
+    console.warn(`[getLocalStorage]: entry "${name}" has an invalid shape.`);
+    return undefined;
+  }
+  const ageInDays = (Date.now() - parsed.creationDate) / MS_PER_DAY;
+  if (ageInDays > timeLimit) {
+    return undefined; // Expired entries are an expected state.
+  }
+  return /** @type {TLocalStorageEntry} */parsed;
 }
 
-/**@description it receives the data and update it with the current Date
- * and sets the localStorage;
- * @param {string} name The name of the LocalStorage to be set
- * @param {Object} data which is fetched
- * */
-function setLocalStorage(name = "localData", data) {
-  //log(data, "setting localStorage Data");
-
-  const dataWithDate = {
+/**
+ * Writes data to localStorage wrapped with a creation timestamp,
+ * so that {@link getLocalStorage} can validate its TTL.
+ *
+ * @param {string} name - localStorage key.
+ * @param {Record<string, unknown>} data - Payload to store.
+ * @returns {boolean} `true` when the entry was written successfully.
+ */
+function setLocalStorage(name, data) {
+  const entry = {
     data,
     creationDate: Date.now()
   };
-  localStorage.setItem(name, JSON.stringify(dataWithDate));
+  try {
+    localStorage.setItem(name, JSON.stringify(entry));
+    return true;
+  } catch (error) {
+    // QuotaExceededError or storage disabled (e.g. private mode).
+    console.error(`[setLocalStorage]: failed to write "${name}":`, error);
+    return false;
+  }
 }
 
 /**
@@ -221,6 +286,83 @@ function isInSet(value, values) {
   return values.has(/** @type {T} */value);
 }
 
+/**
+ * @param {"warn"|"log"|"error"} logType
+ * @param {TLogMessageParams} params
+ * @returns {void}
+ */
+function initLog(logType, params) {
+  const {
+    component = 'Unknown',
+    message = '',
+    details
+  } = params;
+  if (typeof console[logType] !== 'function') {
+    throw new TypeError(`[initLog]: unsupported log type "${logType}".`);
+  }
+  const formattedMessage = `[${component}]: ${message}`;
+  if (details !== undefined) {
+    // We pass them as separate arguments—modern browsers render this perfectly.
+    console[logType](formattedMessage, '\nDetails:', details);
+  } else {
+    console[logType](formattedMessage);
+  }
+}
+
+/**
+ * Wraps a function to catch and log synchronous errors.
+ *
+ * @template {(...args: any[]) => any} T
+ *
+ * @param {T} func - The function to wrap.
+ * @param {string} [fallbackName] - Optional custom name for logging (useful for anonymous/arrow functions).
+ *
+ * @returns {(...args: Parameters<T>) => (ReturnType<T> | undefined)}
+ * A wrapped function that returns the original result or undefined if an error occurs.
+ *
+ * @throws {TypeError} If func is not a function.
+ *
+ * @example
+ * // Option 1: Named function (the name will be picked up automatically)
+ * function calculateTax(amount) { return amount * 0.2; }
+ * const safeTax = tryUse(calculateTax);
+ * safeTax(100);
+ *
+ * @example
+ * // Option 2: Arrow function with a custom name for logs
+ * const safeSum = tryUse((a, b) => a + b, 'sumOperation');
+ * console.log(safeSum(2, 3)); // 5
+ *
+ * @example
+ * const safeSum = tryUse((a, b) => a + b, 'sumOperation')(2, 3);
+ *
+ * @example
+ * const safeSum = tryUse(someFunc)(2, 3);
+ */
+function tryUse(func, fallbackName) {
+  if (typeof func !== 'function') {
+    initLog('error', {
+      component: 'tryUse',
+      message: `Expected a function, received "${typeof func}".`,
+      details: new TypeError(`Received ${typeof func} instead of function`)
+    });
+    return () => undefined;
+  }
+  const component = func.name || fallbackName || 'AnonymousFunction';
+  return (/** @type {Parameters<T>} */...args) => {
+    try {
+      return func(...args);
+    } catch (error) {
+      initLog('error', {
+        component,
+        message: `An error occurred during animation initialization.`,
+        details: error
+      });
+      return undefined;
+    }
+  };
+}
+
 /***/ }),
 
 /***/ "./src/js/helpers/funcsDOM.js":
@@ -251,7 +393,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   getSelectorName: function() { return /* binding */ getSelectorName; },
 /* harmony export */   initLangSwitcher: function() { return /* binding */ initLangSwitcher; },
 /* harmony export */   initLockScroll: function() { return /* binding */ initLockScroll; },
-/* harmony export */   initLog: function() { return /* binding */ initLog; },
 /* harmony export */   initMasonry: function() { return /* binding */ initMasonry; },
 /* harmony export */   isHTMLElement: function() { return /* binding */ isHTMLElement; },
 /* harmony export */   isStyleSupported: function() { return /* binding */ isStyleSupported; },
@@ -264,9 +405,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   requireElements: function() { return /* binding */ requireElements; },
 /* harmony export */   restoreDocumentScroll: function() { return /* binding */ restoreDocumentScroll; },
 /* harmony export */   setAttributes: function() { return /* binding */ setAttributes; },
+/* harmony export */   setDocumentScrollLocked: function() { return /* binding */ setDocumentScrollLocked; },
 /* harmony export */   toggleClassOnIntersection: function() { return /* binding */ toggleClassOnIntersection; }
 /* harmony export */ });
 /* harmony import */ var _funcs_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./funcs.js */ "./src/js/helpers/funcs.js");
+/* harmony import */ var _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../partials/initialSelectors.js */ "./src/js/partials/initialSelectors.js");
+
 
 
 
@@ -295,6 +439,8 @@ __webpack_require__.r(__webpack_exports__);
  * @typedef {import("../types/masonry.types.js").TMasonryColumns} TMasonryColumns
  * @typedef {import("../types/masonry.types.js").TMasonryItemLayout} TMasonryItemLayout
  * @typedef {import("../types/masonry.types.js").TMasonryConfig} TMasonryConfig
+ * @typedef {import("../types/masonry.types.js").TMasonryResizeSchedulerState} TMasonryResizeSchedulerState
+ * @typedef {import("../types/masonry.types.js").TMasonryLifecycleState} TMasonryLifecycleState
  */
 
 //////////////// END OF TYPE DEFINITIONS /////////////////
@@ -386,13 +532,18 @@ function lockedEventListener(event, listenerOwner, delay = 300) {
  * Uses IntersectionObserver instead of scroll listeners,
  * which improves performance and avoids unnecessary scroll handling.
  *
+ * The activation flag is updated synchronously while the DOM mutation
+ * is deferred to the next animation frame. This prevents duplicate
+ * scheduled frames when the observer fires again before the pending
+ * frame executes.
+ *
  * @param {HTMLElement} targetElement - The element whose class will be toggled.
  * @param {HTMLElement} triggerElement - The element that triggers the class change.
  * @param {string} activeClass - The CSS class to add/remove.
- * @param {Element|null} [root=null] - The scrolling container. Default is the viewport.
+ * @param {Element | null} [root=null] - The scrolling container. Default is the viewport.
  * @param {string} [rootMargin="-1px 0px 0px 0px"] - Margin around the root to fine-tune trigger timing.
  *
- * @returns {Function} Cleanup function that disconnects the observer.
+ * @returns {() => void} Cleanup function that disconnects the observer.
  */
 function toggleClassOnIntersection(targetElement, triggerElement, activeClass, root = null, rootMargin = '-1px 0px 0px 0px') {
   if (!targetElement?.isConnected || !triggerElement?.isConnected) {
@@ -401,18 +552,18 @@ function toggleClassOnIntersection(targetElement, triggerElement, activeClass, r
   let isClassActive = false;
   const observer = new IntersectionObserver(([entry]) => {
     const shouldActivate = entry.boundingClientRect.top <= 0 && !entry.isIntersecting;
-    if (shouldActivate && !isClassActive) {
-      requestAnimationFrame(() => {
-        targetElement.classList.add(activeClass);
-        isClassActive = true;
-      });
+
+    // No state change — nothing to schedule.
+    if (shouldActivate === isClassActive) {
+      return;
     }
-    if (!shouldActivate && isClassActive) {
-      requestAnimationFrame(() => {
-        targetElement.classList.remove(activeClass);
-        isClassActive = false;
-      });
-    }
+
+    // Synchronous flag update blocks duplicate scheduling
+    // from observer notifications arriving before the frame.
+    isClassActive = shouldActivate;
+    requestAnimationFrame(() => {
+      targetElement.classList.toggle(activeClass, shouldActivate);
+    });
   }, {
     root,
     threshold: 0,
@@ -508,7 +659,7 @@ function setAttributes(elements = [], targetAttr = {}) {
   elements.forEach((element, i) => {
     if (!(element instanceof Element)) {
       const errorMessage = `one of the elements at index ${i} is not the instance of HTMLElement...`;
-      initLog("error", {
+      (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
         component: "setAttributes",
         message: errorMessage,
         details: {
@@ -652,7 +803,7 @@ function checkHtmlElement(element) {
   if (!isHTMLElem) {
     // Cast to any type inside JSDoc comment so TS allows reading properties
     const unsafeTarget = /** @type {*} */element;
-    initLog("error", {
+    (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
       component: "checkHtmlElement",
       message: `Expected HTMLElement, but got ${element?.constructor?.name || typeof element}`,
       details: {
@@ -710,16 +861,18 @@ function canUseContextAsTarget(context, targetSelector, includeContextSelector) 
  * above:@template {HTMLFormElement}
  * const form = getDOMElement('#login-form', document, false);
  * if (!form) return;
-*
+ *
  */
 function getDOMElement(selector, context = document, useLog = true) {
   const element = context.querySelector(selector);
   if (!element) {
-    useLog && initLog("error", {
+    useLog && (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
       component: "getDOMElement",
       message: `Element with selector "${selector}" was not found in the DOM.`,
       details: {
-        parent: parent.constructor.name
+        parent: context?.constructor?.name,
+        targetSelector: selector,
+        targetElement: element
       }
     });
     return;
@@ -804,11 +957,11 @@ function getElements(selector, context = document, multiple = true, includeConte
    * The context is considered only when the selector produced
    * no descendant targets.
    */
-  if (!targets.length && canUseContextAsTarget(context, selector, includeContextAsTarget) && context instanceof Element) {
+  if (!targets.length && canUseContextAsTarget(context, selector, includeContextAsTarget)) {
     targets.push(/** @type {T} */context);
   }
   if (!targets.length) {
-    initLog("error", {
+    (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
       component: "getElements",
       message: `Element with selector "${selector}" ` + "was not found in DOM.",
       details: {
@@ -904,7 +1057,7 @@ function requireElements(selectors, context = document) {
      */
     if (!result.length) {
       const errorMessage = `Required DOM element missing. ` + `Key: "${key}", Selector: "${selector}"`;
-      initLog("error", {
+      (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
         component: "requireElements",
         message: errorMessage
       });
@@ -918,6 +1071,25 @@ function requireElements(selectors, context = document) {
     elements[key] = multiple ? result : result[0];
   }
   return elements;
+}
+
+/**
+ * Sets or releases the document scroll lock.
+ *
+ * Applies `scrollbar-gutter: stable` to keep the layout stable while
+ * the native scrollbar is hidden, preventing content shift.
+ *
+ * The function is idempotent: repeated calls with the same state
+ * are no-ops.
+ *
+ * @param {boolean} locked - `true` to lock scrolling, `false` to restore.
+ * @returns {void}
+ */
+function setDocumentScrollLocked(locked) {
+  const gutterValue = locked ? "stable" : "";
+  document.documentElement.style.scrollbarGutter = gutterValue;
+  document.body.style.scrollbarGutter = gutterValue;
+  document.body.style.overflow = locked ? "hidden" : "";
 }
 
 /**
@@ -935,8 +1107,8 @@ function requireElements(selectors, context = document) {
  */
 function lockDocumentScroll() {
   // Preserve the scrollbar width while the navigation is open.
-  document.documentElement.style.scrollbarGutter = "stable";
-  document.body.style.scrollbarGutter = "stable";
+  document.documentElement.style.scrollbarGutter = "stable"; //html
+  document.body.style.scrollbarGutter = "stable"; //body
 
   // Prevent the document from scrolling behind the navigation.
   document.body.style.overflow = "hidden";
@@ -1053,53 +1225,6 @@ function getImageDimensions(img) {
   });
 }
 
-/**
- * Removes broken images and their parent elements from DOM
- * @param {Array<{src: string, element: HTMLElement}>} brokenImages - Array of broken image data
- */
-function removeBrokenImages(brokenImages) {
-  if (brokenImages.length === 0) return;
-  console.warn(`[getImagesLoaded] Removed ${brokenImages.length} broken image(s):`, brokenImages.map(b => b.src));
-  brokenImages.forEach(({
-    element
-  }) => {
-    if (element?.isConnected) {
-      element.remove();
-    }
-  });
-}
-
-/**
- * Processes imagesLoaded instance results
- * Separates broken and loaded images, collects dimensions
- *
- * @param {Object} instance - imagesLoaded instance
- * @param {Map<HTMLImageElement, HTMLElement>} parentMap - Mapping of images to parents
- * @returns {Promise<Array<LoadedImageResult>>} Processed image results
- */
-async function processImageResults(instance, parentMap) {
-  const loadedPromises = [];
-  const brokenImages = [];
-  instance.images.forEach(item => {
-    const img = item.img;
-    const parentElement = parentMap.get(img);
-    if (!item.isLoaded) {
-      brokenImages.push({
-        src: img.src || img.currentSrc || 'unknown',
-        element: parentElement
-      });
-    } else {
-      loadedPromises.push(getImageDimensions(img).then(size => ({
-        element: parentElement,
-        size
-      })));
-    }
-  });
-  removeBrokenImages(brokenImages);
-  const results = await Promise.all(loadedPromises);
-  return results.filter(r => r.size !== null);
-}
-
 //!////// MASONRY ///////////
 /**
  * `items` and `columns` are expected to be validated
@@ -1111,6 +1236,144 @@ async function processImageResults(instance, parentMap) {
  * - columns.count is a positive integer;
  * - columns.gap and columns.leftOffset are non-negative.
  */
+
+/**
+ * Recalculates Masonry layout after the container size changes.
+ *
+ * Errors are isolated from the ResizeObserver callback so that
+ * a failed recalculation does not escape the observer lifecycle.
+ *
+ * @param {HTMLElement} container
+ * Masonry container element.
+ *
+ * @param {TMasonryConfig} config
+ * Normalized masonry configuration.
+ *
+ * @returns {void}
+ */
+function handleMasonryResize(container, config) {
+  try {
+    createMasonry(container, config);
+  } catch (error) {
+    ;(0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
+      component: 'initMasonry',
+      message: 'Masonry resize recalculation failed.',
+      details: error
+    });
+  }
+}
+
+/**
+ * Schedules a Masonry resize cycle.
+ *
+ * @param {TMasonryResizeSchedulerState} state
+ * @returns {void}
+ */
+function scheduleMasonryResizeCycle(state) {
+  if (state.cancelled || state.locked) return;
+  state.locked = true;
+  state.timeoutId = setTimeout(() => {
+    state.timeoutId = null;
+    requestMasonryResizeFrame(state);
+  }, state.delay);
+}
+
+/**
+ * Releases the current cycle and processes a pending request.
+ *
+ * @param {TMasonryResizeSchedulerState} state
+ * @returns {void}
+ */
+function finishMasonryResizeCycle(state) {
+  state.locked = false;
+  if (state.cancelled || !state.pending) return;
+  state.pending = false;
+  scheduleMasonryResizeCycle(state);
+}
+
+/**
+ * Runs Masonry recalculation in the next animation frame.
+ *
+ * @param {TMasonryResizeSchedulerState} state
+ * @returns {void}
+ */
+function requestMasonryResizeFrame(state) {
+  if (state.cancelled) {
+    finishMasonryResizeCycle(state);
+    return;
+  }
+  state.resizeRafId = requestAnimationFrame(() => {
+    state.resizeRafId = null;
+    try {
+      if (!state.cancelled) {
+        handleMasonryResize(state.container, state.config);
+      }
+    } finally {
+      finishMasonryResizeCycle(state);
+    }
+  });
+}
+
+/**
+ * Requests a Masonry recalculation.
+ *
+ * @param {TMasonryResizeSchedulerState} state
+ * @returns {void}
+ */
+function requestMasonryResize(state) {
+  if (state.cancelled) return;
+  if (state.locked) {
+    state.pending = true;
+    return;
+  }
+  scheduleMasonryResizeCycle(state);
+}
+
+/**
+ * Cancels pending Masonry resize work.
+ *
+ * @param {TMasonryResizeSchedulerState} state
+ * @returns {void}
+ */
+function cancelMasonryResizeScheduler(state) {
+  state.cancelled = true;
+  state.pending = false;
+  if (state.timeoutId !== null) {
+    clearTimeout(state.timeoutId);
+    state.timeoutId = null;
+  }
+  if (state.resizeRafId !== null) {
+    cancelAnimationFrame(state.resizeRafId);
+    state.resizeRafId = null;
+  }
+  state.locked = false;
+}
+
+/**
+ * Creates a rate-limited scheduler for Masonry resize calculations.
+ *
+ * @param {HTMLElement} container
+ * @param {TMasonryConfig} config
+ * @param {number} [delay=250]
+ * @returns {{ schedule: () => void, cancel: () => void }}
+ */
+function createMasonryResizeScheduler(container, config, delay = 250) {
+  /** @type {TMasonryResizeSchedulerState} */
+  const state = {
+    container,
+    config,
+    delay,
+    locked: false,
+    pending: false,
+    cancelled: false,
+    timeoutId: null,
+    resizeRafId: null
+  };
+  return {
+    schedule: () => requestMasonryResize(state),
+    cancel: () => cancelMasonryResizeScheduler(state)
+  };
+}
 
 /**
  * Validates the external input contract of the masonry layout calculation.
@@ -1157,7 +1420,6 @@ function validateMasonryLayoutInput(containerWidth, items, gap) {
     throw new RangeError(`[validateMasonryLayoutInput]: gap must be greater than or equal to zero, but received ${gap}`);
   }
 }
-const IMAGE_RATIO_TOLERANCE = 0.001;
 
 /**
  * Validates the declared image aspect ratio against the actual
@@ -1211,10 +1473,10 @@ function validateImageAspectRatio(image, index) {
    * from being reported as image dimension mismatches.
    */
   const ratioDifference = Math.abs(declaredRatio - actualRatio);
-  if (ratioDifference <= IMAGE_RATIO_TOLERANCE) {
+  if (ratioDifference <= _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.IMAGE_RATIO_TOLERANCE) {
     return;
   }
-  initLog("warn", {
+  ;(0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("warn", {
     component: "validateImageAspectRatio",
     message: `Image at index ${index} has a different declared ` + "and intrinsic aspect ratio.",
     details: {
@@ -1227,7 +1489,7 @@ function validateImageAspectRatio(image, index) {
       actualHeight,
       actualRatio,
       ratioDifference,
-      tolerance: IMAGE_RATIO_TOLERANCE
+      tolerance: _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.IMAGE_RATIO_TOLERANCE
     }
   });
 }
@@ -1251,7 +1513,7 @@ function getMasonryImages(items) {
     if (image instanceof HTMLImageElement) {
       images.push(image);
     } else {
-      initLog("warn", {
+      (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("warn", {
         component: "getMasonryImages",
         message: "Masonry item does not contain an HTMLImageElement.",
         details: {
@@ -1263,6 +1525,43 @@ function getMasonryImages(items) {
     }
   }
   return images;
+}
+
+/**
+ * Reveals a Masonry item after its image has loaded.
+ *
+ * The visual transition is handled by CSS. JavaScript only changes
+ * the item's state by adding the `image-loaded` class.
+ *
+ * The item is checked again when the timer fires because it may have
+ * been removed from the document after the timer was scheduled.
+ *
+ * @param {HTMLElement} item - Masonry item to reveal.
+ * @param {number} [delay=0] - Delay before revealing the item, in milliseconds.
+ * @returns {void}
+ */
+function revealMasonryItem(item, delay = 0) {
+  // Validate the item before scheduling asynchronous work.
+  if (!(item instanceof HTMLElement) || !item.isConnected) {
+    return;
+  }
+
+  // Ignore invalid delays rather than passing them to setTimeout.
+  if (!Number.isFinite(delay) || delay < 0) {
+    (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("warn", {
+      component: "revealMasonryItem",
+      message: "Invalid reveal delay; using 0 milliseconds.",
+      details: {
+        delay
+      }
+    });
+    delay = 0;
+  }
+  setTimeout(() => {
+    // The item may have been removed while the timer was waiting.
+    if (!item.isConnected) return;
+    item.classList.add("image-loaded");
+  }, delay);
 }
 
 /**
@@ -1278,13 +1577,15 @@ function getMasonryImages(items) {
  * @param {number} index
  * Zero-based image index.
  *
+ * @param {number} [delay=0] for revealing loaded images
+ *
  * @returns {void}
  */
-function handleMasonryImageLoaded(image, index) {
+function handleMasonryImageLoaded(image, index, delay = 0) {
   validateImageAspectRatio(image, index);
   const parentElem = image.parentElement;
   if (!parentElem || !parentElem.classList.contains('gallery__item')) {
-    initLog("error", {
+    (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
       component: "validateMasonryImages",
       message: "Could not find the Masonry item parent element.",
       details: {
@@ -1295,181 +1596,7 @@ function handleMasonryImageLoaded(image, index) {
     });
     return;
   }
-  revealMasonryItem(parentElem, 500);
-}
-
-/**
- * Registers Masonry images for asynchronous validation and reveal.
- *
- * Each image is registered at most once during the lifecycle of the
- * current Masonry instance.
- *
- * Already completed images are processed immediately. Images that
- * have not completed loading yet are processed through a one-time
- * `load` event listener.
- *
- * @param {HTMLImageElement[]} images
- * Masonry image elements to process.
- *
- * @param {WeakSet<HTMLImageElement>} validatedImages
- * Images already registered during the current Masonry lifecycle.
- *
- * @returns {void}
- */
-function validateMasonryImages(images, validatedImages) {
-  if (!Array.isArray(images)) {
-    throw new TypeError('[validateMasonryImages]: images must be an array.');
-  }
-  for (const [index, image] of images.entries()) {
-    /*
-     * Prevent duplicate registration during subsequent Masonry
-     * recalculations triggered by ResizeObserver.
-     */
-    if (validatedImages.has(image)) {
-      continue;
-    }
-    validatedImages.add(image);
-
-    /*
-     * `complete` means that the browser has finished processing
-     * the image request. It does not guarantee successful loading.
-     *
-     * `naturalWidth > 0` confirms that a valid intrinsic image
-     * resource is available.
-     */
-    if (image.complete) {
-      if (image.naturalWidth > 0 && image.naturalHeight > 0) {
-        handleMasonryImageLoaded(image, index);
-      }
-      continue;
-    }
-
-    /*
-     * The image has not completed loading yet.
-     *
-     * The `load` event is the correct event for successful image
-     * loading. The listener is automatically removed after firing.
-     */
-    image.addEventListener('load', () => {
-      handleMasonryImageLoaded(image, index);
-    }, {
-      once: true
-    });
-    image.addEventListener('error', () => {
-      initLog("error", {
-        component: "validateMasonryImages",
-        message: "Masonry image failed to load.",
-        details: {
-          index,
-          image
-        }
-      });
-    }, {
-      once: true
-    });
-  }
-}
-
-/**
- * Measures the current layout dimensions of masonry items.
- *
- * The function assumes that the input collection has already been
- * resolved from the DOM by `getElements()`.
- *
- * Each connected element is measured using `offsetWidth` and
- * `offsetHeight`. Elements with invalid DOM state or invalid dimensions
- * are skipped and reported through the initialization error logger.
- *
- * The function does not:
- * - resolve DOM selectors;
- * - wait for image loading;
- * - calculate masonry columns;
- * - calculate item positions;
- * - mutate the DOM.
- *
- * @param {HTMLElement[]} items
- * Masonry item elements resolved from the DOM.
- *
- * @returns {TMasonryItemMeasurement[]}
- * Measured dimensions of all valid masonry items.
- *
- * @throws {TypeError}
- * If `items` is not an array.
- *
- * @throws {Error}
- * If the input array is empty or no valid masonry items remain
- * after measurement.
- */
-function measureMasonryItems(items) {
-  /*
-   * The function receives the result of getElements(), therefore
-   * the collection itself must be a valid array before processing.
-   */
-  if (!Array.isArray(items)) {
-    throw new TypeError('[measureMasonryItems]: items must be an array.');
-  }
-  if (items.length === 0) {
-    throw new RangeError('[measureMasonryItems]: items must not be empty.');
-  }
-
-  /** @type {TMasonryItemMeasurement[]} */
-  const measurements = [];
-  for (const [index, element] of items.entries()) {
-    /*
-     * A disconnected element no longer participates in the current
-     * document layout and therefore cannot provide a meaningful
-     * masonry measurement.
-     */
-    if (!element.isConnected) {
-      initLog("error", {
-        component: 'measureMasonryItems',
-        message: 'Masonry item is not connected to the DOM and ' + 'will be skipped.',
-        details: {
-          element,
-          index
-        }
-      });
-      continue;
-    }
-    const width = element.offsetWidth;
-    const height = element.offsetHeight;
-
-    /*
-     * A masonry item must have positive layout dimensions.
-     *
-     * Zero dimensions can occur when an element is hidden,
-     * detached from the rendered layout, or otherwise prevented
-     * from participating in normal layout calculation.
-     */
-    if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
-      initLog("error", {
-        component: 'measureMasonryItems',
-        message: 'Masonry item has invalid layout dimensions ' + 'and will be skipped.',
-        details: {
-          element,
-          index,
-          width,
-          height
-        }
-      });
-      continue;
-    }
-    measurements.push({
-      element,
-      width,
-      height
-    });
-  }
-
-  /*
-   * An empty measurement result means that masonry cannot be
-   * calculated. At this point the problem is no longer related
-   * to an individual item, but to the complete input collection.
-   */
-  if (measurements.length === 0) {
-    throw new Error('[measureMasonryItems]: no valid masonry items remain after measurement.');
-  }
-  return measurements;
+  revealMasonryItem(parentElem, delay);
 }
 
 /**
@@ -1768,6 +1895,108 @@ function applyMasonryLayout(layout) {
 }
 
 /**
+ * Measures the current layout dimensions of masonry items.
+ *
+ * The function assumes that the input collection has already been
+ * resolved from the DOM by `getElements()`.
+ *
+ * Each connected element is measured using `offsetWidth` and
+ * `offsetHeight`. Elements with invalid DOM state or invalid dimensions
+ * are skipped and reported through the initialization error logger.
+ *
+ * The function does not:
+ * - resolve DOM selectors;
+ * - wait for image loading;
+ * - calculate masonry columns;
+ * - calculate item positions;
+ * - mutate the DOM.
+ *
+ * @param {HTMLElement[]} items
+ * Masonry item elements resolved from the DOM.
+ *
+ * @returns {TMasonryItemMeasurement[]}
+ * Measured dimensions of all valid masonry items.
+ *
+ * @throws {TypeError}
+ * If `items` is not an array.
+ *
+ * @throws {Error}
+ * If the input array is empty or no valid masonry items remain
+ * after measurement.
+ */
+function measureMasonryItems(items) {
+  /*
+   * The function receives the result of getElements(), therefore
+   * the collection itself must be a valid array before processing.
+   */
+  if (!Array.isArray(items)) {
+    throw new TypeError('[measureMasonryItems]: items must be an array.');
+  }
+  if (items.length === 0) {
+    throw new RangeError('[measureMasonryItems]: items must not be empty.');
+  }
+
+  /** @type {TMasonryItemMeasurement[]} */
+  const measurements = [];
+  for (const [index, element] of items.entries()) {
+    /*
+     * A disconnected element no longer participates in the current
+     * document layout and therefore cannot provide a meaningful
+     * masonry measurement.
+     */
+    if (!element.isConnected) {
+      (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
+        component: 'measureMasonryItems',
+        message: 'Masonry item is not connected to the DOM and ' + 'will be skipped.',
+        details: {
+          element,
+          index
+        }
+      });
+      continue;
+    }
+    const width = element.offsetWidth;
+    const height = element.offsetHeight;
+
+    /*
+     * A masonry item must have positive layout dimensions.
+     *
+     * Zero dimensions can occur when an element is hidden,
+     * detached from the rendered layout, or otherwise prevented
+     * from participating in normal layout calculation.
+     */
+    if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+      (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
+        component: 'measureMasonryItems',
+        message: 'Masonry item has invalid layout dimensions ' + 'and will be skipped.',
+        details: {
+          element,
+          index,
+          width,
+          height
+        }
+      });
+      continue;
+    }
+    measurements.push({
+      element,
+      width,
+      height
+    });
+  }
+
+  /*
+   * An empty measurement result means that masonry cannot be
+   * calculated. At this point the problem is no longer related
+   * to an individual item, but to the complete input collection.
+   */
+  if (measurements.length === 0) {
+    throw new Error('[measureMasonryItems]: no valid masonry items remain after measurement.');
+  }
+  return measurements;
+}
+
+/**
  * Creates and applies the current Masonry layout.
  *
  * This function orchestrates one complete synchronous Masonry
@@ -1805,195 +2034,215 @@ function applyMasonryLayout(layout) {
  * width, or the Masonry layout calculation fails.
  */
 function createMasonry(container, config) {
+  const {
+    itemSelector,
+    gap = 0
+  } = config;
+
   /** @type {HTMLElement[]} */
-  const items = getElements(config.itemSelector, container);
+  const items = getElements(itemSelector, container);
   const measurements = measureMasonryItems(items);
   const containerWidth = container.offsetWidth;
   if (!Number.isFinite(containerWidth) || containerWidth <= 0) {
     throw new RangeError(`[createMasonry]: masonry container must have a positive finite width: ${containerWidth}`);
   }
-  const layout = calculateMasonryLayout(containerWidth, measurements, config.gap);
+  const layout = calculateMasonryLayout(containerWidth, measurements, gap);
   applyMasonryLayout(layout);
   return layout;
 }
 
 /**
- * Recalculates Masonry layout after the container size changes.
+ * Registers Masonry images for asynchronous validation and reveal.
  *
- * Errors are isolated from the ResizeObserver callback so that
- * a failed recalculation does not escape the observer lifecycle.
+ * Each image is registered at most once during the lifecycle of the
+ * current Masonry instance.
  *
- * @param {HTMLElement} container
- * Masonry container element.
+ * Already completed images are processed immediately. Images that
+ * have not completed loading yet are processed through a one-time
+ * `load` event listener.
  *
- * @param {TMasonryConfig} config
- * Normalized masonry configuration.
+ * @param {HTMLImageElement[]} images
+ * Masonry image elements to process.
+ *
+ * @param {WeakSet<HTMLImageElement>} validatedImages
+ * Images already registered during the current Masonry lifecycle.
  *
  * @returns {void}
  */
-function handleMasonryResize(container, config) {
+function validateMasonryImages(images, validatedImages) {
+  if (!Array.isArray(images)) {
+    throw new TypeError('[validateMasonryImages]: images must be an array.');
+  }
+  for (const [index, image] of images.entries()) {
+    /*
+     * Prevent duplicate registration during subsequent Masonry
+     * recalculations triggered by ResizeObserver.
+     */
+    if (validatedImages.has(image)) {
+      continue;
+    }
+    validatedImages.add(image);
+
+    /*
+     * `complete` means that the browser has finished processing
+     * the image request. It does not guarantee successful loading.
+     *
+     * `naturalWidth > 0` confirms that a valid intrinsic image
+     * resource is available.
+     */
+    if (image.complete) {
+      if (image.naturalWidth > 0 && image.naturalHeight > 0) {
+        handleMasonryImageLoaded(image, index, _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.MASONRY_REVEAL_DELAY);
+      } else {
+        // `complete` with zero intrinsic dimensions means a failed load
+        // that finished before registration (e.g. cached error response).
+        (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("warn", {
+          component: "validateMasonryImages",
+          message: "Masonry image completed with no valid resource.",
+          details: {
+            index,
+            src: image.currentSrc || image.src
+          }
+        });
+      }
+      continue;
+    }
+
+    /*
+     * The image has not completed loading yet.
+     *
+     * The `load` event is the correct event for successful image
+     * loading. The listener is automatically removed after firing.
+     */
+    image.addEventListener("load", () => {
+      handleMasonryImageLoaded(image, index, _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.MASONRY_REVEAL_DELAY);
+    }, {
+      once: true
+    });
+    image.addEventListener('error', () => {
+      (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
+        component: "validateMasonryImages",
+        message: "Masonry image failed to load.",
+        details: {
+          index,
+          image
+        }
+      });
+    }, {
+      once: true
+    });
+  }
+}
+
+/**
+ * Performs the initial Masonry layout and registers image validation.
+ *
+ * @param {TMasonryLifecycleState} state
+ * @returns {void}
+ */
+function initializeMasonry(state) {
+  const layout = createMasonry(state.container, state.config);
+  const images = getMasonryImages(layout.items);
+  validateMasonryImages(images, state.validatedImages);
+  state.isInitialized = true;
+  state.intersectionObserver?.disconnect();
+  state.resizeObserver?.observe(state.container);
+}
+
+/**
+ * Handles the initial intersection event.
+ *
+ * @param {IntersectionObserverEntry[]} entries
+ * @param {TMasonryLifecycleState} state
+ * @returns {void}
+ */
+function handleMasonryIntersection(entries, state) {
+  if (state.isDestroyed || state.isInitialized) return;
+  const entry = entries.find(item => item.target === state.container);
+  if (!entry?.isIntersecting) return;
   try {
-    createMasonry(container, config);
+    initializeMasonry(state);
   } catch (error) {
-    initLog("error", {
-      component: 'initMasonry',
-      message: 'Masonry resize recalculation failed.',
+    ;(0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
+      component: "initMasonry",
+      message: "Masonry initialization failed.",
       details: error
     });
   }
 }
 
 /**
- * Initializes lazy Masonry layout activation and resize handling.
+ * Destroys a Masonry lifecycle.
  *
- * Masonry is created when the container approaches the viewport.
- * After successful initialization, container size changes are observed
- * and the Masonry layout is recalculated automatically.
- *
- * Image validation is performed independently from the Masonry layout
- * calculation. Each image is registered for validation at most once
- * during the lifecycle of this Masonry instance.
- *
- * @param {HTMLElement} container
- * Masonry container element.
- *
- * @param {TMasonryConfig} config
- * Normalized Masonry configuration.
- *
- * @param {string} [rootMargin="300px 0px"]
- * Distance from the viewport at which Masonry is initialized.
- *
- * @returns {{
- *   destroy: () => void
- * }}
- * Masonry lifecycle controller.
+ * @param {TMasonryLifecycleState} state
+ * @returns {void}
  */
-function initMasonry(container, config, rootMargin = '0px 0px') {
-  let isInitialized = false;
-  let isFirstResizeNotification = true;
-
-  /*
-   * Tracks images that have already been registered for validation
-   * during this Masonry lifecycle.
-   *
-   * WeakSet is used because image elements must not be kept alive
-   * solely by the validation registry after they leave the DOM.
-   */
-  const validatedImages = new WeakSet();
-  const resizeObserver = new ResizeObserver(() => {
-    /*
-     * ResizeObserver is created before the initial Masonry layout,
-     * but recalculation must not start until the first layout has
-     * been created successfully.
-     */
-    if (!isInitialized) {
-      return;
-    }
-    if (isFirstResizeNotification) {
-      /*
-      * ResizeObserver may report the current geometry immediately
-      * after observation starts.
-      *
-      * The initial Masonry layout has already been calculated just
-      * before observe() was called, so this first notification does
-      * not require another layout pass.
-      */
-      isFirstResizeNotification = false;
-      return;
-    }
-    handleMasonryResize(container, config);
-  });
-  const intersectionObserver = new IntersectionObserver(entries => {
-    const entry = entries[0];
-    if (!entry?.isIntersecting) {
-      return;
-    }
-    try {
-      /*
-       * Perform the initial Masonry layout synchronously.
-       *
-       * The Masonry lifecycle is marked as initialized only after
-       * the initial layout and image validation registration complete
-       * successfully.
-       */
-      const layout = createMasonry(container, config);
-      isInitialized = true;
-
-      /*
-       * The layout snapshot already contains the exact Masonry
-       * items used during the current layout pass.
-       *
-       * Therefore, resolving the Masonry item collection from
-       * the container again is unnecessary.
-       */
-      const images = getMasonryImages(layout.items);
-
-      /*
-       * Image validation is independent from Masonry layout
-       * creation and does not block the layout pipeline.
-       *
-       * validatedImages prevents the same image from being
-       * registered more than once during this lifecycle.
-       */
-      validateMasonryImages(images, validatedImages);
-
-      /*
-       * The initial layout has been created successfully,
-       * therefore the intersection observer is no longer needed.
-       */
-      intersectionObserver.unobserve(container);
-      intersectionObserver.disconnect();
-
-      /*
-       * Start observing container size changes only after
-       * successful Masonry initialization.
-       */
-      resizeObserver.observe(container);
-    } catch (error) {
-      /*
-       * Initialization errors are isolated from the observer
-       * callback and reported through the common initialization
-       * logging mechanism.
-       */
-      initLog("error", {
-        component: 'initMasonry',
-        message: 'Masonry initialization failed.',
-        details: error
-      });
-    }
-  }, {
-    rootMargin
-  });
-  intersectionObserver.observe(container);
-  return {
-    /**
-     * Destroys all observers associated with this Masonry instance.
-     *
-     * @returns {void}
-     */
-    destroy() {
-      intersectionObserver.disconnect();
-      resizeObserver.disconnect();
-    }
-  };
+function destroyMasonry(state) {
+  if (state.isDestroyed) return;
+  state.isDestroyed = true;
+  state.isInitialized = false;
+  state.intersectionObserver?.disconnect();
+  state.resizeObserver?.disconnect();
+  state.resizeScheduler.cancel();
 }
 
 /**
- * Reveals a Masonry item after its image has loaded.
+ * Handles Masonry container width changes.
  *
- * The visual transition itself is handled by CSS. JavaScript only
- * changes the item's state by adding the corresponding CSS class.
- *
- * @param {HTMLElement} item
- * @param {number} [delay=0]
- *
+ * @param {ResizeObserverEntry[]} entries
+ * @param {TMasonryLifecycleState} state
  * @returns {void}
  */
-function revealMasonryItem(item, delay = 0) {
-  setTimeout(() => {
-    item.classList.add('image-loaded');
-  }, delay);
+function handleMasonryResizeObservation(entries, state) {
+  if (state.isDestroyed || !state.isInitialized) return;
+  const entry = entries.find(item => item.target === state.container);
+  if (!entry) return;
+  const currentWidth = entry.contentRect.width;
+  if (state.lastObservedWidth === null) {
+    state.lastObservedWidth = currentWidth;
+    return;
+  }
+  if (Math.abs(currentWidth - state.lastObservedWidth) < 0.5) {
+    return;
+  }
+  state.lastObservedWidth = currentWidth;
+  state.resizeScheduler.schedule();
 }
+
+/**
+ * Initializes lazy Masonry layout activation and width-based resize handling.
+ *
+ * @param {HTMLElement} container
+ * @param {TMasonryConfig} config
+ * @param {string} [rootMargin="0px 0px"]
+ * @returns {{ destroy: () => void }}
+ */
+function initMasonry(container, config, rootMargin = "0px 0px") {
+  /** @type {TMasonryLifecycleState} */
+  const state = {
+    container,
+    config,
+    isInitialized: false,
+    isDestroyed: false,
+    lastObservedWidth: null,
+    validatedImages: new WeakSet(),
+    resizeScheduler: createMasonryResizeScheduler(container, config, 250),
+    intersectionObserver: null,
+    resizeObserver: null
+  };
+  state.resizeObserver = new ResizeObserver(entries => {
+    handleMasonryResizeObservation(entries, state);
+  });
+  state.intersectionObserver = new IntersectionObserver(entries => handleMasonryIntersection(entries, state), {
+    rootMargin
+  });
+  state.intersectionObserver.observe(container);
+  return {
+    destroy: () => destroyMasonry(state)
+  };
+}
+
+///////////////////////////////////////
 
 /**
  * Activates the navigation link based on the specified conditions.
@@ -2019,7 +2268,7 @@ function activateNavLink(params) {
     invalidValues: ["", undefined, null, 0]
   });
   if (missingKeys.length) {
-    initLog("error", {
+    (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
       component: "activateNavLink",
       message: `Missing required parameters:\n${missingKeys.join("\n")}`,
       details: params
@@ -2050,29 +2299,6 @@ function activateNavLink(params) {
 }
 
 /**
- * @param {"warn"|"log"|"error"} logType
- * @param {TLogMessageParams} params
- * @returns {void}
- */
-function initLog(logType, params) {
-  const {
-    component = 'Unknown',
-    message = '',
-    details
-  } = params;
-  if (typeof console[logType] !== 'function') {
-    throw new TypeError(`[initLog]: unsupported log type "${logType}".`);
-  }
-  const formattedMessage = `[${component}]: ${message}`;
-  if (details !== undefined) {
-    // We pass them as separate arguments—modern browsers render this perfectly.
-    console[logType](formattedMessage, '\nDetails:', details);
-  } else {
-    console[logType](formattedMessage);
-  }
-}
-
-/**
  * Handles language selection.
  * @param {string} dataSetKey - the key of the dataset-[key]: dataset-lang
  * @param {string} langActive - active version of language
@@ -2089,7 +2315,7 @@ function getLangClickHandler(dataSetKey, langActive) {
     if (!(eTarget instanceof Element)) {
       // Cast to any type inside JSDoc comment so TS allows reading properties
       const unsafeTarget = /** @type {*} */eTarget;
-      initLog("error", {
+      (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
         component: "getLangClickHandler",
         message: `Expected Element, but got ${eTarget?.constructor?.name || typeof eTarget}`,
         details: {
@@ -2102,19 +2328,72 @@ function getLangClickHandler(dataSetKey, langActive) {
     }
     const clickedLang = getClickedLanguage(eTarget, dataSetKey);
     if (!clickedLang) return;
-    console.log("clickedLang:", clickedLang);
     redirectToLanguage(langActive, clickedLang);
   };
 }
 
 /**
- * @param {string} langActive
- * @param {string} clickedLang
- * @return {void}
+ * Redirects the browser to the clicked language version of the current page.
+ *
+ * The language segment of the current pathname is replaced with the
+ * clicked language code.
+ *
+ * The language code is expected to be the first path segment:
+ * `/uk/`, `/uk/gates-installation-repair`, and so on.
+ *
+ * Query parameters and the URL hash are preserved because only the pathname
+ * is modified. `location.replace()` avoids adding the previous language
+ * version as a separate history entry.
+ *
+ * `location.replace()` is used intentionally: a language switch
+ * navigates to a parallel version of the page, not to a new step
+ * of the browsing session. The previous language version is kept
+ * out of the session history, so the browser Back button does not
+ * silently revert the user's language choice.
+ *
+ * @param {string} langActive - Currently active language code.
+ * @param {string} clickedLang - Language code selected by the user.
+ * @returns {void}
  */
 function redirectToLanguage(langActive, clickedLang) {
   const currentUrl = new URL(window.location.href);
-  currentUrl.pathname = currentUrl.pathname.replace(`/${langActive}/`, `/${clickedLang}/`);
+  const segments = currentUrl.pathname.split("/");
+
+  // The first segment after the leading slash must match the active language.
+  if (segments[1] !== langActive) {
+    (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("warn", {
+      component: "redirectToLanguage",
+      message: "The active language does not match the first URL path segment.",
+      details: {
+        pathname: currentUrl.pathname,
+        expectedLanguage: langActive,
+        actualLanguage: segments[1]
+      }
+    });
+    return;
+  }
+
+  // Validate the target language before modifying the URL.
+  // Language codes must be a single non-empty path segment.
+  if (typeof clickedLang !== "string" || clickedLang.length === 0 || clickedLang.includes("/")) {
+    (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("warn", {
+      component: "redirectToLanguage",
+      message: "Invalid target language code.",
+      details: {
+        clickedLang
+      }
+    });
+    return;
+  }
+
+  // Avoid reloading the page when the selected language is already active.
+  if (langActive === clickedLang) return;
+
+  // Replace only the language segment; preserve the remaining path.
+  segments[1] = clickedLang;
+  currentUrl.pathname = segments.join("/");
+
+  // The query string and hash remain unchanged.
   window.location.replace(currentUrl.toString());
 }
 
@@ -2136,7 +2415,7 @@ function getClickedLanguage(eTarget, dataSetKey) {
   const dataSetLang = langElement.dataset;
   const clickedLang = dataSetLang[dataSetKey];
   if (!clickedLang) {
-    initLog("error", {
+    (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
       component: "getLangClickHandler",
       message: `The given HTMLElement has no data-set attributes or not valid:`,
       details: {
@@ -2149,6 +2428,8 @@ function getClickedLanguage(eTarget, dataSetKey) {
   }
   return clickedLang;
 }
+
+///////////////////////////////////////////////
 
 /**
  * Toggles the expanded state of an interactive element.
@@ -2208,7 +2489,7 @@ function checkEventCurrentTarget(event) {
   if (!isHTMLElement(curTarget)) {
     // Cast to any type inside JSDoc comment so TS allows reading properties
     const unsafeTarget = /** @type {*} */curTarget;
-    initLog("error", {
+    (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
       component: "checkEventCurrentTarget",
       message: `Expected HTMLElement, but got ${curTarget?.constructor?.name || typeof curTarget}`,
       details: {
@@ -2263,7 +2544,7 @@ function initLangSwitcher(params) {
     invalidValues: ["", undefined, null]
   });
   if (missingKeys.length) {
-    initLog("error", {
+    (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
       component: "initLangSwitcher",
       message: `Missing required parameters:\n${missingKeys.join("\n")}`
     });
@@ -2287,14 +2568,14 @@ function initLangSwitcher(params) {
   if (!langCurrentButton || !checkHtmlElement(langCurrentButton)) return;
   const langActive = langCurrentButton.dataset[dataSetKey];
   if (!langActive) {
-    initLog("error", {
+    (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
       component: "initLangSwitcher",
       message: `Element with selector: ${langSwitcherCurrent}${langActiveSelector} has no data-${dataSetKey} value...`
     });
     return;
   }
   if (!Array.isArray(langOptionArr) || !langOptionArr.length) {
-    initLog("error", {
+    (0,_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
       component: "initLangSwitcher",
       message: `langOptionArr must be a non-empty array.`,
       details: langOptionArr
@@ -2554,7 +2835,6 @@ __webpack_require__.r(__webpack_exports__);
  *! DOM type aliases used by this module.
  *
  * @typedef {import("./types/dom.types.js").TActivateNavlinkParams} TActivateNavlinkParams
- * @typedef {import("./types/dom.types.js").TNavLinkParams} TNavLinkParams
  *
  */
 
@@ -2562,27 +2842,6 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-
-/**
- *
- * @param {TNavLinkParams} params
- *
- * @return {TActivateNavlinkParams}
- */
-function getNavLinkParams(params) {
-  const {
-    navLinkSelector,
-    pageType,
-    activeClass,
-    anchorLink
-  } = params;
-  return {
-    navLinkSelector,
-    pageType,
-    activeClass,
-    anchorLink
-  };
-}
 
 // ============================================
 // DOM READY
@@ -2590,18 +2849,22 @@ function getNavLinkParams(params) {
 document.addEventListener("DOMContentLoaded", async () => {
   const pageType = document.body.dataset.type || "";
   const isIn = (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_4__.isKeyOf)(_partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.linkAnchors, pageType);
-  const navLinkParams = getNavLinkParams({
+
+  /** @type {TActivateNavlinkParams} */
+  const navLinkParams = {
     navLinkSelector: _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.SELECTORS.navLinkSelector,
     pageType,
     activeClass: _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.linkClassNameActive,
     anchorLink: isIn ? _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.linkAnchors[pageType] : "#"
-  });
-  const navLinkParamsHexagon = getNavLinkParams({
+  };
+
+  /** @type {TActivateNavlinkParams} */
+  const navLinkParamsHexagon = {
     navLinkSelector: _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.SELECTORS.navHexagonSelector,
     pageType,
     activeClass: _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.linkClassNameActive,
     anchorLink: isIn ? _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.linkAnchors[pageType] : "#"
-  });
+  };
   try {
     // Navigation & Language (non-GSAP, immediate)
     (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.activateNavLink)(navLinkParams);
@@ -3684,18 +3947,6 @@ __webpack_require__.r(__webpack_exports__);
  *
  */
 
-/**
- *! MASONRY type aliases used by this module.
- *
- * @typedef {import("../types/masonry.types.js").TMasonryOptions} TMasonryOptions
- * @typedef {import("../types/masonry.types.js").TMasonryConfig} TMasonryConfig
- * @typedef {import("../types/masonry.types.js").TMasonryItemMeasurement} TMasonryItemMeasurement
- * @typedef {import("../types/masonry.types.js").TMasonryColumnCalculation} TMasonryColumnCalculation
- * @typedef {import("../types/masonry.types.js").TMasonryColumns} TMasonryColumns
- * @typedef {import("../types/masonry.types.js").TMasonryItemLayout} TMasonryItemLayout
- * @typedef {import("../types/masonry.types.js").TMasonryLayout} TMasonryLayout
- */
-
 /// UTILITY FUNCTIONS ///
 
 /**
@@ -4438,7 +4689,10 @@ function initBurgerListener(burger, burgerElementsData, navMenuAnime) {
     });
     if (isExpanded) {
       // Restore the default scrollbar behavior.
-      (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.restoreDocumentScroll)();
+
+      //restoreDocumentScroll();
+
+      (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.setDocumentScrollLocked)(false);
 
       // Reverse the Timeline to hide the navigation.
       navMenuAnime.reverse();
@@ -4446,7 +4700,10 @@ function initBurgerListener(burger, burgerElementsData, navMenuAnime) {
     }
 
     // Preserve the scrollbar width while the navigation is open.
-    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.lockDocumentScroll)();
+
+    //lockDocumentScroll();
+
+    ;(0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.setDocumentScrollLocked)(true);
 
     // Play the Timeline to reveal the navigation.
     navMenuAnime.play();
@@ -4496,7 +4753,7 @@ function closeBurgerClickHandler(e, burgerElementsData, navMenuAnime) {
   }
 
   // Synchronize the ARIA state of all Burger controls.
-  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.setAttributes)([burgerHidden, burgerFixed, navMenuFixed], {
+  ;(0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.setAttributes)([burgerHidden, burgerFixed, navMenuFixed], {
     "aria-expanded": false
   });
 
@@ -4504,7 +4761,8 @@ function closeBurgerClickHandler(e, burgerElementsData, navMenuAnime) {
   navMenuAnime.reverse();
 
   // Restore document scrolling.
-  document.body.style.overflow = "auto";
+  //restoreDocumentScroll();
+  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.setDocumentScrollLocked)(false);
 }
 
 /**
@@ -4700,7 +4958,7 @@ function isPageName(value, pageNames) {
 function getCurrentPageName(pageNames) {
   const pageName = document.body?.dataset?.type || null;
   if (!pageName) {
-    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
+    (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_2__.initLog)("error", {
       component: "getCurrentPageName",
       message: "<body> does not have a data-type attribute.",
       details: {
@@ -4710,7 +4968,7 @@ function getCurrentPageName(pageNames) {
     return null;
   }
   if (!isPageName(pageName, pageNames)) {
-    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
+    (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_2__.initLog)("error", {
       component: "getCurrentPageName",
       message: `Unknown page name "${pageName}".`,
       details: {
@@ -4774,11 +5032,7 @@ function runPageAnimations(animations, pageNames) {
 async function initAnimations() {
   const gsapAll = await (0,_gsap_loader_js__WEBPACK_IMPORTED_MODULE_1__.getGSAP)();
   if (!gsapAll) {
-    iniLog("error", {
-      component: "initAnimations",
-      message: `gsap is not loaded... omitting...`,
-      details: gsapAll
-    });
+    //initLog will log error in getGSAP()
     return;
   }
   const {
@@ -4808,38 +5062,38 @@ async function initAnimations() {
   const pageAnimations = {
     automation: () => {
       //parallax at gates-rollers-automation.html
-      buildSingleTimeline(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.automationParallaxTimelineParams);
+      (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_2__.tryUse)(buildSingleTimeline)(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.automationParallaxTimelineParams);
     },
     common: () => {
       //Hero section priority...
-      buildGroupTimeline(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.heroTimelineParams, "heroAnimation");
+      (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_2__.tryUse)(buildGroupTimeline)(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.heroTimelineParams, "heroAnimation");
 
       //initializing burger handlers, build and register animation timeline...
-      initBurgerMenu(gsap, _initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.navMenuSelectorsData, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.burgerNavTimelineParams);
+      (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_2__.tryUse)(initBurgerMenu)(gsap, _initialSelectors_js__WEBPACK_IMPORTED_MODULE_3__.navMenuSelectorsData, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.burgerNavTimelineParams);
 
       // parallax on services section on all pages
-      buildSingleTimeline(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.servicesParallaxTimelineParams);
+      (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_2__.tryUse)(buildSingleTimeline)(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.servicesParallaxTimelineParams);
 
       // separate timelines of Elements with common selector: fade-in-left
-      buildEachTimelines(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.fadeInLeftTimelineParams);
+      (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_2__.tryUse)(buildEachTimelines)(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.fadeInLeftTimelineParams);
 
       // separate timelines of Elements with common selector: fade-in-right
-      buildEachTimelines(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.fadeInRightTimelineParams);
+      (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_2__.tryUse)(buildEachTimelines)(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.fadeInRightTimelineParams);
 
       // separate timelines of Elements with common selector: scale-in
-      buildEachTimelines(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.scaleInTimelineParams);
+      (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_2__.tryUse)(buildEachTimelines)(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.scaleInTimelineParams);
 
       // separate timelines of Elements with common selector: fade-in-up
-      buildEachTimelines(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.fadeInUpTimelineParams);
+      (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_2__.tryUse)(buildEachTimelines)(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.fadeInUpTimelineParams);
 
       //the navigation panel show-on-scroll Timeline
-      buildSingleTimeline(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.scrolledNavTimelineParams);
+      (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_2__.tryUse)(buildSingleTimeline)(gsap, _animationParams_js__WEBPACK_IMPORTED_MODULE_4__.scrolledNavTimelineParams);
     }
   };
   runPageAnimations(pageAnimations, pageNames);
 }
 
-// TODO: LOWER IS TO REMAKE
+// TODO: LOWER IS TO REMAKE or DELETE
 
 /**
  * Builds fade-in animations for elements matching a selector.
@@ -5007,11 +5261,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   getAnimation: function() { return /* binding */ getAnimation; },
 /* harmony export */   getGSAP: function() { return /* binding */ getGSAP; },
-/* harmony export */   isGsapLoaded: function() { return /* binding */ isGsapLoaded; },
 /* harmony export */   isRegisteredAnimation: function() { return /* binding */ isRegisteredAnimation; },
 /* harmony export */   killAnimation: function() { return /* binding */ killAnimation; },
 /* harmony export */   registerAnimation: function() { return /* binding */ registerAnimation; }
 /* harmony export */ });
+/* harmony import */ var _helpers_funcs_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../helpers/funcs.js */ "./src/js/helpers/funcs.js");
 
 
 /**
@@ -5021,33 +5275,26 @@ __webpack_require__.r(__webpack_exports__);
  * can register, retrieve, and kill tweens/timelines in one centralized place.
  */
 
-/*** TYPES ***/
 
+/// TYPES ///
 /**
- * TAnimation - Tween or Timeline
- * @typedef {gsap.core.Tween | gsap.core.Timeline} TAnimation or use type: gsap.core.Animation for any GSAP Animation
- */
-
-/**
- * TAnimationKey - Key used to identify a cached animation.
+ *! GSAP ANIMATIONS type aliases used by this module.
  *
- * String keys are used for application-level animations,
- * while Element keys are used for element-bound animations.
+ * @typedef {import("../types/animations.types.js").TAnimation} TAnimation
+ * @typedef {import("../types/animations.types.js").TAnimationKey} TAnimationKey
+ * @typedef {import("../types/animations.types.js").TGsapModules} TGsapModules
  *
- * @typedef {string | Element} TAnimationKey
- */
-
-/**
- * @typedef {{
- *   gsap: typeof import('gsap').gsap,
- *   ScrollTrigger: typeof import('gsap/ScrollTrigger').ScrollTrigger,
- * }} TGsapModules
  */
 
 ///////////////
-
-/** @type {TGsapModules|null} */
-let gsapModules = null;
+/**
+ * @type {Promise<TGsapModules | null> | null}
+ * Cached Promise for the GSAP modules.
+ *
+ * The Promise is cached immediately, before the dynamic import resolves,
+ * so concurrent callers share the same initialization.
+ */
+let gsapPromise = null;
 
 // ============================================
 // CACHE & STATE
@@ -5070,29 +5317,52 @@ const namedAnimations = new Map();
 // ============================================
 
 /**
- * Loads and caches GSAP + ScrollTrigger as a single atomic chunk.
- * Returns the cached modules when called again.
+ * Loads and caches GSAP and ScrollTrigger as a single initialization.
+ *
+ * A failed load resolves to `null`, matching the caller's existing
+ * `if (!gsapAll)` guard.
  *
  * @returns {Promise<TGsapModules | null>}
  */
-async function getGSAP() {
-  if (gsapModules) {
-    return gsapModules;
+function getGSAP() {
+  if (!gsapPromise) {
+    // Cache the Promise, not only the resolved modules.
+    gsapPromise = loadGSAP().catch(error => {
+      (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_0__.initLog)("error", {
+        component: "getGSAP",
+        message: "Failed to load GSAP or ScrollTrigger.",
+        details: error
+      });
+      gsapPromise = null;
+
+      // Allow a later call to retry initialization after a failure.
+      return null;
+    });
   }
+  return gsapPromise;
+}
+
+/**
+ * Dynamically imports GSAP modules and registers ScrollTrigger.
+ *
+ * @returns {Promise<TGsapModules>}
+ * @throws {Error} If GSAP or ScrollTrigger cannot be loaded.
+ */
+async function loadGSAP() {
   const {
     gsap,
     ScrollTrigger
   } = await __webpack_require__.e(/*! import() | gsap */ "gsap").then(__webpack_require__.bind(__webpack_require__, /*! ./gsap-all.js */ "./src/js/partials/gsap-all.js"));
   if (!gsap || !ScrollTrigger) {
-    console.error("at getGSAP: no gsap or ScrollTrigger imported...");
-    return null;
+    throw new Error("[getGSAP]: GSAP or ScrollTrigger was not imported.");
   }
+
+  // Register the plugin after both modules have loaded successfully.
   gsap.registerPlugin(ScrollTrigger);
-  gsapModules = {
+  return {
     gsap,
     ScrollTrigger
   };
-  return gsapModules;
 }
 
 // ============================================
@@ -5136,10 +5406,10 @@ function getAnimation(key) {
 }
 
 /**
- * Returns a registered animation.
+ * Checks whether an animation is registered under the given key.
  *
  * @param {TAnimationKey} key - Animation name or DOM element.
- * @returns {boolean}
+ * @returns {boolean} `true` when the key exists in the animation cache.
  */
 function isRegisteredAnimation(key) {
   if (typeof key === "string") {
@@ -5167,14 +5437,6 @@ function killAnimation(key) {
   }
 }
 
-/**
- * Checks if GSAP is loaded.
- * @returns {boolean}
- */
-function isGsapLoaded() {
-  return gsapModules !== null;
-}
-
 /***/ }),
 
 /***/ "./src/js/partials/initialSelectors.js":
@@ -5185,6 +5447,8 @@ function isGsapLoaded() {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   IMAGE_RATIO_TOLERANCE: function() { return /* binding */ IMAGE_RATIO_TOLERANCE; },
+/* harmony export */   MASONRY_REVEAL_DELAY: function() { return /* binding */ MASONRY_REVEAL_DELAY; },
 /* harmony export */   SELECTORS: function() { return /* binding */ SELECTORS; },
 /* harmony export */   galleryThumbsFolderName: function() { return /* binding */ galleryThumbsFolderName; },
 /* harmony export */   langSwitchData: function() { return /* binding */ langSwitchData; },
@@ -5303,6 +5567,13 @@ const masonryConfig = {
   gap: 16
 };
 
+///////// ANIMATION CONSTANTS //////////
+//! is used for validateImageAspectRatio() in funcsDOM.js
+const IMAGE_RATIO_TOLERANCE = 0.001;
+
+//! delay for the masonry gallery images to reveal in ms...
+const MASONRY_REVEAL_DELAY = 120;
+
 /***/ })
 
 /******/ 	});
@@ -5325,6 +5596,12 @@ const masonryConfig = {
 /******/ 		};
 /******/ 	
 /******/ 		// Execute the module function
+/******/ 		if (!(moduleId in __webpack_modules__)) {
+/******/ 			delete __webpack_module_cache__[moduleId];
+/******/ 			var e = new Error("Cannot find module '" + moduleId + "'");
+/******/ 			e.code = 'MODULE_NOT_FOUND';
+/******/ 			throw e;
+/******/ 		}
 /******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
 /******/ 	
 /******/ 		// Return the exports of the module
@@ -5338,25 +5615,20 @@ const masonryConfig = {
 /******/ 	/* webpack/runtime/chunk loaded */
 /******/ 	!function() {
 /******/ 		var deferred = [];
-/******/ 		__webpack_require__.O = function(result, chunkIds, fn, priority) {
+/******/ 		__webpack_require__.O = function(result, chunkIds, fn) {
 /******/ 			if(chunkIds) {
-/******/ 				priority = priority || 0;
-/******/ 				for(var i = deferred.length; i > 0 && deferred[i - 1][2] > priority; i--) deferred[i] = deferred[i - 1];
-/******/ 				deferred[i] = [chunkIds, fn, priority];
+/******/ 				deferred.push([chunkIds, fn]);
 /******/ 				return;
 /******/ 			}
-/******/ 			var notFulfilled = Infinity;
 /******/ 			for (var i = 0; i < deferred.length; i++) {
 /******/ 				var chunkIds = deferred[i][0];
 /******/ 				var fn = deferred[i][1];
-/******/ 				var priority = deferred[i][2];
 /******/ 				var fulfilled = true;
 /******/ 				for (var j = 0; j < chunkIds.length; j++) {
-/******/ 					if ((priority & 1 === 0 || notFulfilled >= priority) && Object.keys(__webpack_require__.O).every(function(key) { return __webpack_require__.O[key](chunkIds[j]); })) {
+/******/ 					if (__webpack_require__.O.j(chunkIds[j])) {
 /******/ 						chunkIds.splice(j--, 1);
 /******/ 					} else {
 /******/ 						fulfilled = false;
-/******/ 						if(priority < notFulfilled) notFulfilled = priority;
 /******/ 					}
 /******/ 				}
 /******/ 				if(fulfilled) {
@@ -5370,55 +5642,41 @@ const masonryConfig = {
 /******/ 	}();
 /******/ 	
 /******/ 	/* webpack/runtime/define property getters */
-/******/ 	!function() {
-/******/ 		// define getter functions for harmony exports
-/******/ 		__webpack_require__.d = function(exports, definition) {
-/******/ 			for(var key in definition) {
-/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 				}
+/******/ 	// define getter/value functions for harmony exports
+/******/ 	__webpack_require__.d = function(exports, definition) {
+/******/ 		for(var key in definition) {
+/******/ 			if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 				Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
 /******/ 			}
-/******/ 		};
-/******/ 	}();
+/******/ 		}
+/******/ 	};
 /******/ 	
 /******/ 	/* webpack/runtime/ensure chunk */
-/******/ 	!function() {
-/******/ 		__webpack_require__.f = {};
-/******/ 		// This file contains only the entry chunk.
-/******/ 		// The chunk loading function for additional chunks
-/******/ 		__webpack_require__.e = function(chunkId) {
-/******/ 			return Promise.all(Object.keys(__webpack_require__.f).reduce(function(promises, key) {
-/******/ 				__webpack_require__.f[key](chunkId, promises);
-/******/ 				return promises;
-/******/ 			}, []));
-/******/ 		};
-/******/ 	}();
+/******/ 	__webpack_require__.f = {};
+/******/ 	// This file contains only the entry chunk.
+/******/ 	// The chunk loading function for additional chunks
+/******/ 	__webpack_require__.e = function(chunkId) {
+/******/ 		var promises = [];
+/******/ 		__webpack_require__.f.j(chunkId, promises);
+/******/ 		return Promise.all(promises);
+/******/ 	};
 /******/ 	
 /******/ 	/* webpack/runtime/get javascript chunk filename */
-/******/ 	!function() {
-/******/ 		// This function allow to reference async chunks
-/******/ 		__webpack_require__.u = function(chunkId) {
-/******/ 			// return url for filenames based on template
-/******/ 			return "" + chunkId + ".bundle.js";
-/******/ 		};
-/******/ 	}();
+/******/ 	// This function allow to reference async chunks
+/******/ 	__webpack_require__.u = function(chunkId) { return chunkId + ".bundle.js"; };
 /******/ 	
 /******/ 	/* webpack/runtime/global */
-/******/ 	!function() {
-/******/ 		__webpack_require__.g = (function() {
-/******/ 			if (typeof globalThis === 'object') return globalThis;
-/******/ 			try {
-/******/ 				return this || new Function('return this')();
-/******/ 			} catch (e) {
-/******/ 				if (typeof window === 'object') return window;
-/******/ 			}
-/******/ 		})();
-/******/ 	}();
+/******/ 	__webpack_require__.g = (function() {
+/******/ 		if (typeof globalThis === 'object') return globalThis;
+/******/ 		try {
+/******/ 			return this || new Function('return this')();
+/******/ 		} catch (e) {
+/******/ 			if (typeof window === 'object') return window;
+/******/ 		}
+/******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	!function() {
-/******/ 		__webpack_require__.o = function(obj, prop) { return Object.prototype.hasOwnProperty.call(obj, prop); }
-/******/ 	}();
+/******/ 	__webpack_require__.o = function(obj, prop) { return Object.prototype.hasOwnProperty.call(obj, prop); };
 /******/ 	
 /******/ 	/* webpack/runtime/load script */
 /******/ 	!function() {
@@ -5440,7 +5698,6 @@ const masonryConfig = {
 /******/ 				script = document.createElement('script');
 /******/ 		
 /******/ 				script.charset = 'utf-8';
-/******/ 				script.timeout = 120;
 /******/ 				if (__webpack_require__.nc) {
 /******/ 					script.setAttribute("nonce", __webpack_require__.nc);
 /******/ 				}
@@ -5467,15 +5724,13 @@ const masonryConfig = {
 /******/ 	}();
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
-/******/ 	!function() {
-/******/ 		// define __esModule on exports
-/******/ 		__webpack_require__.r = function(exports) {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 			}
-/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 		};
-/******/ 	}();
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
 /******/ 	
 /******/ 	/* webpack/runtime/publicPath */
 /******/ 	!function() {
@@ -5489,14 +5744,14 @@ const masonryConfig = {
 /******/ 				var scripts = document.getElementsByTagName("script");
 /******/ 				if(scripts.length) {
 /******/ 					var i = scripts.length - 1;
-/******/ 					while (i > -1 && (!scriptUrl || !/^http(s?):/.test(scriptUrl))) scriptUrl = scripts[i--].src;
+/******/ 					while (i > -1 && (!scriptUrl || !/^https?:/.test(scriptUrl))) scriptUrl = scripts[i--].src;
 /******/ 				}
 /******/ 			}
 /******/ 		}
 /******/ 		// When supporting browsers where an automatic publicPath is not supported you must specify an output.publicPath manually via configuration
 /******/ 		// or pass an empty string ("") and set the __webpack_public_path__ variable from your code to use your own logic.
 /******/ 		if (!scriptUrl) throw new Error("Automatic publicPath is not supported in this browser");
-/******/ 		scriptUrl = scriptUrl.replace(/^blob:/, "").replace(/#.*$/, "").replace(/\?.*$/, "").replace(/\/[^\/]+$/, "/");
+/******/ 		scriptUrl = scriptUrl.replace(/^blob:|[?#].*$/g, "").replace(/\/[^/]+$/, "/");
 /******/ 		__webpack_require__.p = scriptUrl;
 /******/ 	}();
 /******/ 	
@@ -5525,8 +5780,6 @@ const masonryConfig = {
 /******/ 							var promise = new Promise(function(resolve, reject) { installedChunkData = installedChunks[chunkId] = [resolve, reject]; });
 /******/ 							promises.push(installedChunkData[2] = promise);
 /******/ 		
-/******/ 							// start chunk loading
-/******/ 							var url = __webpack_require__.p + __webpack_require__.u(chunkId);
 /******/ 							// create error before stack unwound to get useful stacktrace later
 /******/ 							var error = new Error();
 /******/ 							var loadingEnded = function(event) {
@@ -5540,11 +5793,12 @@ const masonryConfig = {
 /******/ 										error.name = 'ChunkLoadError';
 /******/ 										error.type = errorType;
 /******/ 										error.request = realSrc;
+/******/ 										error.event = event;
 /******/ 										installedChunkData[1](error);
 /******/ 									}
 /******/ 								}
 /******/ 							};
-/******/ 							__webpack_require__.l(url, loadingEnded, "chunk-" + chunkId, chunkId);
+/******/ 							__webpack_require__.l(__webpack_require__.p + __webpack_require__.u(chunkId), loadingEnded, "chunk-" + chunkId, chunkId);
 /******/ 						}
 /******/ 					}
 /******/ 				}

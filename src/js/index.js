@@ -13,7 +13,6 @@
  *! DOM type aliases used by this module.
  *
  * @typedef {import("./types/dom.types.js").TActivateNavlinkParams} TActivateNavlinkParams
- * @typedef {import("./types/dom.types.js").TNavLinkParams} TNavLinkParams
  *
  */
 
@@ -36,24 +35,6 @@ import { initThumbs } from "./modulesPack/gallery-thumbs/index.js";
 import { initAnimations } from "./partials/animations.js";
 import { isKeyOf } from "./helpers/funcs.js";
 
-
-/**
- *
- * @param {TNavLinkParams} params
- *
- * @return {TActivateNavlinkParams}
- */
-function getNavLinkParams(params) {
-	const { navLinkSelector, pageType, activeClass, anchorLink } = params;
-
-	return {
-		navLinkSelector,
-		pageType,
-		activeClass,
-		anchorLink,
-	}
-}
-
 // ============================================
 // DOM READY
 // ============================================
@@ -61,19 +42,21 @@ document.addEventListener("DOMContentLoaded", async () => {
 	const pageType = document.body.dataset.type || "";
 	const isIn = isKeyOf(linkAnchors, pageType);
 
-	const navLinkParams = getNavLinkParams({
+	/** @type {TActivateNavlinkParams} */
+	const navLinkParams = {
 		navLinkSelector: SELECTORS.navLinkSelector,
 		pageType,
 		activeClass: linkClassNameActive,
 		anchorLink: isIn ? linkAnchors[pageType] : "#"
-	});
+	};
 
-	const navLinkParamsHexagon = getNavLinkParams({
+	/** @type {TActivateNavlinkParams} */
+	const navLinkParamsHexagon = {
 		navLinkSelector: SELECTORS.navHexagonSelector,
 		pageType,
 		activeClass: linkClassNameActive,
 		anchorLink: isIn ? linkAnchors[pageType] : "#",
-	});
+	};
 
 
 	try {

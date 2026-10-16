@@ -13,11 +13,11 @@ import {
 	getElements,
 	getDOMElement,
 	requireElements,
-	initLog,
 	lockDocumentScroll,
 	restoreDocumentScroll,
+	setDocumentScrollLocked,
 	checkHtmlElement,
-	isHTMLElement
+	isHTMLElement,
 } from "../helpers/funcsDOM.js";
 import {
 	getGSAP,
@@ -30,6 +30,8 @@ import {
 	isKeyOf,
 	isInSet,
 	createKeySet,
+	tryUse,
+	initLog,
 } from "../helpers/funcs.js";
 
 
@@ -83,19 +85,6 @@ import {
  * @typedef {import("../types/animations.types.js").TTimelineParams} TTimelineParams
  *
  */
-
-/**
- *! MASONRY type aliases used by this module.
- *
- * @typedef {import("../types/masonry.types.js").TMasonryOptions} TMasonryOptions
- * @typedef {import("../types/masonry.types.js").TMasonryConfig} TMasonryConfig
- * @typedef {import("../types/masonry.types.js").TMasonryItemMeasurement} TMasonryItemMeasurement
- * @typedef {import("../types/masonry.types.js").TMasonryColumnCalculation} TMasonryColumnCalculation
- * @typedef {import("../types/masonry.types.js").TMasonryColumns} TMasonryColumns
- * @typedef {import("../types/masonry.types.js").TMasonryItemLayout} TMasonryItemLayout
- * @typedef {import("../types/masonry.types.js").TMasonryLayout} TMasonryLayout
- */
-
 
 /// UTILITY FUNCTIONS ///
 
@@ -1044,7 +1033,10 @@ function initBurgerListener(
 		if (isExpanded) {
 
 			// Restore the default scrollbar behavior.
-			restoreDocumentScroll();
+
+			//restoreDocumentScroll();
+
+			setDocumentScrollLocked(false);
 
 			// Reverse the Timeline to hide the navigation.
 			navMenuAnime.reverse();
@@ -1053,7 +1045,10 @@ function initBurgerListener(
 		}
 
 		// Preserve the scrollbar width while the navigation is open.
-		lockDocumentScroll();
+
+		//lockDocumentScroll();
+
+		setDocumentScrollLocked(true);
 
 		// Play the Timeline to reveal the navigation.
 		navMenuAnime.play();
@@ -1125,7 +1120,8 @@ function closeBurgerClickHandler(
 	navMenuAnime.reverse();
 
 	// Restore document scrolling.
-	document.body.style.overflow = "auto";
+	//restoreDocumentScroll();
+	setDocumentScrollLocked(false);
 }
 
 /**
@@ -1431,12 +1427,7 @@ export async function initAnimations() {
 	const gsapAll = await getGSAP();
 
 	if (!gsapAll) {
-		iniLog("error", {
-			component: "initAnimations",
-			message: `gsap is not loaded... omitting...`,
-			details: gsapAll
-		});
-
+		//initLog will log error in getGSAP()
 		return;
 	}
 
@@ -1468,62 +1459,61 @@ export async function initAnimations() {
 	const pageAnimations = {
 		automation: () => {
 			//parallax at gates-rollers-automation.html
-			buildSingleTimeline(
+			tryUse(buildSingleTimeline)(
 				gsap,
-				automationParallaxTimelineParams,
+				automationParallaxTimelineParams
 			);
 		},
 		common: () => {
 			//Hero section priority...
-			buildGroupTimeline(
+			tryUse(buildGroupTimeline)(
 				gsap,
 				heroTimelineParams,
 				"heroAnimation",
 			);
 
 			//initializing burger handlers, build and register animation timeline...
-			initBurgerMenu(
+			tryUse(initBurgerMenu)(
 				gsap,
 				navMenuSelectorsData,
 				burgerNavTimelineParams
 			);
 
 			// parallax on services section on all pages
-			buildSingleTimeline(
+			tryUse(buildSingleTimeline)(
 				gsap,
 				servicesParallaxTimelineParams,
 			);
 
 			// separate timelines of Elements with common selector: fade-in-left
-			buildEachTimelines(
+			tryUse(buildEachTimelines)(
 				gsap,
 				fadeInLeftTimelineParams,
 			);
 
 			// separate timelines of Elements with common selector: fade-in-right
-			buildEachTimelines(
+			tryUse(buildEachTimelines)(
 				gsap,
 				fadeInRightTimelineParams
 			);
 
 			// separate timelines of Elements with common selector: scale-in
-			buildEachTimelines(
+			tryUse(buildEachTimelines)(
 				gsap,
 				scaleInTimelineParams
 			);
 
 			// separate timelines of Elements with common selector: fade-in-up
-			buildEachTimelines(
+			tryUse(buildEachTimelines)(
 				gsap,
 				fadeInUpTimelineParams
 			);
 
 			//the navigation panel show-on-scroll Timeline
-			buildSingleTimeline(
+			tryUse(buildSingleTimeline)(
 				gsap,
 				scrolledNavTimelineParams,
 			);
-
 		}
 	};
 
@@ -1531,7 +1521,7 @@ export async function initAnimations() {
 }
 
 
-// TODO: LOWER IS TO REMAKE
+// TODO: LOWER IS TO REMAKE or DELETE
 
 
 /**

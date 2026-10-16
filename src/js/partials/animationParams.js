@@ -33,6 +33,7 @@ import {SELECTORS} from "./initialSelectors.js";
 
 ///////// ANIMATION CONFIGURATION //////////
 
+
 const defaultParallaxScrollTrigger = {
 	start: "top bottom",
 	end: "bottom top",

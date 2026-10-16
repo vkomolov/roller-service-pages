@@ -46,6 +46,14 @@
  */
 
 /**
+ *
+ * @typedef {Object} TGsapModules
+ * @property {TGsap} gsap - GSAP instance.
+ * @property {typeof import("gsap/ScrollTrigger").ScrollTrigger} ScrollTrigger
+ *   - ScrollTrigger plugin.
+ */
+
+/**
  * TGsapVars
  *
  * Generic GSAP vars object.

@@ -116,3 +116,9 @@ export const masonryConfig = {
 	gap: 16,
 };
 
+///////// ANIMATION CONSTANTS //////////
+//! is used for validateImageAspectRatio() in funcsDOM.js
+export const IMAGE_RATIO_TOLERANCE = 0.001;
+
+//! delay for the masonry gallery images to reveal in ms...
+export const MASONRY_REVEAL_DELAY = 120;

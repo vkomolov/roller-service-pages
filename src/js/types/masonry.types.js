@@ -10,33 +10,41 @@
 //// TYPE DEFINITIONS /////
 
 /**
- * TMasonryOptions: Public options for masonry initialization.
- *
- * `gap` is optional because the masonry API provides a default value.
- *
- * @typedef {Object} TMasonryOptions
- *
- * @property {string} itemSelector
- * CSS selector used to resolve masonry items inside the container.
- *
- * @property {number} [gap=0]
- * Gap between masonry columns and rows, in pixels.
- */
-
-/**
  * TMasonryConfig: Normalized masonry configuration used internally by the masonry pipeline.
- *
- * Unlike TMasonryOptions, all optional values have already been resolved
- * to their effective runtime values.
  *
  * @typedef {Object} TMasonryConfig
  *
  * @property {string} itemSelector
  * CSS selector used to resolve masonry items.
  *
- * @property {number} gap
+ * @property {number} [gap=0]
  * Normalized gap between masonry items, in pixels.
- * Must be greater than or equal to zero.
+ * A missing gap falls back to 0
+ */
+
+/**
+ * @typedef {Object} TMasonryResizeSchedulerState
+ * @property {HTMLElement} container
+ * @property {TMasonryConfig} config
+ * @property {number} delay
+ * @property {boolean} locked
+ * @property {boolean} pending
+ * @property {boolean} cancelled
+ * @property {ReturnType<typeof setTimeout> | null} timeoutId
+ * @property {number | null} resizeRafId
+ */
+
+/**
+ * @typedef {Object} TMasonryLifecycleState
+ * @property {HTMLElement} container
+ * @property {TMasonryConfig} config
+ * @property {boolean} isInitialized
+ * @property {boolean} isDestroyed
+ * @property {number | null} lastObservedWidth
+ * @property {WeakSet<HTMLImageElement>} validatedImages
+ * @property {{ schedule: () => void, cancel: () => void }} resizeScheduler
+ * @property {IntersectionObserver | null} intersectionObserver
+ * @property {ResizeObserver | null} resizeObserver
  */
 
 /**

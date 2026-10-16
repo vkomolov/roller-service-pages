@@ -1,6 +1,7 @@
 'use strict';
 
-import { getInvalidKeys } from "./funcs.js";
+import { getInvalidKeys, initLog } from "./funcs.js";
+import {MASONRY_REVEAL_DELAY, IMAGE_RATIO_TOLERANCE} from "../partials/initialSelectors.js";
 
 //////////////// TYPE DEFINITIONS /////////////////
 /**
@@ -26,6 +27,8 @@ import { getInvalidKeys } from "./funcs.js";
  * @typedef {import("../types/masonry.types.js").TMasonryColumns} TMasonryColumns
  * @typedef {import("../types/masonry.types.js").TMasonryItemLayout} TMasonryItemLayout
  * @typedef {import("../types/masonry.types.js").TMasonryConfig} TMasonryConfig
+ * @typedef {import("../types/masonry.types.js").TMasonryResizeSchedulerState} TMasonryResizeSchedulerState
+ * @typedef {import("../types/masonry.types.js").TMasonryLifecycleState} TMasonryLifecycleState
  */
 
 //////////////// END OF TYPE DEFINITIONS /////////////////
@@ -126,13 +129,18 @@ export function lockedEventListener(event, listenerOwner, delay = 300) {
  * Uses IntersectionObserver instead of scroll listeners,
  * which improves performance and avoids unnecessary scroll handling.
  *
+ * The activation flag is updated synchronously while the DOM mutation
+ * is deferred to the next animation frame. This prevents duplicate
+ * scheduled frames when the observer fires again before the pending
+ * frame executes.
+ *
  * @param {HTMLElement} targetElement - The element whose class will be toggled.
  * @param {HTMLElement} triggerElement - The element that triggers the class change.
  * @param {string} activeClass - The CSS class to add/remove.
- * @param {Element|null} [root=null] - The scrolling container. Default is the viewport.
+ * @param {Element | null} [root=null] - The scrolling container. Default is the viewport.
  * @param {string} [rootMargin="-1px 0px 0px 0px"] - Margin around the root to fine-tune trigger timing.
  *
- * @returns {Function} Cleanup function that disconnects the observer.
+ * @returns {() => void} Cleanup function that disconnects the observer.
  */
 export function toggleClassOnIntersection(
 	targetElement,
@@ -154,19 +162,18 @@ export function toggleClassOnIntersection(
 			const shouldActivate =
 				entry.boundingClientRect.top <= 0 && !entry.isIntersecting;
 
-			if (shouldActivate && !isClassActive) {
-				requestAnimationFrame(() => {
-					targetElement.classList.add(activeClass);
-					isClassActive = true;
-				});
+			// No state change — nothing to schedule.
+			if (shouldActivate === isClassActive) {
+				return;
 			}
 
-			if (!shouldActivate && isClassActive) {
-				requestAnimationFrame(() => {
-					targetElement.classList.remove(activeClass);
-					isClassActive = false;
-				});
-			}
+			// Synchronous flag update blocks duplicate scheduling
+			// from observer notifications arriving before the frame.
+			isClassActive = shouldActivate;
+
+			requestAnimationFrame(() => {
+				targetElement.classList.toggle(activeClass, shouldActivate);
+			});
 		},
 		{
 			root,
@@ -179,6 +186,7 @@ export function toggleClassOnIntersection(
 
 	return () => observer.disconnect();
 }
+
 
 /**
  * Observes visibility changes of a DOM element using IntersectionObserver.
@@ -278,7 +286,7 @@ export function setAttributes(elements = [], targetAttr = {}) {
 		if (!(element instanceof Element)) {
 			const errorMessage = `one of the elements at index ${i} is not the instance of HTMLElement...`;
 
-			initLog("error",{
+			initLog("error", {
 				component: "setAttributes",
 				message: errorMessage,
 				details: {
@@ -506,16 +514,20 @@ export function canUseContextAsTarget(
  * above:@template {HTMLFormElement}
  * const form = getDOMElement('#login-form', document, false);
  * if (!form) return;
-*
+ *
  */
 export function getDOMElement(selector, context = document, useLog = true) {
 	const element = context.querySelector(selector);
 
 	if (!element) {
-		useLog && initLog("error",{
+		useLog && initLog("error", {
 			component: "getDOMElement",
 			message: `Element with selector "${selector}" was not found in the DOM.`,
-			details: { parent: parent.constructor.name }
+			details: {
+				parent: context?.constructor?.name,
+				targetSelector: selector,
+				targetElement: element,
+			}
 		});
 		return;
 	}
@@ -616,7 +628,7 @@ export function getElements(
 			context,
 			selector,
 			includeContextAsTarget,
-		) && context instanceof Element
+		)
 	) {
 		targets.push(
 			/** @type {T} */ (context),
@@ -624,7 +636,7 @@ export function getElements(
 	}
 
 	if (!targets.length) {
-		initLog("error",{
+		initLog("error", {
 			component: "getElements",
 			message:
 				`Element with selector "${selector}" ` +
@@ -756,6 +768,25 @@ export function requireElements(
 	return elements;
 }
 
+/**
+ * Sets or releases the document scroll lock.
+ *
+ * Applies `scrollbar-gutter: stable` to keep the layout stable while
+ * the native scrollbar is hidden, preventing content shift.
+ *
+ * The function is idempotent: repeated calls with the same state
+ * are no-ops.
+ *
+ * @param {boolean} locked - `true` to lock scrolling, `false` to restore.
+ * @returns {void}
+ */
+export function setDocumentScrollLocked(locked) {
+	const gutterValue = locked ? "stable" : "";
+
+	document.documentElement.style.scrollbarGutter = gutterValue;
+	document.body.style.scrollbarGutter = gutterValue;
+	document.body.style.overflow = locked ? "hidden" : "";
+}
 
 /**
  * Locks document scrolling while the Burger navigation is open.
@@ -772,8 +803,8 @@ export function requireElements(
  */
 export function lockDocumentScroll() {
 	// Preserve the scrollbar width while the navigation is open.
-	document.documentElement.style.scrollbarGutter = "stable";
-	document.body.style.scrollbarGutter = "stable";
+	document.documentElement.style.scrollbarGutter = "stable";  //html
+	document.body.style.scrollbarGutter = "stable"; //body
 
 	// Prevent the document from scrolling behind the navigation.
 	document.body.style.overflow = "hidden";
@@ -897,63 +928,6 @@ function getImageDimensions(img) {
 	});
 }
 
-/**
- * Removes broken images and their parent elements from DOM
- * @param {Array<{src: string, element: HTMLElement}>} brokenImages - Array of broken image data
- */
-function removeBrokenImages(brokenImages) {
-	if (brokenImages.length === 0) return;
-
-	console.warn(
-		`[getImagesLoaded] Removed ${brokenImages.length} broken image(s):`,
-		brokenImages.map(b => b.src)
-	);
-
-	brokenImages.forEach(({ element }) => {
-		if (element?.isConnected) {
-			element.remove();
-		}
-	});
-}
-
-/**
- * Processes imagesLoaded instance results
- * Separates broken and loaded images, collects dimensions
- *
- * @param {Object} instance - imagesLoaded instance
- * @param {Map<HTMLImageElement, HTMLElement>} parentMap - Mapping of images to parents
- * @returns {Promise<Array<LoadedImageResult>>} Processed image results
- */
-async function processImageResults(instance, parentMap) {
-	const loadedPromises = [];
-	const brokenImages = [];
-
-	instance.images.forEach(item => {
-		const img = item.img;
-		const parentElement = parentMap.get(img);
-
-		if (!item.isLoaded) {
-			brokenImages.push({
-				src: img.src || img.currentSrc || 'unknown',
-				element: parentElement
-			});
-		}
-		else {
-			loadedPromises.push(
-				getImageDimensions(img).then(size => ({
-					element: parentElement,
-					size
-				}))
-			);
-		}
-	});
-
-	removeBrokenImages(brokenImages);
-
-	const results = await Promise.all(loadedPromises);
-	return results.filter(r => r.size !== null);
-}
-
 
 //!////// MASONRY ///////////
 /**
@@ -966,6 +940,164 @@ async function processImageResults(instance, parentMap) {
  * - columns.count is a positive integer;
  * - columns.gap and columns.leftOffset are non-negative.
  */
+
+/**
+ * Recalculates Masonry layout after the container size changes.
+ *
+ * Errors are isolated from the ResizeObserver callback so that
+ * a failed recalculation does not escape the observer lifecycle.
+ *
+ * @param {HTMLElement} container
+ * Masonry container element.
+ *
+ * @param {TMasonryConfig} config
+ * Normalized masonry configuration.
+ *
+ * @returns {void}
+ */
+function handleMasonryResize(
+	container,
+	config,
+) {
+	try {
+		createMasonry(
+			container,
+			config,
+		);
+	}
+	catch (error) {
+		initLog("error", {
+			component: 'initMasonry',
+			message: 'Masonry resize recalculation failed.',
+			details: error,
+		});
+	}
+}
+
+
+/**
+ * Schedules a Masonry resize cycle.
+ *
+ * @param {TMasonryResizeSchedulerState} state
+ * @returns {void}
+ */
+function scheduleMasonryResizeCycle(state) {
+	if (state.cancelled || state.locked) return;
+
+	state.locked = true;
+
+	state.timeoutId = setTimeout(() => {
+		state.timeoutId = null;
+		requestMasonryResizeFrame(state);
+	}, state.delay);
+}
+
+/**
+ * Releases the current cycle and processes a pending request.
+ *
+ * @param {TMasonryResizeSchedulerState} state
+ * @returns {void}
+ */
+function finishMasonryResizeCycle(state) {
+	state.locked = false;
+
+	if (state.cancelled || !state.pending) return;
+
+	state.pending = false;
+	scheduleMasonryResizeCycle(state);
+}
+
+/**
+ * Runs Masonry recalculation in the next animation frame.
+ *
+ * @param {TMasonryResizeSchedulerState} state
+ * @returns {void}
+ */
+function requestMasonryResizeFrame(state) {
+	if (state.cancelled) {
+		finishMasonryResizeCycle(state);
+		return;
+	}
+
+	state.resizeRafId = requestAnimationFrame(() => {
+		state.resizeRafId = null;
+
+		try {
+			if (!state.cancelled) {
+				handleMasonryResize(state.container, state.config);
+			}
+		} finally {
+			finishMasonryResizeCycle(state);
+		}
+	});
+}
+
+/**
+ * Requests a Masonry recalculation.
+ *
+ * @param {TMasonryResizeSchedulerState} state
+ * @returns {void}
+ */
+function requestMasonryResize(state) {
+	if (state.cancelled) return;
+
+	if (state.locked) {
+		state.pending = true;
+		return;
+	}
+
+	scheduleMasonryResizeCycle(state);
+}
+
+/**
+ * Cancels pending Masonry resize work.
+ *
+ * @param {TMasonryResizeSchedulerState} state
+ * @returns {void}
+ */
+function cancelMasonryResizeScheduler(state) {
+	state.cancelled = true;
+	state.pending = false;
+
+	if (state.timeoutId !== null) {
+		clearTimeout(state.timeoutId);
+		state.timeoutId = null;
+	}
+
+	if (state.resizeRafId !== null) {
+		cancelAnimationFrame(state.resizeRafId);
+		state.resizeRafId = null;
+	}
+
+	state.locked = false;
+}
+
+/**
+ * Creates a rate-limited scheduler for Masonry resize calculations.
+ *
+ * @param {HTMLElement} container
+ * @param {TMasonryConfig} config
+ * @param {number} [delay=250]
+ * @returns {{ schedule: () => void, cancel: () => void }}
+ */
+function createMasonryResizeScheduler(container, config, delay = 250) {
+	/** @type {TMasonryResizeSchedulerState} */
+	const state = {
+		container,
+		config,
+		delay,
+		locked: false,
+		pending: false,
+		cancelled: false,
+		timeoutId: null,
+		resizeRafId: null,
+	};
+
+	return {
+		schedule: () => requestMasonryResize(state),
+		cancel: () => cancelMasonryResizeScheduler(state),
+	};
+}
 
 /**
  * Validates the external input contract of the masonry layout calculation.
@@ -1033,8 +1165,6 @@ function validateMasonryLayoutInput(
 		);
 	}
 }
-
-const IMAGE_RATIO_TOLERANCE = 0.001;
 
 /**
  * Validates the declared image aspect ratio against the actual
@@ -1184,6 +1314,44 @@ function getMasonryImages(items) {
 }
 
 /**
+ * Reveals a Masonry item after its image has loaded.
+ *
+ * The visual transition is handled by CSS. JavaScript only changes
+ * the item's state by adding the `image-loaded` class.
+ *
+ * The item is checked again when the timer fires because it may have
+ * been removed from the document after the timer was scheduled.
+ *
+ * @param {HTMLElement} item - Masonry item to reveal.
+ * @param {number} [delay=0] - Delay before revealing the item, in milliseconds.
+ * @returns {void}
+ */
+function revealMasonryItem(item, delay = 0) {
+	// Validate the item before scheduling asynchronous work.
+	if (!(item instanceof HTMLElement) || !item.isConnected) {
+		return;
+	}
+
+	// Ignore invalid delays rather than passing them to setTimeout.
+	if (!Number.isFinite(delay) || delay < 0) {
+		initLog("warn", {
+			component: "revealMasonryItem",
+			message: "Invalid reveal delay; using 0 milliseconds.",
+			details: { delay },
+		});
+
+		delay = 0;
+	}
+
+	setTimeout(() => {
+		// The item may have been removed while the timer was waiting.
+		if (!item.isConnected) return;
+
+		item.classList.add("image-loaded");
+	}, delay);
+}
+
+/**
  * Handles a successfully loaded Masonry image.
  *
  * Image diagnostics and visual reveal are intentionally kept
@@ -1196,11 +1364,14 @@ function getMasonryImages(items) {
  * @param {number} index
  * Zero-based image index.
  *
+ * @param {number} [delay=0] for revealing loaded images
+ *
  * @returns {void}
  */
 function handleMasonryImageLoaded(
 	image,
-	index
+	index,
+	delay = 0
 ) {
 	validateImageAspectRatio(
 		image,
@@ -1230,232 +1401,7 @@ function handleMasonryImageLoaded(
 		return;
 	}
 
-	revealMasonryItem(parentElem, 500);
-}
-
-
-/**
- * Registers Masonry images for asynchronous validation and reveal.
- *
- * Each image is registered at most once during the lifecycle of the
- * current Masonry instance.
- *
- * Already completed images are processed immediately. Images that
- * have not completed loading yet are processed through a one-time
- * `load` event listener.
- *
- * @param {HTMLImageElement[]} images
- * Masonry image elements to process.
- *
- * @param {WeakSet<HTMLImageElement>} validatedImages
- * Images already registered during the current Masonry lifecycle.
- *
- * @returns {void}
- */
-function validateMasonryImages(
-	images,
-	validatedImages,
-) {
-	if (!Array.isArray(images)) {
-		throw new TypeError(
-			'[validateMasonryImages]: images must be an array.',
-		);
-	}
-
-	for (const [index, image] of images.entries()) {
-		/*
-		 * Prevent duplicate registration during subsequent Masonry
-		 * recalculations triggered by ResizeObserver.
-		 */
-		if (validatedImages.has(image)) {
-			continue;
-		}
-
-		validatedImages.add(image);
-
-		/*
-		 * `complete` means that the browser has finished processing
-		 * the image request. It does not guarantee successful loading.
-		 *
-		 * `naturalWidth > 0` confirms that a valid intrinsic image
-		 * resource is available.
-		 */
-		if (image.complete) {
-			if (
-				image.naturalWidth > 0 &&
-				image.naturalHeight > 0
-			) {
-				handleMasonryImageLoaded(
-					image,
-					index,
-				);
-			}
-
-			continue;
-		}
-
-		/*
-		 * The image has not completed loading yet.
-		 *
-		 * The `load` event is the correct event for successful image
-		 * loading. The listener is automatically removed after firing.
-		 */
-		image.addEventListener(
-			'load',
-			() => {
-				handleMasonryImageLoaded(
-					image,
-					index,
-				);
-			},
-			{
-				once: true,
-			},
-		);
-
-		image.addEventListener(
-			'error',
-			() => {
-				initLog("error", {
-					component: "validateMasonryImages",
-					message:
-						"Masonry image failed to load.",
-					details: {
-						index,
-						image,
-					},
-				});
-			},
-			{
-				once: true,
-			},
-		);
-
-	}
-}
-
-/**
- * Measures the current layout dimensions of masonry items.
- *
- * The function assumes that the input collection has already been
- * resolved from the DOM by `getElements()`.
- *
- * Each connected element is measured using `offsetWidth` and
- * `offsetHeight`. Elements with invalid DOM state or invalid dimensions
- * are skipped and reported through the initialization error logger.
- *
- * The function does not:
- * - resolve DOM selectors;
- * - wait for image loading;
- * - calculate masonry columns;
- * - calculate item positions;
- * - mutate the DOM.
- *
- * @param {HTMLElement[]} items
- * Masonry item elements resolved from the DOM.
- *
- * @returns {TMasonryItemMeasurement[]}
- * Measured dimensions of all valid masonry items.
- *
- * @throws {TypeError}
- * If `items` is not an array.
- *
- * @throws {Error}
- * If the input array is empty or no valid masonry items remain
- * after measurement.
- */
-export function measureMasonryItems(items) {
-	/*
-	 * The function receives the result of getElements(), therefore
-	 * the collection itself must be a valid array before processing.
-	 */
-	if (!Array.isArray(items)) {
-		throw new TypeError(
-			'[measureMasonryItems]: items must be an array.'
-		);
-	}
-
-	if (items.length === 0) {
-		throw new RangeError(
-			'[measureMasonryItems]: items must not be empty.'
-		);
-	}
-
-	/** @type {TMasonryItemMeasurement[]} */
-	const measurements = [];
-
-	for (const [index, element] of items.entries()) {
-		/*
-		 * A disconnected element no longer participates in the current
-		 * document layout and therefore cannot provide a meaningful
-		 * masonry measurement.
-		 */
-		if (!element.isConnected) {
-			initLog("error", {
-				component: 'measureMasonryItems',
-				message:
-					'Masonry item is not connected to the DOM and ' +
-					'will be skipped.',
-				details: {
-					element,
-					index,
-				},
-			});
-
-			continue;
-		}
-
-		const width = element.offsetWidth;
-		const height = element.offsetHeight;
-
-		/*
-		 * A masonry item must have positive layout dimensions.
-		 *
-		 * Zero dimensions can occur when an element is hidden,
-		 * detached from the rendered layout, or otherwise prevented
-		 * from participating in normal layout calculation.
-		 */
-		if (
-			!Number.isFinite(width) ||
-			!Number.isFinite(height) ||
-			width <= 0 ||
-			height <= 0
-		) {
-			initLog("error",{
-				component: 'measureMasonryItems',
-				message:
-					'Masonry item has invalid layout dimensions ' +
-					'and will be skipped.',
-				details: {
-					element,
-					index,
-					width,
-					height,
-				},
-			});
-
-			continue;
-		}
-
-		measurements.push({
-			element,
-			width,
-			height,
-		});
-	}
-
-	/*
-	 * An empty measurement result means that masonry cannot be
-	 * calculated. At this point the problem is no longer related
-	 * to an individual item, but to the complete input collection.
-	 */
-	if (measurements.length === 0) {
-		throw new Error(
-			'[measureMasonryItems]: no valid masonry items remain after measurement.'
-		);
-	}
-
-	return measurements;
+	revealMasonryItem(parentElem, delay);
 }
 
 /**
@@ -1716,7 +1662,6 @@ function getMasonryItemWidth(items) {
 	return itemWidth;
 }
 
-
 /**
  * Calculates the position of every masonry item.
  *
@@ -1778,7 +1723,6 @@ function calculateMasonryItemLayouts(items, columns) {
 		};
 	});
 }
-
 
 /**
  * Calculates the complete masonry layout from measured item geometry.
@@ -1860,6 +1804,130 @@ export function applyMasonryLayout(layout) {
 }
 
 /**
+ * Measures the current layout dimensions of masonry items.
+ *
+ * The function assumes that the input collection has already been
+ * resolved from the DOM by `getElements()`.
+ *
+ * Each connected element is measured using `offsetWidth` and
+ * `offsetHeight`. Elements with invalid DOM state or invalid dimensions
+ * are skipped and reported through the initialization error logger.
+ *
+ * The function does not:
+ * - resolve DOM selectors;
+ * - wait for image loading;
+ * - calculate masonry columns;
+ * - calculate item positions;
+ * - mutate the DOM.
+ *
+ * @param {HTMLElement[]} items
+ * Masonry item elements resolved from the DOM.
+ *
+ * @returns {TMasonryItemMeasurement[]}
+ * Measured dimensions of all valid masonry items.
+ *
+ * @throws {TypeError}
+ * If `items` is not an array.
+ *
+ * @throws {Error}
+ * If the input array is empty or no valid masonry items remain
+ * after measurement.
+ */
+export function measureMasonryItems(items) {
+	/*
+	 * The function receives the result of getElements(), therefore
+	 * the collection itself must be a valid array before processing.
+	 */
+	if (!Array.isArray(items)) {
+		throw new TypeError(
+			'[measureMasonryItems]: items must be an array.'
+		);
+	}
+
+	if (items.length === 0) {
+		throw new RangeError(
+			'[measureMasonryItems]: items must not be empty.'
+		);
+	}
+
+	/** @type {TMasonryItemMeasurement[]} */
+	const measurements = [];
+
+	for (const [index, element] of items.entries()) {
+		/*
+		 * A disconnected element no longer participates in the current
+		 * document layout and therefore cannot provide a meaningful
+		 * masonry measurement.
+		 */
+		if (!element.isConnected) {
+			initLog("error", {
+				component: 'measureMasonryItems',
+				message:
+					'Masonry item is not connected to the DOM and ' +
+					'will be skipped.',
+				details: {
+					element,
+					index,
+				},
+			});
+
+			continue;
+		}
+
+		const width = element.offsetWidth;
+		const height = element.offsetHeight;
+
+		/*
+		 * A masonry item must have positive layout dimensions.
+		 *
+		 * Zero dimensions can occur when an element is hidden,
+		 * detached from the rendered layout, or otherwise prevented
+		 * from participating in normal layout calculation.
+		 */
+		if (
+			!Number.isFinite(width) ||
+			!Number.isFinite(height) ||
+			width <= 0 ||
+			height <= 0
+		) {
+			initLog("error", {
+				component: 'measureMasonryItems',
+				message:
+					'Masonry item has invalid layout dimensions ' +
+					'and will be skipped.',
+				details: {
+					element,
+					index,
+					width,
+					height,
+				},
+			});
+
+			continue;
+		}
+
+		measurements.push({
+			element,
+			width,
+			height,
+		});
+	}
+
+	/*
+	 * An empty measurement result means that masonry cannot be
+	 * calculated. At this point the problem is no longer related
+	 * to an individual item, but to the complete input collection.
+	 */
+	if (measurements.length === 0) {
+		throw new Error(
+			'[measureMasonryItems]: no valid masonry items remain after measurement.'
+		);
+	}
+
+	return measurements;
+}
+
+/**
  * Creates and applies the current Masonry layout.
  *
  * This function orchestrates one complete synchronous Masonry
@@ -1900,10 +1968,12 @@ export function createMasonry(
 	container,
 	config,
 ) {
+	const { itemSelector, gap = 0 } = config;
+
 	/** @type {HTMLElement[]} */
 	const items =
 		getElements(
-			config.itemSelector,
+			itemSelector,
 			container,
 		);
 
@@ -1926,7 +1996,7 @@ export function createMasonry(
 		calculateMasonryLayout(
 			containerWidth,
 			measurements,
-			config.gap,
+			gap,
 		);
 
 	applyMasonryLayout(layout);
@@ -1935,217 +2005,255 @@ export function createMasonry(
 }
 
 /**
- * Recalculates Masonry layout after the container size changes.
+ * Registers Masonry images for asynchronous validation and reveal.
  *
- * Errors are isolated from the ResizeObserver callback so that
- * a failed recalculation does not escape the observer lifecycle.
+ * Each image is registered at most once during the lifecycle of the
+ * current Masonry instance.
  *
- * @param {HTMLElement} container
- * Masonry container element.
+ * Already completed images are processed immediately. Images that
+ * have not completed loading yet are processed through a one-time
+ * `load` event listener.
  *
- * @param {TMasonryConfig} config
- * Normalized masonry configuration.
+ * @param {HTMLImageElement[]} images
+ * Masonry image elements to process.
+ *
+ * @param {WeakSet<HTMLImageElement>} validatedImages
+ * Images already registered during the current Masonry lifecycle.
  *
  * @returns {void}
  */
-function handleMasonryResize(
-	container,
-	config,
+function validateMasonryImages(
+	images,
+	validatedImages,
 ) {
-	try {
-		createMasonry(
-			container,
-			config,
+	if (!Array.isArray(images)) {
+		throw new TypeError(
+			'[validateMasonryImages]: images must be an array.',
 		);
+	}
+
+	for (const [index, image] of images.entries()) {
+		/*
+		 * Prevent duplicate registration during subsequent Masonry
+		 * recalculations triggered by ResizeObserver.
+		 */
+		if (validatedImages.has(image)) {
+			continue;
+		}
+
+		validatedImages.add(image);
+
+		/*
+		 * `complete` means that the browser has finished processing
+		 * the image request. It does not guarantee successful loading.
+		 *
+		 * `naturalWidth > 0` confirms that a valid intrinsic image
+		 * resource is available.
+		 */
+		if (image.complete) {
+			if (
+				image.naturalWidth > 0 &&
+				image.naturalHeight > 0
+			) {
+				handleMasonryImageLoaded(
+					image,
+					index,
+					MASONRY_REVEAL_DELAY
+				);
+			}
+			else {
+				// `complete` with zero intrinsic dimensions means a failed load
+				// that finished before registration (e.g. cached error response).
+				initLog("warn", {
+					component: "validateMasonryImages",
+					message: "Masonry image completed with no valid resource.",
+					details: { index, src: image.currentSrc || image.src },
+				});
+			}
+
+			continue;
+		}
+
+		/*
+		 * The image has not completed loading yet.
+		 *
+		 * The `load` event is the correct event for successful image
+		 * loading. The listener is automatically removed after firing.
+		 */
+		image.addEventListener(
+			"load",
+			() => {
+				handleMasonryImageLoaded(
+					image,
+					index,
+					MASONRY_REVEAL_DELAY
+				);
+			},
+			{ once: true }
+		);
+
+		image.addEventListener(
+			'error',
+			() => {
+				initLog("error", {
+					component: "validateMasonryImages",
+					message:
+						"Masonry image failed to load.",
+					details: {
+						index,
+						image,
+					},
+				});
+			},
+			{
+				once: true,
+			},
+		);
+
+	}
+}
+
+/**
+ * Performs the initial Masonry layout and registers image validation.
+ *
+ * @param {TMasonryLifecycleState} state
+ * @returns {void}
+ */
+function initializeMasonry(state) {
+	const layout = createMasonry(state.container, state.config);
+	const images = getMasonryImages(layout.items);
+
+	validateMasonryImages(images, state.validatedImages);
+
+	state.isInitialized = true;
+
+	state.intersectionObserver?.disconnect();
+	state.resizeObserver?.observe(state.container);
+}
+
+/**
+ * Handles the initial intersection event.
+ *
+ * @param {IntersectionObserverEntry[]} entries
+ * @param {TMasonryLifecycleState} state
+ * @returns {void}
+ */
+function handleMasonryIntersection(entries, state) {
+	if (state.isDestroyed || state.isInitialized) return;
+
+	const entry = entries.find(
+		(item) => item.target === state.container,
+	);
+
+	if (!entry?.isIntersecting) return;
+
+	try {
+		initializeMasonry(state);
 	} catch (error) {
-		initLog("error",{
-			component: 'initMasonry',
-			message: 'Masonry resize recalculation failed.',
+		initLog("error", {
+			component: "initMasonry",
+			message: "Masonry initialization failed.",
 			details: error,
 		});
 	}
 }
 
 /**
- * Initializes lazy Masonry layout activation and resize handling.
+ * Destroys a Masonry lifecycle.
  *
- * Masonry is created when the container approaches the viewport.
- * After successful initialization, container size changes are observed
- * and the Masonry layout is recalculated automatically.
+ * @param {TMasonryLifecycleState} state
+ * @returns {void}
+ */
+function destroyMasonry(state) {
+	if (state.isDestroyed) return;
+
+	state.isDestroyed = true;
+	state.isInitialized = false;
+
+	state.intersectionObserver?.disconnect();
+	state.resizeObserver?.disconnect();
+	state.resizeScheduler.cancel();
+}
+
+
+/**
+ * Handles Masonry container width changes.
  *
- * Image validation is performed independently from the Masonry layout
- * calculation. Each image is registered for validation at most once
- * during the lifecycle of this Masonry instance.
+ * @param {ResizeObserverEntry[]} entries
+ * @param {TMasonryLifecycleState} state
+ * @returns {void}
+ */
+function handleMasonryResizeObservation(entries, state) {
+	if (state.isDestroyed || !state.isInitialized) return;
+
+	const entry = entries.find(
+		(item) => item.target === state.container,
+	);
+
+	if (!entry) return;
+
+	const currentWidth = entry.contentRect.width;
+
+	if (state.lastObservedWidth === null) {
+		state.lastObservedWidth = currentWidth;
+		return;
+	}
+
+	if (Math.abs(currentWidth - state.lastObservedWidth) < 0.5) {
+		return;
+	}
+
+	state.lastObservedWidth = currentWidth;
+	state.resizeScheduler.schedule();
+}
+
+/**
+ * Initializes lazy Masonry layout activation and width-based resize handling.
  *
  * @param {HTMLElement} container
- * Masonry container element.
- *
  * @param {TMasonryConfig} config
- * Normalized Masonry configuration.
- *
- * @param {string} [rootMargin="300px 0px"]
- * Distance from the viewport at which Masonry is initialized.
- *
- * @returns {{
- *   destroy: () => void
- * }}
- * Masonry lifecycle controller.
+ * @param {string} [rootMargin="0px 0px"]
+ * @returns {{ destroy: () => void }}
  */
 export function initMasonry(
 	container,
 	config,
-	rootMargin = '0px 0px',
+	rootMargin = "0px 0px",
 ) {
-	let isInitialized = false;
-	let isFirstResizeNotification = true;
-
-	/*
-	 * Tracks images that have already been registered for validation
-	 * during this Masonry lifecycle.
-	 *
-	 * WeakSet is used because image elements must not be kept alive
-	 * solely by the validation registry after they leave the DOM.
-	 */
-	const validatedImages =	new WeakSet();
-
-	const resizeObserver = new ResizeObserver(() => {
-			/*
-			 * ResizeObserver is created before the initial Masonry layout,
-			 * but recalculation must not start until the first layout has
-			 * been created successfully.
-			 */
-			if (!isInitialized) {
-				return;
-			}
-
-		if (isFirstResizeNotification) {
-			/*
-   * ResizeObserver may report the current geometry immediately
-   * after observation starts.
-   *
-   * The initial Masonry layout has already been calculated just
-   * before observe() was called, so this first notification does
-   * not require another layout pass.
-   */
-			isFirstResizeNotification = false;
-			return;
-		}
-
-			handleMasonryResize(
-				container,
-				config,
-			);
-		});
-	const intersectionObserver = new IntersectionObserver((entries) => {
-				const entry = entries[0];
-
-				if (!entry?.isIntersecting) {
-					return;
-				}
-
-				try {
-					/*
-					 * Perform the initial Masonry layout synchronously.
-					 *
-					 * The Masonry lifecycle is marked as initialized only after
-					 * the initial layout and image validation registration complete
-					 * successfully.
-					 */
-					const layout = createMasonry(container, config);
-
-					isInitialized = true;
-
-					/*
-					 * The layout snapshot already contains the exact Masonry
-					 * items used during the current layout pass.
-					 *
-					 * Therefore, resolving the Masonry item collection from
-					 * the container again is unnecessary.
-					 */
-					const images = getMasonryImages(layout.items);
-
-					/*
-					 * Image validation is independent from Masonry layout
-					 * creation and does not block the layout pipeline.
-					 *
-					 * validatedImages prevents the same image from being
-					 * registered more than once during this lifecycle.
-					 */
-					validateMasonryImages(
-						images,
-						validatedImages,
-					);
-
-					/*
-					 * The initial layout has been created successfully,
-					 * therefore the intersection observer is no longer needed.
-					 */
-					intersectionObserver.unobserve(
-						container,
-					);
-
-					intersectionObserver.disconnect();
-
-					/*
-					 * Start observing container size changes only after
-					 * successful Masonry initialization.
-					 */
-					resizeObserver.observe(
-						container,
-					);
-				} catch (error) {
-					/*
-					 * Initialization errors are isolated from the observer
-					 * callback and reported through the common initialization
-					 * logging mechanism.
-					 */
-					initLog("error", {
-						component: 'initMasonry',
-						message:
-							'Masonry initialization failed.',
-						details: error,
-					});
-				}
-			},
-			{
-				rootMargin,
-			},
-		);
-
-	intersectionObserver.observe(
+	/** @type {TMasonryLifecycleState} */
+	const state = {
 		container,
+		config,
+		isInitialized: false,
+		isDestroyed: false,
+		lastObservedWidth: null,
+		validatedImages: new WeakSet(),
+		resizeScheduler: createMasonryResizeScheduler(
+			container,
+			config,
+			250,
+		),
+		intersectionObserver: null,
+		resizeObserver: null,
+	};
+
+	state.resizeObserver = new ResizeObserver((entries) => {
+		handleMasonryResizeObservation(entries, state);
+	});
+
+	state.intersectionObserver = new IntersectionObserver(
+		(entries) => handleMasonryIntersection(entries, state),
+		{ rootMargin },
 	);
 
+	state.intersectionObserver.observe(container);
+
 	return {
-		/**
-		 * Destroys all observers associated with this Masonry instance.
-		 *
-		 * @returns {void}
-		 */
-		destroy() {
-			intersectionObserver.disconnect();
-			resizeObserver.disconnect();
-		},
+		destroy: () => destroyMasonry(state),
 	};
 }
 
-/**
- * Reveals a Masonry item after its image has loaded.
- *
- * The visual transition itself is handled by CSS. JavaScript only
- * changes the item's state by adding the corresponding CSS class.
- *
- * @param {HTMLElement} item
- * @param {number} [delay=0]
- *
- * @returns {void}
- */
-function revealMasonryItem(item, delay = 0) {
-	setTimeout(() => {
-		item.classList.add('image-loaded');
-	}, delay);
-}
-
+///////////////////////////////////////
 
 /**
  * Activates the navigation link based on the specified conditions.
@@ -2181,22 +2289,22 @@ export function activateNavLink(params) {
 		}
 	);
 
-		if (missingKeys.length) {
-			initLog("error",{
-				component: "activateNavLink",
-				message: `Missing required parameters:\n${missingKeys.join("\n")}`,
-				details: params
-			});
+	if (missingKeys.length) {
+		initLog("error", {
+			component: "activateNavLink",
+			message: `Missing required parameters:\n${missingKeys.join("\n")}`,
+			details: params
+		});
 
 		return;
 	}
 
-		const {
-			navLinkSelector,
-			pageType,
-			activeClass,
-			anchorLink,
-		} = params;
+	const {
+		navLinkSelector,
+		pageType,
+		activeClass,
+		anchorLink,
+	} = params;
 
 	// Get all navigation link items using the provided selector.
 	const navLinkItems = /** @type {HTMLAnchorElement[]} */ (
@@ -2216,35 +2324,13 @@ export function activateNavLink(params) {
 }
 
 /**
- * @param {"warn"|"log"|"error"} logType
- * @param {TLogMessageParams} params
- * @returns {void}
- */
-export function initLog(logType, params) {
-	const { component = 'Unknown', message = '', details } = params;
-
-	if (typeof console[logType] !== 'function') {
-		throw new TypeError(`[initLog]: unsupported log type "${logType}".`);
-	}
-
-	const formattedMessage = `[${component}]: ${message}`;
-
-	if (details !== undefined) {
-		// We pass them as separate arguments—modern browsers render this perfectly.
-		console[logType](formattedMessage, '\nDetails:', details);
-	} else {
-		console[logType](formattedMessage);
-	}
-}
-
-/**
  * Handles language selection.
  * @param {string} dataSetKey - the key of the dataset-[key]: dataset-lang
  * @param {string} langActive - active version of language
  *
  * @return ()=>{} //returning cb for {@link initLangSwitcher}
  */
-function getLangClickHandler (dataSetKey, langActive) {
+function getLangClickHandler(dataSetKey, langActive) {
 	/**
 	 * the callback for the click listener at langListSelector "#lang-list"
 	 * @param {MouseEvent}  event
@@ -2272,27 +2358,76 @@ function getLangClickHandler (dataSetKey, langActive) {
 
 		if (!clickedLang) return;
 
-		console.log("clickedLang:", clickedLang);
-
 		redirectToLanguage(langActive, clickedLang);
 	}
 }
 
 /**
- * @param {string} langActive
- * @param {string} clickedLang
- * @return {void}
+ * Redirects the browser to the clicked language version of the current page.
+ *
+ * The language segment of the current pathname is replaced with the
+ * clicked language code.
+ *
+ * The language code is expected to be the first path segment:
+ * `/uk/`, `/uk/gates-installation-repair`, and so on.
+ *
+ * Query parameters and the URL hash are preserved because only the pathname
+ * is modified. `location.replace()` avoids adding the previous language
+ * version as a separate history entry.
+ *
+ * `location.replace()` is used intentionally: a language switch
+ * navigates to a parallel version of the page, not to a new step
+ * of the browsing session. The previous language version is kept
+ * out of the session history, so the browser Back button does not
+ * silently revert the user's language choice.
+ *
+ * @param {string} langActive - Currently active language code.
+ * @param {string} clickedLang - Language code selected by the user.
+ * @returns {void}
  */
 function redirectToLanguage(langActive, clickedLang) {
 	const currentUrl = new URL(window.location.href);
+	const segments = currentUrl.pathname.split("/");
 
-	currentUrl.pathname =
-		currentUrl.pathname.replace(
-			`/${langActive}/`,
-			`/${clickedLang}/`
-		);
+	// The first segment after the leading slash must match the active language.
+	if (segments[1] !== langActive) {
+		initLog("warn", {
+			component: "redirectToLanguage",
+			message: "The active language does not match the first URL path segment.",
+			details: {
+				pathname: currentUrl.pathname,
+				expectedLanguage: langActive,
+				actualLanguage: segments[1],
+			},
+		});
 
+		return;
+	}
 
+	// Validate the target language before modifying the URL.
+	// Language codes must be a single non-empty path segment.
+	if (
+		typeof clickedLang !== "string" ||
+		clickedLang.length === 0 ||
+		clickedLang.includes("/")
+	) {
+		initLog("warn", {
+			component: "redirectToLanguage",
+			message: "Invalid target language code.",
+			details: { clickedLang },
+		});
+
+		return;
+	}
+
+	// Avoid reloading the page when the selected language is already active.
+	if (langActive === clickedLang) return;
+
+	// Replace only the language segment; preserve the remaining path.
+	segments[1] = clickedLang;
+	currentUrl.pathname = segments.join("/");
+
+	// The query string and hash remain unchanged.
 	window.location.replace(currentUrl.toString());
 }
 
@@ -2311,12 +2446,12 @@ function getClickedLanguage(eTarget, dataSetKey) {
 	if (!langElement || !checkHtmlElement(langElement)) return;
 
 	//langElement is already checked to be HTMLElement and has "dataset" property...
-	 const dataSetLang = langElement.dataset;
+	const dataSetLang = langElement.dataset;
 
 
 	const clickedLang = dataSetLang[dataSetKey];
 	if (!clickedLang) {
-		initLog("error",{
+		initLog("error", {
 			component: "getLangClickHandler",
 			message: `The given HTMLElement has no data-set attributes or not valid:`,
 			details: {
@@ -2332,6 +2467,8 @@ function getClickedLanguage(eTarget, dataSetKey) {
 	return clickedLang;
 }
 
+///////////////////////////////////////////////
+
 /**
  * Toggles the expanded state of an interactive element.
  * it is made for {@link toggleAriaExpandedMenu}
@@ -2343,7 +2480,6 @@ function toggleAriaExpanded(element) {
 
 	element.ariaExpanded = `${!expanded}`;
 }
-
 
 /**
  * Handles click on the current language button.
@@ -2394,7 +2530,7 @@ export function checkEventCurrentTarget(event) {
 		// Cast to any type inside JSDoc comment so TS allows reading properties
 		const unsafeTarget = /** @type {*} */ (curTarget);
 
-		initLog("error",{
+		initLog("error", {
 			component: "checkEventCurrentTarget",
 			message: `Expected HTMLElement, but got ${curTarget?.constructor?.name || typeof curTarget}`,
 			details: {
@@ -2469,10 +2605,10 @@ export function initLangSwitcher(params) {
 	);
 
 	if (missingKeys.length) {
-		initLog("error",{
+		initLog("error", {
 			component: "initLangSwitcher",
 			message: `Missing required parameters:\n${missingKeys.join("\n")}`
-			});
+		});
 		return;
 	}
 
@@ -2499,7 +2635,7 @@ export function initLangSwitcher(params) {
 
 	const langActive = langCurrentButton.dataset[dataSetKey];
 	if (!langActive) {
-		initLog("error",{
+		initLog("error", {
 			component: "initLangSwitcher",
 			message: `Element with selector: ${langSwitcherCurrent}${langActiveSelector} has no data-${dataSetKey} value...`
 		});
@@ -2507,7 +2643,7 @@ export function initLangSwitcher(params) {
 	}
 
 	if (!Array.isArray(langOptionArr) || !langOptionArr.length) {
-		initLog("error",{
+		initLog("error", {
 			component: "initLangSwitcher",
 			message: `langOptionArr must be a non-empty array.`,
 			details: langOptionArr
@@ -2558,8 +2694,8 @@ export function initLangSwitcher(params) {
  *
  * @return {HTMLLIElement[]}
  */
-function getLangItems(langVerArr, params, ) {
-	const{
+function getLangItems(langVerArr, params,) {
+	const {
 		langSwitcherItem,
 		langSwitcherButton,
 		dataSetKey

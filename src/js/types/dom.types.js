@@ -41,14 +41,14 @@
  */
 
 /**
- * TNavLinkParams:
+ * TActivateNavlinkParams
+ * Type definition for arguments of {@link activateNavLink}
  *
- * @typedef {{
- *   navLinkSelector: string,
- *   activeClass: string,
- *   pageType: string,
- *   anchorLink: string,
- * }} TNavLinkParams
+ * @typedef {Object} TActivateNavlinkParams
+ * @property {string} navLinkSelector - The CSS selector to find the navigation link items.
+ * @property {string} pageType - The type of the page to match with the pagesVersions attribute of the navigation items.
+ * @property {string} activeClass - The class name to add to the matched navigation link items.
+ * @property {string} anchorLink - The URL to set as the `href` attribute for the matched navigation items.
  */
 
 /**
@@ -76,17 +76,6 @@
  * @typedef {Record<string, unknown>} LoadedImageResult
  * @property {HTMLElement} element - The parent element containing the image
  * @property {ImageSize} size - Dimension information
- */
-
-/**
- * TActivateNavlinkParams
- * Type definition for arguments of {@link activateNavLink}
- *
- * @typedef {Object} TActivateNavlinkParams
- * @property {string} navLinkSelector - The CSS selector to find the navigation link items.
- * @property {string} pageType - The type of the page to match with the pagesVersions attribute of the navigation items.
- * @property {string} activeClass - The class name to add to the matched navigation link items.
- * @property {string} anchorLink - The URL to set as the `href` attribute for the matched navigation items.
  */
 
 /**
