@@ -166,13 +166,31 @@ $element-shadow: 0.15em, 0.3em, rgba(0, 0, 0, .8);
   // Convert target values from px to specified unit
   // rem/em/%: divide by base-size (e.g., 16px → 1rem)
   // px: keep original value (e.g., 16px → 16px)
+
+/*
+  //deprecated in Dart Sass (1.95+)
   $min-size: if($needs-conversion, math.div($min-value-num, $base-size), $min-value-num);
   $max-size: if($needs-conversion, math.div($max-value-num, $base-size), $max-value-num);
+  */
+
+  //! IDE stile not recognize new Dart Sass (1.95+) syntax
+  $min-size: if(sass($needs-conversion): math.div($min-value-num, $base-size); else: $min-value-num);
+  $max-size: if(sass($needs-conversion): math.div($max-value-num, $base-size); else: $max-value-num);
+
 
   // Convert viewport boundaries using same logic
   // Ensures slope calculation uses consistent units
+
+/*
+  //deprecated in Dart Sass (1.95+)
   $min-width: if($needs-conversion, math.div($min-media-num, $base-size), $min-media-num);
   $max-width: if($needs-conversion, math.div($max-media-num, $base-size), $max-media-num);
+  */
+
+  //! IDE stile not recognize new Dart Sass (1.95+) syntax
+  $min-width: if(sass($needs-conversion): math.div($min-media-num, $base-size); else: $min-media-num);
+  $max-width: if(sass($needs-conversion): math.div($max-media-num, $base-size); else: $max-media-num);
+
 
   // Calculate slope (m): rate of change per viewport unit
   // Formula: rise / run = (size difference) / (viewport range)

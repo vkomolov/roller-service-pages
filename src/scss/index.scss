@@ -1,7 +1,8 @@
 @use "./global_styles/root" as root;
 @use "../js/modulesPack/gallery-thumbs/scss/gallery-thumbs.scss";
 @use "./partials/footer";
-@use "./partials/header"; //!!TODO: to dynamically override inline styles... TO DELETE FROM HERE
+
+//use "./partials/header"; //is written in critical.scss which will be written inline in head
 
 
 /////// STYLES ////////

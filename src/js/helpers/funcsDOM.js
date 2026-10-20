@@ -832,11 +832,17 @@ export function restoreDocumentScroll() {
 }
 
 /**
+ * @typedef {{
+ *   background?: boolean | string
+ * }} TImageParentMapOptions
+ */
+
+/**
  * Builds a mapping between image elements and their parent containers
  * Handles both <img> tags and background images
  *
  * @param {HTMLElement} container - The container which contains the images or image wrappers
- * @param {Object} options - imagesLoaded options
+ * @param {TImageParentMapOptions} options - imagesLoaded options
  * @returns {Map<HTMLImageElement, HTMLElement>} Map of image -> parent
  */
 function buildImageParentMap(container, options) {
@@ -2783,10 +2789,18 @@ export function createModalState() {
 }
 
 /**
+ * @typedef {{
+ *   close: Function,
+ *   prev: Function,
+ *   next: Function
+ * }} TCreateModalHandlersCallbacks
+ */
+
+/**
  * Creates modal event handlers
  * @param {Object} dom - Modal DOM elements
  * @param {ModalState} state - Modal state reference
- * @param {Object} callbacks - Action callbacks
+ * @param {TCreateModalHandlersCallbacks} callbacks - Action callbacks
  * @returns {{handleKeydown: Function, handleClick: Function}}
  */
 export function createModalHandlers(dom, state, callbacks) {

@@ -149,7 +149,7 @@ const tasks = {
         .pipe(plumber({
           errorHandler: handleError("Error at pipeStyles...")
         }))
-        .pipe(sass.sync({}, () => {}).on('error', sass.logError))
+        .pipe(sass.sync({ api: "modern" }).on('error', sass.logError))
         .pipe(changed(`${pathData.tempPath}/css/`, { hasChanged: compareContents }))
         .pipe(debug({ title: "*.scss is piped:" }))
         .pipe(dest(`${pathData.tempPath}/css/`))
@@ -258,7 +258,7 @@ const tasks = {
         /*.pipe(size(useGulpSizeConfig({
           title: "Before sass: "
         })))*/
-        .pipe(sass.sync({}, () => {}).on('error', sass.logError))
+        .pipe(sass.sync({ api: "modern" }).on('error', sass.logError))
 
         //! CustomPurgeCss could be used in mono language version of the project with the one language version of the page...
         //! scss file must have the same name as the corresponding HTML file!!!

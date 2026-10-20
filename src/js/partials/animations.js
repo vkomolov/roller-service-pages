@@ -1466,11 +1466,11 @@ export async function initAnimations() {
 		},
 		common: () => {
 			//Hero section priority...
-			tryUse(buildGroupTimeline)(
+/*			tryUse(buildGroupTimeline)(
 				gsap,
 				heroTimelineParams,
 				"heroAnimation",
-			);
+			);*/
 
 			//initializing burger handlers, build and register animation timeline...
 			tryUse(initBurgerMenu)(
@@ -1518,6 +1518,14 @@ export async function initAnimations() {
 	};
 
 	runPageAnimations(pageAnimations, pageNames);
+
+	/**
+	 *!! CRITICALLY IMPORTANT:
+	 * Since initialization now happens lazily upon scrolling,
+	 * we ask ScrollTrigger to immediately recalculate the coordinate map
+	 * for all registered triggers on the page, accounting for the current offset.
+	 */
+	ScrollTrigger.refresh();
 }
 
 

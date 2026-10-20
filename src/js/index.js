@@ -38,7 +38,7 @@ import { isKeyOf } from "./helpers/funcs.js";
 // ============================================
 // DOM READY
 // ============================================
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
 	const pageType = document.body.dataset.type || "";
 	const isIn = isKeyOf(linkAnchors, pageType);
 
@@ -58,11 +58,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 		anchorLink: isIn ? linkAnchors[pageType] : "#",
 	};
 
-
 	try {
 		// Navigation & Language (non-GSAP, immediate)
 		activateNavLink(navLinkParams);
 		activateNavLink(navLinkParamsHexagon);
+		//initializing language switcher...
+		initLangSwitcher(langSwitchData);
 
 // Initialize Masonry (non-GSAP, lazy)
 		const galleryContainer = getDOMElement(
@@ -71,20 +72,34 @@ document.addEventListener("DOMContentLoaded", async () => {
 			false,
 		);
 
-		if (isHTMLElement(galleryContainer)) {
-			initMasonry(
-				galleryContainer,
-				masonryConfig,
-			);
+		const lazyInit = async () => {
+			// Removing the listener immediately so as not to react to subsequent scrolls
+			window.removeEventListener("scroll", lazyInit);
+
+			try {
+				// Initializing the Masonry layout
+				if (isHTMLElement(galleryContainer)) {
+					initMasonry(
+						galleryContainer,
+						masonryConfig,
+					);
+				}
+				//Downloading the GSAP chunk and trigger the animations:
+				await initAnimations();
+
+
+				//await initThumbs(gallerySelector, galleryThumbsFolderName);
+
+			}
+			catch (lazyError) {
+				console.error("[LazyInit]: failed:", lazyError);
+			}
 		}
 
-		//initializing GSAP animations...
-		await initAnimations();
-
-		//initializing language switcher...
-		initLangSwitcher(langSwitchData);
-
-		//await initThumbs(gallerySelector, galleryThumbsFolderName);
+		//attaching the listener to the first scroll.
+		//{ passive: true } is critical - it optimizes scrolling for the browser
+		//If true, the listener will be automatically removed after being called.
+		window.addEventListener("scroll", lazyInit, { passive: true });
 	}
 	catch (error) {
 		console.error("[DOMContentLoaded]: initialization failed:", error);

@@ -203,6 +203,50 @@ ul{
     transform:scaleX(1);
   }
 }
+@keyframes scaleUpZero{
+  0%{
+    transform:scale(0);
+  }
+  50%{
+    transform:scale(1.05);
+  }
+  70%{
+    transform:scale(.95);
+  }
+  to{
+    transform:scale(1);
+  }
+}
+@keyframes fadeInLeft{
+  0%{
+    opacity:0;
+    transform:translateX(50px);
+  }
+  to{
+    opacity:1;
+    transform:translateX(0);
+  }
+}
+@keyframes fadeInRight{
+  0%{
+    opacity:0;
+    transform:translateX(-50px);
+  }
+  to{
+    opacity:1;
+    transform:translateX(0);
+  }
+}
+@keyframes fadeInUp{
+  0%{
+    opacity:0;
+    transform:translateY(40px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
 .section{
   padding-bottom:120px;
   padding-top:80px;
@@ -743,14 +787,20 @@ h2,h3,h4,h5{
   text-shadow:.08em .08em .1em rgba(0,0,0,.8);
 }
 .section__heading-block--hero .accent{
+  animation:fadeInLeft .8s cubic-bezier(.25, 1, .5, 1) .3s forwards;
   display:inline-block;
   font-size:1em;
   opacity:0;
+  transform:translateX(50px);
+  will-change:transform, opacity;
 }
 .section__heading-block--hero .rest-of-heading{
+  animation:fadeInRight .8s cubic-bezier(.25, 1, .5, 1) .3s forwards;
   display:block;
   font-size:max(.543em, 18px);
   opacity:0;
+  transform:translateX(-50px);
+  will-change:transform, opacity;
 }
 
 .section__content-block--hero{
@@ -759,23 +809,31 @@ h2,h3,h4,h5{
 }
 
 .section__text-block--hero{
+  animation:fadeInUp .8s cubic-bezier(.25, 1, .5, 1) .45s forwards;
   max-width:20em;
   opacity:0;
+  transform:translateY(40px);
+  will-change:transform, opacity;
 }
 
 .section__img-wrapper--hero{
+  animation:scaleUpZero .8s linear .65s forwards;
   transform:scale(0);
   width:7em;
+  will-change:transform;
 }
 
 .section__bidding-block{
   align-items:flex-start;
+  animation:fadeInUp .8s cubic-bezier(.25, 1, .5, 1) .65s forwards;
   display:flex;
   flex-flow:column wrap;
   font-size:var(--range_20-18_1280-641);
   justify-content:center;
   margin-top:1.4em;
   opacity:0;
+  transform:translateY(40px);
+  will-change:transform, opacity;
 }
 .section__bidding-block p{
   max-width:14em;

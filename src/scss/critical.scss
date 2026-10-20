@@ -215,8 +215,15 @@
 		display: inline-block;
 		font-size: 1em;
 
-		//////// GSAP:
+		// Hiding the element before the animation starts...
 		opacity: 0;
+		transform: translateX(50px); /* starting from right */
+
+		// Enabling hardware acceleration on the GPU
+		will-change: transform, opacity;
+
+		// animation: name, duration, easing, DELAY, final state retention
+		animation: fadeInLeft 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.3s forwards;
 
 		/* mobile (portrait narrow): (max-width: 480px)*/
 		@include root.maxMobilePortraitNarrow {
@@ -228,8 +235,15 @@
 		display: block;
 		font-size: max(0.543em, 18px);
 
-		//////// GSAP:
+		// Hiding the element before the animation starts...
 		opacity: 0;
+		transform: translateX(-50px); /* starting from left */
+
+		// Enabling hardware acceleration on the GPU
+		will-change: transform, opacity;
+
+		// fadeInRight - two stage animation, which can be used with cubic-bezier
+		animation: fadeInRight 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.3s forwards;
 	}
 }
 
@@ -241,23 +255,43 @@
 .section__text-block--hero {
 	max-width: 20em;
 
-	////////// GSAP:
+	// Hiding the element before the animation starts...
 	opacity: 0;
+	transform: translateY(40px); /* starting from below */
+
+	// Enabling hardware acceleration on the GPU
+	will-change: transform, opacity;
+
+	// fadeInUp - two stage animation, which can be used with cubic-bezier
+	animation: fadeInUp 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.45s forwards;
 }
 
 .section__img-wrapper--hero {
 	width: 7em;
 
-	////////// GSAP:
+	// Positioning the element before the animation starts...
 	transform: scale(0);
+
+	// Enabling hardware acceleration on the GPU
+	will-change: transform;
+
+	/* Using 'linear' so that the frame stages themselves control the 'elastic' effect. */
+	animation: scaleUpZero 0.6s linear 0.65s forwards;
 }
 
 .section__bidding-block {
 	font-size: var(--range_20-18_1280-641);
 	margin-top: 1.4em;
 
-	///////// GSAP:
+	// Hiding the element before the animation starts...
 	opacity: 0;
+	transform: translateY(40px); /* starting from below */
+
+	// Enabling hardware acceleration on the GPU
+	will-change: transform, opacity;
+
+	// fadeInUp - two stage animation, which can be used with cubic-bezier
+	animation: fadeInUp 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.65s forwards;
 
 	@include root.flex-box(column, center, flex-start);
 
