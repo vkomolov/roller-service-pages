@@ -572,6 +572,9 @@ export function getDOMElement(selector, context = document, useLog = true) {
  * Whether the context Element may be used as a fallback target
  * when no matching descendants are found.
  *
+ * @param {boolean} [useLog=true]
+ * if true, it will make log with warning, if it returns an empty array
+ *
  * @returns {T[]}
  * Array containing the resolved Element(s).
  * Returns an empty array when neither matching descendants nor
@@ -603,6 +606,8 @@ export function getElements(
 	context = document,
 	multiple = true,
 	includeContextAsTarget = false,
+	useLog = true,
+
 ) {
 	const targets = multiple
 		? /** @type {T[]} */ (
@@ -635,7 +640,7 @@ export function getElements(
 		);
 	}
 
-	if (!targets.length) {
+	if (!targets.length && useLog) {
 		initLog("error", {
 			component: "getElements",
 			message:
@@ -2120,52 +2125,39 @@ function validateMasonryImages(
 }
 
 /**
- * Performs the initial Masonry layout and registers image validation.
+ * Performs the initial Masonry layout, validates its images,
+ * and starts observing container width changes.
+ *
+ * The container is already eligible for initialization because
+ * visibility detection is handled by the shared observer in `index.js`.
  *
  * @param {TMasonryLifecycleState} state
  * @returns {void}
  */
 function initializeMasonry(state) {
+	// Calculate and apply the initial layout.
 	const layout = createMasonry(state.container, state.config);
 	const images = getMasonryImages(layout.items);
 
+	// Register image load/error handlers only once per image.
 	validateMasonryImages(images, state.validatedImages);
 
+	/**
+	 * !Mark initialization as complete before observing the container.
+	 * This prevents resize handling from running as if Masonry were
+	 * still uninitialized.
+	 */
 	state.isInitialized = true;
 
-	state.intersectionObserver?.disconnect();
+	// ResizeObserver is retained for subsequent container width changes.
 	state.resizeObserver?.observe(state.container);
 }
 
 /**
- * Handles the initial intersection event.
+ * Destroys the Masonry lifecycle and releases its resources.
  *
- * @param {IntersectionObserverEntry[]} entries
- * @param {TMasonryLifecycleState} state
- * @returns {void}
- */
-function handleMasonryIntersection(entries, state) {
-	if (state.isDestroyed || state.isInitialized) return;
-
-	const entry = entries.find(
-		(item) => item.target === state.container,
-	);
-
-	if (!entry?.isIntersecting) return;
-
-	try {
-		initializeMasonry(state);
-	} catch (error) {
-		initLog("error", {
-			component: "initMasonry",
-			message: "Masonry initialization failed.",
-			details: error,
-		});
-	}
-}
-
-/**
- * Destroys a Masonry lifecycle.
+ * The shared IntersectionObserver is owned by the caller and is not
+ * part of the Masonry lifecycle.
  *
  * @param {TMasonryLifecycleState} state
  * @returns {void}
@@ -2176,11 +2168,10 @@ function destroyMasonry(state) {
 	state.isDestroyed = true;
 	state.isInitialized = false;
 
-	state.intersectionObserver?.disconnect();
+	// Stop width observation and cancel any pending recalculation.
 	state.resizeObserver?.disconnect();
 	state.resizeScheduler.cancel();
 }
-
 
 /**
  * Handles Masonry container width changes.
@@ -2214,18 +2205,32 @@ function handleMasonryResizeObservation(entries, state) {
 }
 
 /**
- * Initializes lazy Masonry layout activation and width-based resize handling.
+ * Initializes Masonry immediately and registers width-based
+ * resize handling.
  *
- * @param {HTMLElement} container
- * @param {TMasonryConfig} config
- * @param {string} [rootMargin="0px 0px"]
- * @returns {{ destroy: () => void }}
+ * Lazy activation is intentionally handled by the shared
+ * IntersectionObserver in `index.js`.
+ *
+ * @param {HTMLElement} container - The Masonry gallery container.
+ * @param {TMasonryConfig} config - Masonry layout configuration.
+ * @returns {{ destroy: () => void }} Lifecycle cleanup handle.
+ * @throws {TypeError} If the container is not a valid HTMLElement.
  */
 export function initMasonry(
 	container,
 	config,
-	rootMargin = "0px 0px",
 ) {
+	if (!isHTMLElement(container)) {
+		throw new TypeError(
+			"[initMasonry]: container must be an HTMLElement.",
+		);
+	}
+	if (!container.isConnected) {
+		throw new Error(
+			"[initMasonry]: container must be connected to the DOM.",
+		);
+	}
+
 	/** @type {TMasonryLifecycleState} */
 	const state = {
 		container,
@@ -2239,20 +2244,28 @@ export function initMasonry(
 			config,
 			250,
 		),
-		intersectionObserver: null,
 		resizeObserver: null,
 	};
 
-	state.resizeObserver = new ResizeObserver((entries) => {
-		handleMasonryResizeObservation(entries, state);
-	});
+	try {
+		// Observe only width changes; visibility is handled elsewhere.
+		state.resizeObserver = new ResizeObserver((entries) => {
+			handleMasonryResizeObservation(entries, state);
+		});
 
-	state.intersectionObserver = new IntersectionObserver(
-		(entries) => handleMasonryIntersection(entries, state),
-		{ rootMargin },
-	);
+		// Perform the first layout synchronously within this call.
+		initializeMasonry(state);
+	}
+	catch (error) {
+		/*
+		 * Initialization may fail after ResizeObserver has been created.
+		 * Release resources before propagating the error to the caller.
+		 */
+		state.resizeObserver?.disconnect();
+		state.resizeScheduler.cancel();
 
-	state.intersectionObserver.observe(container);
+		throw error;
+	}
 
 	return {
 		destroy: () => destroyMasonry(state),

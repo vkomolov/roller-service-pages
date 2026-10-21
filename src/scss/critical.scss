@@ -94,15 +94,14 @@
    * ratio and reserve the required layout space before the image
    * resource is loaded.
    *
-   * This is especially important for lazy-loaded images because
-   * Masonry may measure the item before the image resource finishes
-   * loading. The reserved aspect ratio ensures that `offsetHeight`
+   * This is especially important for lazy-loaded images...
+   * The reserved aspect ratio ensures that `offsetHeight`
    * represents the expected image geometry during the initial layout.
    *
    * The CSS width is controlled by the wrapper, while the height is
    * calculated automatically from the declared image aspect ratio.
    */
-	img, svg {
+	img, svg, picture {
 		width: 100%;
 		height: auto;
 		display: block; //Prevents the default inline-image baseline gap

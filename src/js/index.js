@@ -3,10 +3,11 @@
 /**
  * @file index.js
  * @description
- * Entry point. Initializes non-GSAP UI components,
- * registers lazy Masonry layout handling, then initializes
- * GSAP animations and the language switcher.
+ * Entry point. Initializes immediate UI components,
+ * lazily initializes gallery features through one shared
+ * IntersectionObserver, and starts GSAP animations on first scroll.
  */
+
 
 
 /**
@@ -19,7 +20,10 @@
 import {
 	activateNavLink,
 	initLangSwitcher,
-	initMasonry, getDOMElement, isHTMLElement
+	initMasonry,
+	getDOMElement,
+	isHTMLElement,
+	observeIntersection,
 } from "./helpers/funcsDOM.js";
 
 import {
@@ -28,12 +32,13 @@ import {
 	linkClassNameActive,
 	langSwitchData,
 	galleryThumbsFolderName,
-	masonryConfig
+	MASONRY_CONFIG,
+	MASONRY_INITIALIZE_MARGIN,
 } from "./partials/initialSelectors.js";
 
 import { initThumbs } from "./modulesPack/gallery-thumbs/index.js";
 import { initAnimations } from "./partials/animations.js";
-import { isKeyOf } from "./helpers/funcs.js";
+import { initLog, isKeyOf } from "./helpers/funcs.js";
 
 // ============================================
 // DOM READY
@@ -65,43 +70,87 @@ document.addEventListener("DOMContentLoaded", () => {
 		//initializing language switcher...
 		initLangSwitcher(langSwitchData);
 
-// Initialize Masonry (non-GSAP, lazy)
+// Locate the gallery without requiring it to exist on every page.
 		const galleryContainer = getDOMElement(
 			SELECTORS.gallerySelector,
 			document,
 			false,
 		);
 
-		const lazyInit = async () => {
-			// Removing the listener immediately so as not to react to subsequent scrolls
-			window.removeEventListener("scroll", lazyInit);
+		const hasGallery = isHTMLElement(galleryContainer);
 
-			try {
-				// Initializing the Masonry layout
-				if (isHTMLElement(galleryContainer)) {
-					initMasonry(
+		/**
+		 *! One IntersectionObserver handles both gallery features.
+		 * A positive vertical rootMargin allows initialization shortly
+		 * before the gallery enters the visible viewport.
+		 */
+		if (hasGallery) {
+			observeIntersection(galleryContainer, {
+				rootMargin: MASONRY_INITIALIZE_MARGIN,
+				once: true, //first Intersection
+
+				onEnter: () => {
+					// Masonry performs its initial layout immediately.
+					try {
+						initMasonry(galleryContainer, MASONRY_CONFIG);
+					}
+					catch (error) {
+						initLog("error", {
+							component: "initMasonry",
+							message: "Failed to initialize Masonry.",
+							details: error,
+						});
+					}
+
+					/**
+					 *! Modal initialization is independent of Masonry layout.
+					 * Do not await it here: its Promise must not block the
+					 * observer callback or other initialization work.
+					 */
+					initThumbs(
 						galleryContainer,
-						masonryConfig,
-					);
+						galleryThumbsFolderName,
+					).catch((error) => {
+						initLog("error", {
+							component: "initThumbs",
+							message: "Failed to initThumbs...",
+							details: error,
+						});
+					});
 				}
-				//Downloading the GSAP chunk and trigger the animations:
-				await initAnimations();
-
-
-				//await initThumbs(gallerySelector, galleryThumbsFolderName);
-
-			}
-			catch (lazyError) {
-				console.error("[LazyInit]: failed:", lazyError);
-			}
+			});
 		}
+
+		/**
+		 * !GSAP initialization remains independent of the gallery observer.
+		 * The first scroll starts animations and automatically removes
+		 * this listener because the `once` option is enabled.
+		 */
+
+		const lazyInitAnimations = () => {
+			initAnimations().catch((error) => {
+				initLog("error", {
+					component: "initAnimations",
+					message: "Failed to initialize GSAP animations.",
+					details: error,
+				});
+			});
+		};
+
 
 		//attaching the listener to the first scroll.
 		//{ passive: true } is critical - it optimizes scrolling for the browser
 		//If true, the listener will be automatically removed after being called.
-		window.addEventListener("scroll", lazyInit, { passive: true });
+		window.addEventListener("scroll", lazyInitAnimations, {
+			passive: true,
+			once: true,
+		});
 	}
 	catch (error) {
-		console.error("[DOMContentLoaded]: initialization failed:", error);
+		initLog("error", {
+			component: "DOMContentLoaded",
+			message: "Page initialization failed.",
+			details: error,
+		});
 	}
 });

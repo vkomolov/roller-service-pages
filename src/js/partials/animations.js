@@ -8,28 +8,19 @@
  */
 
 import {
-	createMasonry,
 	setAttributes,
 	getElements,
 	getDOMElement,
 	requireElements,
-	lockDocumentScroll,
-	restoreDocumentScroll,
 	setDocumentScrollLocked,
-	checkHtmlElement,
 	isHTMLElement,
+	initMasonry
 } from "../helpers/funcsDOM.js";
 import {
 	getGSAP,
 	registerAnimation,
-	getAnimation,
-	killAnimation, isRegisteredAnimation
 } from "./gsap-loader.js";
 import {
-	getInvalidKeys,
-	isKeyOf,
-	isInSet,
-	createKeySet,
 	tryUse,
 	initLog,
 } from "../helpers/funcs.js";
@@ -38,7 +29,6 @@ import {
 import { linkAnchors, SELECTORS, navMenuSelectorsData } from "./initialSelectors.js";
 import {
 	burgerNavTimelineParams,
-	heroTimelineParams,
 	automationParallaxTimelineParams,
 	servicesParallaxTimelineParams,
 	fadeInLeftTimelineParams,
@@ -84,6 +74,12 @@ import {
  * @typedef {import("../types/animations.types.js").TEachTimelineParams} TEachTimelineParams
  * @typedef {import("../types/animations.types.js").TTimelineParams} TTimelineParams
  *
+ */
+
+/**
+ * ! MASONRY type aliases used by this module.
+ *
+ * @typedef {import("../types/masonry.types.js").TMasonryConfig} TMasonryConfig
  */
 
 /// UTILITY FUNCTIONS ///
@@ -1527,162 +1523,3 @@ export async function initAnimations() {
 	 */
 	ScrollTrigger.refresh();
 }
-
-
-// TODO: LOWER IS TO REMAKE or DELETE
-
-
-/**
- * Builds fade-in animations for elements matching a selector.
- * Each element's timeline is cached individually.
- *
- * @param {typeof import('gsap').gsap} gsap - GSAP instance
- * @param {string} selector - CSS selector for target elements
- * @param {string} propKey - Key prefix for timeline references
- * @param {Object} fromParams - gsap.from parameters (entrance motion)
- * @returns {Object.<string, gsap.core.Timeline>} Timeline references object
- */
-/*function buildFadeAnimations(gsap, selector, propKey, fromParams) {
-	return getAllScrollTwoTweens(
-		gsap,
-		gsap.utils.toArray(document.querySelectorAll(selector)),
-		null,
-		propKey,
-		{ opacity: 1, duration: 0.7, delay: 0.2 },
-		fromParams
-	);
-}*/
-
-/**
- * Creates multiple scroll-triggered timelines for an array of elements.
- * Each timeline is cached against its element via gsap-loader.js.
- *
- * @param {typeof import('gsap').gsap} gsap - GSAP instance
- * @param {HTMLElement[]} elemsArr - Array of target elements
- * @param {HTMLElement|null} triggerElem - Common trigger element (or null for per-element)
- * @param {string} propKey - Prefix for timeline keys in result object
- * @param {Object} gsapToParams - Parameters for gsap.to
- * @param {Object} gsapFromParams - Parameters for gsap.from
- * @param {string} [nextAnimePos="<"] - Timeline position
- * @returns {Object.<string, gsap.core.Timeline>} Object with timeline references
- */
-/*function getAllScrollTwoTweens(gsap, elemsArr, triggerElem, propKey = "tlKey", gsapToParams = {}, gsapFromParams = {}, nextAnimePos = "<") {
-	const tlObj = {};
-	let trigger = null;
-
-	if (!Array.isArray(elemsArr)) {
-		console.error(`getAllScrollTwoTweens: elemsArr is not an Array`);
-		return tlObj;
-	}
-
-	if (triggerElem !== null) {
-		if (!(triggerElem instanceof HTMLElement) || !document.body.contains(triggerElem)) {
-			console.error(`getAllScrollTwoTweens: invalid trigger element`);
-			return tlObj;
-		}
-		trigger = triggerElem;
-	}
-
-	elemsArr.forEach((elem, index) => {
-		if (!(elem instanceof HTMLElement) || !document.body.contains(elem)) {
-			console.warn(`getAllScrollTwoTweens: element at index ${index} is invalid`);
-			return;
-		}
-
-		const tlKey = `${propKey}_${index}`;
-		const tl = getScrollTimelineTwoTweens(gsap, elem, trigger || elem, gsapToParams, gsapFromParams, nextAnimePos);
-
-		if (tl && hasRealAnimations(tl)) {
-			tlObj[tlKey] = tl;
-		}
-	});
-
-	return tlObj;
-}*/
-
-/**
- * Creates a scroll-triggered timeline with fade-in from opacity 0.
- * The resulting timeline is automatically cached via gsap-loader.js.
- *
- * @param {typeof import('gsap').gsap} gsap - GSAP instance
- * @param {HTMLElement} elem - Target element
- * @param {HTMLElement} triggerElem - ScrollTrigger trigger element
- * @param {Object} gsapToParams - Parameters for gsap.to (fade in)
- * @param {Object} gsapFromParams - Parameters for gsap.from (entrance motion)
- * @param {string} [nextAnimePos="<"] - Timeline position for second tween
- * @returns {gsap.core.Timeline|false} Created timeline or false if invalid
- */
-/*function getScrollTimelineTwoTweens(gsap, elem, triggerElem, gsapToParams = {}, gsapFromParams = {}, nextAnimePos = "<") {
-	if (!(elem instanceof HTMLElement) || !(triggerElem instanceof HTMLElement)) {
-		console.warn(`getScrollTimelineTwoTweens: invalid element (${elem}) or trigger (${triggerElem})`);
-		return false;
-	}
-
-	const tl = gsap.timeline({
-		scrollTrigger: {
-			trigger: triggerElem,
-			start: "top 80%",
-			toggleActions: "play none none reverse",
-			preventOverlaps: true,
-		}
-	});
-
-	tl.to(elem, { ...gsapToParams });
-	tl.from(elem, { ...gsapFromParams }, nextAnimePos);
-
-	// Register in gsap-loader cache; kills previous animation for this element automatically
-	cacheAnimation(tl, elem);
-	return tl;
-}*/
-
-/**
- * Builds gallery image fade-in animations.
- *
- * @param {TGsap} gsap - GSAP instance
- * @param {HTMLElement[]} elemsArr - Gallery image elements
- */
-/*function buildGalleryFade(gsap, elemsArr) {
-
-
-	initAllTimelinesFromTo(
-		gsap,
-		elemsArr,
-		document.querySelector(SELECTORS.galleryWork),  //"#gallery-work"
-		{ opacity: 1, duration: 0.8, delay: 0.2 },
-		{ scale: 0.7, duration: 1, ease: "back.out" }
-	);
-}*/
-
-// ============================================
-// BURGER MENU (returns handlers + tween)
-// ===========================================
-
-/*function openBurger() {
-	document.addEventListener("click", closeBurgerHandler);
-}
-
-function closeBurger() {
-	document.removeEventListener("click", closeBurgerHandler);
-}*/
-
-//const imageItems = await createMasonry(gallerySelector, { gap: 20 });
-//fadeInGallery(imageItems);
-
-//const timelines = fadeInGallery(imageItems);
-//Object.assign(totalTl, timelines);
-/*function fadeInGallery(elemsArr = []) {
-	return buildGalleryFade(gsap, elemsArr);
-}*/
-
-/**
- * Runs all page animations.
- * DOM readiness is guaranteed by index.js (DOMContentLoaded),
- * so no redundant readyState checks are needed here.
- *
- * @returns {Object.<string, gsap.core.Timeline|gsap.core.Tween>} Map of all active timelines/tweens
- */
-
-/*  function animatePage() {
-		return onPageLoaded(pageAnimations);
-	}*/
-

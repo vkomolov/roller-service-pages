@@ -43,7 +43,6 @@
  * @property {number | null} lastObservedWidth
  * @property {WeakSet<HTMLImageElement>} validatedImages
  * @property {{ schedule: () => void, cancel: () => void }} resizeScheduler
- * @property {IntersectionObserver | null} intersectionObserver
  * @property {ResizeObserver | null} resizeObserver
  */
 

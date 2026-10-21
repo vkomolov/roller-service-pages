@@ -9,8 +9,9 @@ import {
 	calculateNavIndex,
 	attachModalListeners,
 	detachModalListeners,
-	cleanupModal
+	cleanupModal, getDOMElement, isHTMLElement, getElements
 } from "../../helpers/funcsDOM.js";
+import { initLog } from "../../helpers/funcs.js";
 
 //////// CONSTANTS ////////
 
@@ -40,7 +41,7 @@ const MODAL_IMAGE = "modal__image";
  * Clicking any image opens a fullscreen modal with the hi-resolution version.
  * Navigation: click arrows, keyboard arrows/Escape, or swipe on mobile.
  *
- * @param {string} gallerySelector - CSS selector for the gallery container
+ * @param {string|Element} innGallery - CSS selector for the gallery container
  * @param {string} [thumbsFolder="thumbs"] - Subfolder containing thumbnail images
  * @returns {Promise<void>}
  * @throws {Error} If gallery container not found or no valid media elements
@@ -48,26 +49,36 @@ const MODAL_IMAGE = "modal__image";
  * @example
  * await initThumbs("#gallery-work", "thumbs");
  */
-export async function initThumbs(gallerySelector, thumbsFolder = THUMBS_FOLDER) {
-	const gallery = document.querySelector(gallerySelector);
+export async function initThumbs(innGallery, thumbsFolder = THUMBS_FOLDER) {
+	const gallery = typeof innGallery === "string"
+		? getDOMElement(innGallery, document)
+		: innGallery;
 
-	if (!gallery?.isConnected) {
-		throw new Error(`[initThumbs]: Gallery "${gallerySelector}" not found in DOM`);
+	//narrowing type Element to HTMLElement...
+	if (!gallery || !isHTMLElement(gallery)) {
+		throw new Error(`[initThumbs]: Gallery "${innGallery}" not found in DOM or not HTMLElement...`);
 	}
 
 	// Collect all valid media elements (pictures and standalone images)
 	const mediaItems = collectMediaItems(gallery);
 
 	if (mediaItems.length === 0) {
-		console.warn(`[initThumbs]: No media found in "${gallerySelector}"`);
+		initLog("warn", {
+			component: "initThumbs",
+			message: "the mediaItems array is empty",
+			details: { gallery },
+		});
+
 		return;
 	}
 
+	console.log("[initThumbs] mediaItems: ", mediaItems);
+
 	// Initialize modal system with media data
-	const modal = createModalController(mediaItems, { thumbsFolder });
+	//const modal = createModalController(mediaItems, { thumbsFolder });
 
 	// Delegated click handler on gallery container
-	gallery.addEventListener("click", (event) => {
+/*	gallery.addEventListener("click", (event) => {
 		const mediaItem = event.target.closest("picture, img");
 
 		// Ignore if click wasn't on a media element or if img is inside picture
@@ -79,7 +90,7 @@ export async function initThumbs(gallerySelector, thumbsFolder = THUMBS_FOLDER) 
 		if (index !== -1) {
 			modal.open(index);
 		}
-	});
+	});*/
 }
 
 //////// HELPER FUNCTIONS ////////
@@ -92,10 +103,25 @@ export async function initThumbs(gallerySelector, thumbsFolder = THUMBS_FOLDER) 
  * @returns {HTMLElement[]} Array of picture and standalone img elements
  */
 function collectMediaItems(gallery) {
-	const pictures = Array.from(gallery.querySelectorAll("picture"));
+	/*** @type {HTMLElement[]}*/
+	const pictures = getElements(
+		"picture",
+		gallery,
+		true,
+		false,
+		false
+	);
 
 	// Get all images that are NOT inside a picture element
-	const allImages = Array.from(gallery.querySelectorAll("img"));
+	/*** @type {HTMLElement[]}*/
+	const allImages = getElements(
+		"img",
+		gallery,
+		true,
+		false,
+		false
+	);
+
 	const standaloneImages = allImages.filter(img => !img.closest("picture"));
 
 	return [...pictures, ...standaloneImages];

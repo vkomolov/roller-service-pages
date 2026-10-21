@@ -44,8 +44,6 @@ export const langSwitchData = {
 	dataSetKey: "lang"
 };
 
-export const galleryThumbsFolderName = "thumbs";
-
 export const linkClassNameActive = "active";
 
 // ============================================
@@ -106,19 +104,28 @@ export const navMenuSelectorsData = [
 	},
 ];
 
+///////// MASONRY GALLERY CONSTANTS //////////
+
 /**
  * Default configuration for the work gallery Masonry layout.
  *
  * @type {TMasonryConfig}
  */
-export const masonryConfig = {
+export const MASONRY_CONFIG = {
 	itemSelector: ".gallery__item",
 	gap: 16,
 };
 
-///////// ANIMATION CONSTANTS //////////
+
 //! is used for validateImageAspectRatio() in funcsDOM.js
 export const IMAGE_RATIO_TOLERANCE = 0.001;
 
+
+
 //! delay for the masonry gallery images to reveal in ms...
 export const MASONRY_REVEAL_DELAY = 120;
+
+export const MASONRY_INITIALIZE_MARGIN = "200px 0px"; //"0px"
+
+//is used for initThumbs() at index.js
+export const galleryThumbsFolderName = "thumbs";
