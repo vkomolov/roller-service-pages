@@ -129,3 +129,24 @@ export const MASONRY_INITIALIZE_MARGIN = "200px 0px"; //"0px"
 
 //is used for initThumbs() at index.js
 export const galleryThumbsFolderName = "thumbs";
+
+/////////////////////////  MODAL IMAGE VIEWER  ///////////////////////
+/// Aspect ratio constants from README (1290:720) ///
+export const MODAL_MAX_WIDTH = 1290;
+export const MODAL_MAX_HEIGHT = 720;
+
+/// Swipe threshold for touch navigation ///
+export const SWIPE_THRESHOLD = 50;
+export const THUMBS_FOLDER = "thumbs";
+export const FADE_DURATION = 300;
+
+/// ClassNames ///
+export const MODAL_CLASSNAME = "modal";
+export const MODAL_BAR_CLASSNAME = "modal__bar";
+export const MODAL_BAR_ARROW_CLASSNAME = "modal__bar--arrow";
+export const MODAL_BUTTON_CLASSNAME = "modal__btn";
+export const MODAL_COUNTER_CLASSNAME = "modal__counter";
+export const MODAL_LOADER_CLASSNAME = "modal__loader";
+export const MODAL_VIEWPORT_CLASSNAME = "modal__viewport";
+export const IS_LOADED = "is-loaded"; //opacity: 1
+export const MODAL_IMAGE = "modal__image";

@@ -426,7 +426,11 @@ __webpack_require__.r(__webpack_exports__);
  * @typedef {import("../types/dom.types.js").TInitLangSwitcherParams} TInitLangSwitcherParams
  * @typedef {import("../types/dom.types.js").TGetLangItemsParams} TGetLangItemsParams
  * @typedef {import("../types/dom.types.js").TLogMessageParams} TLogMessageParams
- * @typedef {import("../types/dom.types.js").ModalState} ModalState
+ * @typedef {import("../types/dom.types.js").TModalState} TModalState
+ * @typedef {import("../types/dom.types.js").TModalDOM} TModalDOM
+ * @typedef {import("../types/dom.types.js").TModalHandlers} TModalHandlers
+ * @typedef {import("../types/dom.types.js").TModalImageParams} TModalImageParams
+ * @typedef {import("../types/dom.types.js").TCreateModalHandlersCallbacks} TCreateModalHandlersCallbacks
  *
  */
 
@@ -2693,9 +2697,10 @@ function getSelectorName(selector) {
 /**
  * Creates a new HTML element with specified tag and adds the provided CSS classes to it.
  *
- * @param {string} tag - The tag name of the element to create (e.g., 'div', 'span', 'p').
- * @param {...string} classNames - One or more class names to be added to the newly created element.
- * @returns {HTMLElement} The newly created HTML element with the specified tag and classes.
+ * @template {keyof HTMLElementTagNameMap} K
+ * @param {K} tag - HTML tag name.
+ * @param {...string} classNames - CSS class names.
+ * @returns {HTMLElementTagNameMap[K]}
  *
  * @example
  * const div = createElementWithClass('div', 'container', 'main');
@@ -2708,69 +2713,82 @@ function createElementWithClass(tag, ...classNames) {
 }
 
 /**
- * Replaces the file path of the given URL with a new base path.
+ * Removes the thumbnail folder segment from an image URL or srcset string.
  *
- * @param {string} url - The original URL (either `src` or `srcset`) with the file.
- * @param {string} targetFolder - the part of the path (folder) to remove from the path...
- * @returns {string} The updated URL with the new base path to the given file.
+ * @param {string} url - Image URL or srcset value.
+ * @param {string} targetFolder - Thumbnail folder name, e.g. "thumbs".
+ * @returns {string} URL with the thumbnail folder segment removed.
  */
 function replaceFilePath(url, targetFolder) {
-  //to clean from symbols as "./thumbs/", "./thumbs", "/thumbs/", "/thumbs" to "thumbs"
-  const nestedFolder = targetFolder.replace(/^\.?\/?|\/?\.?$/, '');
-  return url.replace(new RegExp(`/${nestedFolder}/`), '/'); // If no match is found, return the original URL
+  const nestedFolder = targetFolder.trim().replace(/^(?:\.\/|\/)+/, "").replace(/\/+$/, "");
+  if (!nestedFolder) return url;
+  const escapedFolder = nestedFolder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return url.replace(new RegExp(`/${escapedFolder}/`), "/");
 }
 
 /**
  * Creates initial modal state
- * @returns {ModalState}
+ * @returns {TModalState}
  */
 function createModalState() {
   return {
     currentIndex: null,
     isOpen: false,
-    isLoading: false,
-    currentImage: null
+    isLoading: false
   };
 }
 
 /**
- * @typedef {{
- *   close: Function,
- *   prev: Function,
- *   next: Function
- * }} TCreateModalHandlersCallbacks
+
  */
 
 /**
- * Creates modal event handlers
- * @param {Object} dom - Modal DOM elements
- * @param {ModalState} state - Modal state reference
- * @param {TCreateModalHandlersCallbacks} callbacks - Action callbacks
- * @returns {{handleKeydown: Function, handleClick: Function}}
+ * Creates modal event handlers.
+ *
+ * @param {TCreateModalHandlersCallbacks} callbacks - Action callbacks.
+ * @returns {{
+ *   handleKeydown: (event: KeyboardEvent) => void,
+ *   handleClick: (event: MouseEvent) => void
+ * }}
  */
-function createModalHandlers(dom, state, callbacks) {
+function createModalHandlers(callbacks) {
+  /** @param {KeyboardEvent} event */
   const handleKeydown = event => {
-    const actions = {
-      Escape: callbacks.close,
-      ArrowLeft: callbacks.prev,
-      ArrowRight: callbacks.next
-    };
-    const action = actions[event.key];
-    if (action) {
-      event.preventDefault();
-      action();
+    switch (event.key) {
+      case "Escape":
+        console.log("Escape...");
+        event.preventDefault();
+        callbacks.close();
+        break;
+      case "ArrowLeft":
+        console.log("ArrowLeft...");
+        event.preventDefault();
+        callbacks.prev();
+        break;
+      case "ArrowRight":
+        console.log("ArrowRight...");
+        event.preventDefault();
+        callbacks.next();
+        break;
     }
   };
+
+  /** @param {MouseEvent} event */
   const handleClick = event => {
-    const button = event.target.closest('[data-action]');
+    if (!(event.target instanceof Element)) return;
+    const button = event.target.closest("[data-action]");
     if (!button) return;
-    const actionMap = {
-      close: callbacks.close,
-      prev: callbacks.prev,
-      next: callbacks.next
-    };
-    const action = actionMap[button.dataset.action];
-    if (action) action();
+    switch (button.getAttribute("data-action")) {
+      case "close":
+        callbacks.close();
+        break;
+      case "prev":
+        callbacks.prev();
+        break;
+      case "next":
+        callbacks.next();
+        break;
+    }
   };
   return {
     handleKeydown,
@@ -2793,44 +2811,58 @@ function calculateNavIndex(current, total, direction) {
 }
 
 /**
- * Attaches modal event listeners
- * @param {HTMLElement} root - Modal root element
- * @param {Function} handleClick - Click handler
- * @param {Function} handleKeydown - Keydown handler
- * @param {{bind: Function}} touch - Touch handler
+ * Attaches modal event listeners.
+ *
+ * @param {HTMLElement} root - Modal root element.
+ * @param {TModalHandlers} handlers
+ *
  */
-function attachModalListeners(root, handleClick, handleKeydown, touch) {
-  root.addEventListener('click', handleClick);
-  document.addEventListener('keydown', handleKeydown);
+function attachModalListeners(root, handlers) {
+  const {
+    handleClick,
+    handleKeydown,
+    touch
+  } = handlers;
+  root.addEventListener("click", handleClick);
+  document.addEventListener("keydown", handleKeydown);
   touch.bind();
 }
 
 /**
- * Detaches modal event listeners
- * @param {HTMLElement} root - Modal root element
- * @param {Function} handleClick - Click handler
- * @param {Function} handleKeydown - Keydown handler
- * @param {{unbind: Function}} touch - Touch handler
+ * Detaches modal event listeners.
+ *
+ * @param {HTMLElement} root - Modal root element.
+ * @param {TModalHandlers} handlers
+ *
  */
-function detachModalListeners(root, handleClick, handleKeydown, touch) {
+function detachModalListeners(root, handlers) {
+  const {
+    handleClick,
+    handleKeydown,
+    touch
+  } = handlers;
   touch.unbind();
-  root.removeEventListener('click', handleClick);
-  document.removeEventListener('keydown', handleKeydown);
+  root.removeEventListener("click", handleClick);
+  document.removeEventListener("keydown", handleKeydown);
 }
 
 /**
- * Cleanup modal on close with fade animation
- * @param {Object} dom - Modal DOM elements
- * @param {ModalState} state - Modal state reference
- * @param {number} fadeDuration - Fade out duration in ms
+ * Cleanup modal on close with fade animation.
+ *
+ * @param {TModalImageParams} params
+ * @param {number} [fadeDuration=300] - Fade out duration in ms.
  * @returns {Promise<void>}
  */
-async function cleanupModal(dom, state, fadeDuration = 300) {
-  dom.root.style.opacity = '0';
+async function cleanupModal(params, fadeDuration = 300) {
+  const {
+    dom,
+    state
+  } = params;
+  dom.root.style.opacity = "0";
   await new Promise(resolve => setTimeout(resolve, fadeDuration));
   dom.root.remove();
-  dom.root.style.opacity = '';
-  document.body.style.overflow = '';
+  dom.root.style.opacity = "";
+  document.body.style.overflow = "";
 
   // Reset state
   state.currentIndex = null;
@@ -2937,6 +2969,7 @@ document.addEventListener("DOMContentLoaded", () => {
            * Do not await it here: its Promise must not block the
            * observer callback or other initialization work.
            */
+          /** @type {Promise<void>} */
           ;(0,_modulesPack_gallery_thumbs_index_js__WEBPACK_IMPORTED_MODULE_2__.initThumbs)(galleryContainer, _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_1__.galleryThumbsFolderName).catch(error => {
             ;(0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_4__.initLog)("error", {
               component: "initThumbs",
@@ -2994,35 +3027,33 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var touchsweep__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! touchsweep */ "./node_modules/touchsweep/dist/touchsweep.js");
 /* harmony import */ var _helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../helpers/funcsDOM.js */ "./src/js/helpers/funcsDOM.js");
-/* harmony import */ var _helpers_funcs_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../helpers/funcs.js */ "./src/js/helpers/funcs.js");
+/* harmony import */ var _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../partials/initialSelectors.js */ "./src/js/partials/initialSelectors.js");
+/* harmony import */ var _helpers_funcs_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../helpers/funcs.js */ "./src/js/helpers/funcs.js");
+
+
+/**
+ * @file gallery-thumbs/index.js
+ *
+ */
+
+//const TouchSweep = require("touchsweep");
 
 
 
 
 
-
-//////// CONSTANTS ////////
-
-/** Aspect ratio constants from README (1290:660) */
-const MODAL_MAX_WIDTH = 1290;
-const MODAL_MAX_HEIGHT = 720;
-
-/** Swipe threshold for touch navigation */
-const SWIPE_THRESHOLD = 50;
-const THUMBS_FOLDER = "thumbs";
-
-/*** ClassNames ***/
-const MODAL_CLASSNAME = "modal";
-const MODAL_BAR_CLASSNAME = "modal__bar";
-const MODAL_BAR_ARROW_CLASSNAME = "modal__bar--arrow";
-const MODAL_BUTTON_CLASSNAME = "modal__btn";
-const MODAL_COUNTER_CLASSNAME = "modal__counter";
-const MODAL_LOADER_CLASSNAME = "modal__loader";
-const MODAL_VIEWPORT_CLASSNAME = "modal__viewport";
-const IS_LOADED = "is-loaded"; //opacity: 1
-const MODAL_IMAGE = "modal__image";
-
-//////// MAIN EXPORT ////////
+//////// TYPES /////////////
+/**
+ *! DOM type aliases used by this module.
+ *
+ * @typedef {import("../../types/dom.types.js").TModalDOM} TModalDOM,
+ * @typedef {import("../../types/dom.types.js").TModalState} TModalState,
+ * @typedef {import("../../types/dom.types.js").TModalHandlers} TModalHandlers,
+ * @typedef {import("../../types/dom.types.js").TModalImageParams} TModalImageParams,
+ * @typedef {import("../../types/dom.types.js").TModalControllerConfig} TModalControllerConfig,
+ * @typedef {import("../../types/dom.types.js").TTouchController} TTouchController
+ *
+ */
 
 /**
  * Initializes a thumbnail gallery with modal functionality.
@@ -3030,14 +3061,14 @@ const MODAL_IMAGE = "modal__image";
  * Navigation: click arrows, keyboard arrows/Escape, or swipe on mobile.
  *
  * @param {string|Element} innGallery - CSS selector for the gallery container
- * @param {string} [thumbsFolder="thumbs"] - Subfolder containing thumbnail images
+ * @param {string} [thumbsFolderName="thumbs"] - Subfolder containing thumbnail images
  * @returns {Promise<void>}
  * @throws {Error} If gallery container not found or no valid media elements
  *
  * @example
- * await initThumbs("#gallery-work", "thumbs");
+ * initThumbs("#gallery-work", "thumbs");
  */
-async function initThumbs(innGallery, thumbsFolder = THUMBS_FOLDER) {
+async function initThumbs(innGallery, thumbsFolderName = _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_2__.THUMBS_FOLDER) {
   const gallery = typeof innGallery === "string" ? (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.getDOMElement)(innGallery, document) : innGallery;
 
   //narrowing type Element to HTMLElement...
@@ -3048,7 +3079,7 @@ async function initThumbs(innGallery, thumbsFolder = THUMBS_FOLDER) {
   // Collect all valid media elements (pictures and standalone images)
   const mediaItems = collectMediaItems(gallery);
   if (mediaItems.length === 0) {
-    (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_2__.initLog)("warn", {
+    (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_3__.initLog)("warn", {
       component: "initThumbs",
       message: "the mediaItems array is empty",
       details: {
@@ -3057,25 +3088,32 @@ async function initThumbs(innGallery, thumbsFolder = THUMBS_FOLDER) {
     });
     return;
   }
-  console.log("[initThumbs] mediaItems: ", mediaItems);
 
   // Initialize modal system with media data
-  //const modal = createModalController(mediaItems, { thumbsFolder });
+  const modal = createModalController(mediaItems, {
+    thumbsFolderName
+  });
 
-  // Delegated click handler on gallery container
-  /*	gallery.addEventListener("click", (event) => {
-  		const mediaItem = event.target.closest("picture, img");
-  
-  		// Ignore if click wasn't on a media element or if img is inside picture
-  		if (!mediaItem || (mediaItem.tagName === "IMG" && mediaItem.closest("picture"))) {
-  			return;
-  		}
-  
-  		const index = mediaItems.indexOf(mediaItem);
-  		if (index !== -1) {
-  			modal.open(index);
-  		}
-  	});*/
+  // Delegate clicks from the gallery container.
+  gallery.addEventListener("click", event => {
+    const target = event.target;
+
+    // Ignore clicks whose target is not an Element.
+    if (!(target instanceof Element)) {
+      return;
+    }
+
+    // Prefer <picture>; otherwise, use a standalone <img>.
+    const mediaItem = target.closest("picture") ?? target.closest("img");
+
+    // Ignore clicks outside the gallery's media items.
+    if (!mediaItem || !gallery.contains(mediaItem)) return;
+    const index = mediaItems.indexOf(mediaItem);
+    if (index !== -1) {
+      //!The `void` operator explicitly indicates that the returned `Promise` is not expected here.
+      void modal.open(index);
+    }
+  });
 }
 
 //////// HELPER FUNCTIONS ////////
@@ -3088,14 +3126,151 @@ async function initThumbs(innGallery, thumbsFolder = THUMBS_FOLDER) {
  * @returns {HTMLElement[]} Array of picture and standalone img elements
  */
 function collectMediaItems(gallery) {
-  /*** @type {HTMLElement[]}*/
-  const pictures = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.getElements)("picture", gallery, true, false, false);
+  /** @type {HTMLElement[]} */
+  const elements = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.getElements)("picture, img", gallery, true, false, false);
 
-  // Get all images that are NOT inside a picture element
-  /*** @type {HTMLElement[]}*/
-  const allImages = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.getElements)("img", gallery, true, false, false);
-  const standaloneImages = allImages.filter(img => !img.closest("picture"));
-  return [...pictures, ...standaloneImages];
+  //filtering "PICTURE" Elements and standalone images (out of img inside "PICTURE"
+  //keeping the same order of images inside gallery list...
+  return elements.filter(element => element.tagName === "PICTURE" || !element.closest("picture"));
+}
+
+/**
+ *
+ * @param {TModalImageParams} params
+ * @param {"left"|"right"} direction - "left", "right"
+ *
+ */
+function initMediaNavigationHandler(params, direction) {
+  if (!params?.state || !params?.items) {
+    console.error("[initMediaNavigationHandler]: Critical data missing!", params);
+    return () => {}; // Возвращаем безопасную "заглушку"
+  }
+  const {
+    state,
+    items
+  } = params;
+  return async () => {
+    // Reading the current index at the moment of the click
+    const curIndex = state.currentIndex;
+    if (state.isLoading || curIndex === null) return;
+    try {
+      await showImage((0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.calculateNavIndex)(curIndex, items.length, direction), params);
+    } catch (error) {
+      console.error('[Modal] Navigation failed:', error);
+    }
+  };
+}
+
+/**
+ * Displays the image at the specified index.
+ * @param {number} index
+ * @param {TModalImageParams} params
+ * @returns {Promise<void>}
+ */
+async function showImage(index, params) {
+  const {
+    state,
+    dom,
+    items,
+    thumbsFolderName
+  } = params;
+  if (!Number.isInteger(index) || index < 0 || index >= items.length) {
+    throw new RangeError(`[showImage]: Invalid image index: ${index}`);
+  }
+  if (index === state.currentIndex && dom.currentImage) return;
+  state.currentIndex = index;
+  state.isLoading = true;
+  const item = items[index];
+  dom.counter.textContent = formatCounter(index, items.length, getAltText(item));
+
+  // Fade out previous
+  if (dom.currentImage) {
+    dom.currentImage.style.opacity = "0";
+    await delay(200);
+    dom.currentImage.remove();
+    dom.currentImage = null;
+  }
+
+  // Show loader
+  dom.viewport.innerHTML = `<div class="${_partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_2__.MODAL_LOADER_CLASSNAME}"></div>`;
+  try {
+    const {
+      element,
+      naturalSize
+    } = await loadHiResImage(item, thumbsFolderName);
+    const currentImage = element;
+    dom.currentImage = currentImage;
+    const dims = calculateViewportDimensions(naturalSize.width, naturalSize.height, dom.root);
+    applyViewportDimensions(dom.viewport, dims);
+    dom.viewport.innerHTML = '';
+    dom.viewport.appendChild(dom.currentImage);
+    requestAnimationFrame(() => {
+      currentImage.classList.add(_partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_2__.IS_LOADED);
+      state.isLoading = false;
+    });
+  } catch (error) {
+    console.error(`[Modal] Failed to load image ${index}:`, error);
+    dom.viewport.innerHTML = `
+                <div class="modal__error">
+                    <span class="modal__error-icon">⚠</span>
+                    <span class="modal__error-text">Failed to load image</span>
+                </div>
+            `;
+    state.isLoading = false;
+  }
+}
+
+/**
+ * Opens the modal and displays the image at the specified index.
+ *
+ * @param {number} index
+ * @param {TModalHandlers} handlers
+ * @param {TModalImageParams} params
+ * @returns {Promise<void>}
+ */
+async function openModal(index, handlers, params) {
+  const {
+    state,
+    dom
+  } = params;
+  if (state.isOpen) return;
+  state.isOpen = true;
+  document.body.style.overflow = "hidden";
+  document.body.appendChild(dom.root);
+  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.attachModalListeners)(dom.root, handlers);
+  try {
+    await showImage(index, params);
+  } catch (error) {
+    console.error('[Modal] Failed to open:', error);
+  }
+}
+
+/**
+ *
+ * @param {TModalHandlers} handlers
+ * @param {TModalImageParams} params
+ * @returns {Promise<void>}
+ */
+async function closeModal(handlers, params) {
+  if (!params?.state || !params?.dom) {
+    (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_3__.initLog)("error", {
+      component: "closeModal",
+      message: "state or dom is undefined...",
+      details: {
+        state: params?.state,
+        dom: params?.dom
+      }
+    });
+    throw new Error("state or dom is undefined at closeModal()...");
+  }
+  const {
+    state,
+    dom
+  } = params;
+  if (!state.isOpen) return;
+  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.detachModalListeners)(dom.root, handlers);
+  await (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.cleanupModal)(params, _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_2__.FADE_DURATION);
+  state.isOpen = false;
 }
 
 /**
@@ -3103,109 +3278,62 @@ function collectMediaItems(gallery) {
  * Refactored for lower complexity - helper functions moved to funcsDOM.
  *
  * @param {HTMLElement[]} items - Array of media elements
- * @param {Object} config - Configuration object
- * @param {string} config.thumbsFolder - Name of thumbnails subfolder
+ * @param {TModalControllerConfig} config - Configuration object
  * @returns {{open: Function}} Modal controller with open method
  */
 function createModalController(items, config) {
   const state = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createModalState)();
   const dom = buildModalDOM();
-  const touch = initTouchHandling(dom.root, navigatePrev, navigateNext);
+  const mediaLength = items.length;
+  const {
+    thumbsFolderName
+  } = config;
+  if (!mediaLength) {
+    (0,_helpers_funcs_js__WEBPACK_IMPORTED_MODULE_3__.initLog)("warn", {
+      component: "createModalController",
+      message: `the given media items list is empty...`,
+      details: items
+    });
+  }
 
-  // Navigation functions
-  async function navigatePrev() {
-    if (state.isLoading) return;
-    try {
-      await showImage((0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.calculateNavIndex)(state.currentIndex, items.length, 'prev'));
-    } catch (error) {
-      console.error('[Modal] Navigation failed:', error);
-    }
-  }
-  async function navigateNext() {
-    if (state.isLoading) return;
-    try {
-      await showImage((0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.calculateNavIndex)(state.currentIndex, items.length, 'next'));
-    } catch (error) {
-      console.error('[Modal] Navigation failed:', error);
-    }
-  }
+  /**@type TModalImageParams */
+  const modalImageParams = {
+    state,
+    dom,
+    items,
+    thumbsFolderName
+  };
+  const navigatePrev = initMediaNavigationHandler(modalImageParams, "left");
+  const navigateNext = initMediaNavigationHandler(modalImageParams, "right");
+  const touch = initTouchHandling(dom.root, navigatePrev, navigateNext);
 
   // Create handlers with bound callbacks
   const {
     handleKeydown,
     handleClick
-  } = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createModalHandlers)(dom, state, {
-    close: closeModal,
-    prev: navigatePrev,
-    next: navigateNext
+  } = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createModalHandlers)({
+    close: () => closeModal(handlers, modalImageParams),
+    prev: () => navigatePrev(),
+    next: () => navigateNext()
   });
 
+  /**@type TModalHandlers*/
+  const handlers = {
+    handleClick,
+    handleKeydown,
+    touch
+  };
+
   /**
-   * Displays image at given index
-   * @param {number} index - Image index
+   *
+   * @param {number} index of the image clicked
+   * @return {Promise<void>}
    */
-  async function showImage(index) {
-    if (index === state.currentIndex && dom.currentImage) return;
-    state.currentIndex = index;
-    state.isLoading = true;
-    const item = items[index];
-    dom.counter.textContent = formatCounter(index, items.length, getAltText(item));
-
-    // Show loader
-    dom.viewport.innerHTML = `<div class=${MODAL_LOADER_CLASSNAME}></div>`;
-
-    // Fade out previous
-    if (dom.currentImage) {
-      dom.currentImage.style.opacity = "0";
-      await delay(200);
-      dom.currentImage.remove();
-      dom.currentImage = null;
-    }
-    try {
-      const {
-        element,
-        naturalSize
-      } = await loadHiResImage(item, config.thumbsFolder);
-      dom.currentImage = element;
-      const dims = calculateViewportDimensions(naturalSize.width, naturalSize.height, dom.root);
-      applyViewportDimensions(dom.viewport, dims);
-      dom.viewport.innerHTML = '';
-      dom.viewport.appendChild(dom.currentImage);
-      requestAnimationFrame(() => {
-        dom.currentImage.classList.add(IS_LOADED);
-        state.isLoading = false;
-      });
-    } catch (error) {
-      console.error(`[Modal] Failed to load image ${index}:`, error);
-      dom.viewport.innerHTML = `
-                <div class="modal__error">
-                    <span class="modal__error-icon">⚠</span>
-                    <span class="modal__error-text">Failed to load image</span>
-                </div>
-            `;
-      state.isLoading = false;
-    }
-  }
-  async function openModal(startIndex) {
-    if (state.isOpen) return;
-    state.isOpen = true;
-    document.body.style.overflow = "hidden";
-    document.body.appendChild(dom.root);
-    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.attachModalListeners)(dom.root, handleClick, handleKeydown, touch);
-    try {
-      await showImage(startIndex);
-    } catch (error) {
-      console.error('[Modal] Failed to open:', error);
-    }
-  }
-  async function closeModal() {
-    if (!state.isOpen) return;
-    state.isOpen = false;
-    (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.detachModalListeners)(dom.root, handleClick, handleKeydown, touch);
-    await (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.cleanupModal)(dom, state);
+  async function openModalImage(index) {
+    await openModal(index, handlers, modalImageParams);
   }
   return {
-    open: openModal
+    open: openModalImage
   };
 }
 
@@ -3213,27 +3341,29 @@ function createModalController(items, config) {
 
 /**
  * Builds modal DOM structure with all necessary elements.
- * Uses createElementWithClass from funcsDOM for consistency.
+ * Uses createElementWithClass from funcsDOM.js for consistency.
  *
- * @returns {Object} Modal DOM elements reference object
+ * @returns {TModalDOM} Modal DOM elements reference object
  */
 function buildModalDOM() {
-  const root = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", MODAL_CLASSNAME);
+  const root = /** @type {HTMLDivElement} */
+  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_2__.MODAL_CLASSNAME);
 
   // Top bar with counter and close button
-  const header = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", MODAL_BAR_CLASSNAME);
-  const counter = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("span", MODAL_COUNTER_CLASSNAME);
+  const header = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_2__.MODAL_BAR_CLASSNAME);
+  const counter = /** @type {HTMLSpanElement} */
+  (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("span", _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_2__.MODAL_COUNTER_CLASSNAME);
   const closeBtn = createModalButton("×", "close", true);
   header.append(counter, closeBtn);
 
   // Navigation arrows (left/right)
-  const navBar = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", MODAL_BAR_CLASSNAME, MODAL_BAR_ARROW_CLASSNAME);
+  const navBar = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_2__.MODAL_BAR_CLASSNAME, _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_2__.MODAL_BAR_ARROW_CLASSNAME);
   const prevBtn = createModalButton("‹", "prev");
   const nextBtn = createModalButton("›", "next");
   navBar.append(prevBtn, nextBtn);
 
   // Main viewport for images
-  const viewport = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", MODAL_VIEWPORT_CLASSNAME);
+  const viewport = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("div", _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_2__.MODAL_VIEWPORT_CLASSNAME);
 
   // Assemble structure
   root.append(header, navBar, viewport);
@@ -3248,13 +3378,13 @@ function buildModalDOM() {
 /**
  * Creates a modal control button.
  *
- * @param {string} symbol - Button text/icon
- * @param {string} action - Action identifier (close, prev, next)
- * @param {boolean} [isAbsolute=false] - Whether button is absolutely positioned
- * @returns {HTMLButtonElement} Created button element
+ * @param {string} symbol - Button text or icon.
+ * @param {"close" | "prev" | "next"} action - Button action.
+ * @param {boolean} [isAbsolute=false] - Whether the button is absolutely positioned.
+ * @returns {HTMLButtonElement}
  */
 function createModalButton(symbol, action, isAbsolute = false) {
-  const btn = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("button", MODAL_BUTTON_CLASSNAME, `${MODAL_BUTTON_CLASSNAME}--${action}`);
+  const btn = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.createElementWithClass)("button", _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_2__.MODAL_BUTTON_CLASSNAME, `${_partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_2__.MODAL_BUTTON_CLASSNAME}--${action}`);
   btn.textContent = symbol;
   btn.dataset.action = action;
   btn.type = "button";
@@ -3268,129 +3398,131 @@ function createModalButton(symbol, action, isAbsolute = false) {
 //////// IMAGE LOADING ////////
 
 /**
- * Loads hi-resolution image and returns element with natural dimensions.
- * Replaces thumbnail path with hi-res path, waits for load, extracts size.
+ * Loads an image URL and returns its natural dimensions.
  *
- * @param {HTMLElement} original - Original thumbnail element
- * @param {string} thumbsFolder - Thumbnails subfolder name
- * @returns {Promise<{element: HTMLElement, naturalSize: {width: number, height: number}}>}
+ * @param {string} url
+ * @returns {Promise<{width: number, height: number}>}
  */
-async function loadHiResImage(original, thumbsFolder) {
-  /** @type {HTMLElement} */
-  const clone = /** @type {HTMLElement} */original.cloneNode(true);
-  clone.classList.add(MODAL_IMAGE);
+function loadImagePromise(url) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve({
+      width: image.naturalWidth,
+      height: image.naturalHeight
+    });
+    image.onerror = () => {
+      reject(new Error(`Failed to load image: ${url}`));
+    };
+    image.src = url;
+  });
+}
 
-  // Remove fixed dimensions from thumbnail
+/**
+ * Loads the high-resolution image, falling back to the thumbnail.
+ *
+ * @param {string} hiResUrl
+ * @param {string} thumbnailUrl
+ * @returns {Promise<{
+ *   url: string,
+ *   naturalSize: {width: number, height: number}
+ * }>}
+ */
+async function loadWithFallback(hiResUrl, thumbnailUrl) {
+  if (hiResUrl === thumbnailUrl) {
+    return {
+      url: thumbnailUrl,
+      naturalSize: await loadImagePromise(thumbnailUrl)
+    };
+  }
+  try {
+    return {
+      url: hiResUrl,
+      naturalSize: await loadImagePromise(hiResUrl)
+    };
+  } catch {
+    return {
+      url: thumbnailUrl,
+      naturalSize: await loadImagePromise(thumbnailUrl)
+    };
+  }
+}
+
+/**
+ * Rewrites source candidates inside the cloned picture element.
+ *
+ * @param {HTMLElement} clone
+ * @param {string} thumbsFolder
+ */
+function updatePictureSources(clone, thumbsFolder) {
+  if (clone.tagName !== "PICTURE") return;
+  const sources = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.getElements)("source[srcset]", clone);
+  sources.forEach(source => {
+    const srcset = source.getAttribute("srcset");
+    if (!srcset) return;
+    source.setAttribute("srcset", (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.replaceFilePath)(srcset, thumbsFolder));
+  });
+}
+
+/**
+ *
+ * @param {HTMLElement} original
+ * @return {HTMLElement}
+ */
+function getCleanedClone(original) {
+  const clone = /** @type {HTMLElement} */
+  original.cloneNode(true);
+  clone.classList.add(_partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_2__.MODAL_IMAGE);
   clone.removeAttribute("width");
   clone.removeAttribute("height");
-
-  // Remove lazy loading - not needed in modal
   clone.removeAttribute("loading");
   clone.removeAttribute("decoding");
+  return clone;
+}
 
-  // Get main image element
-  /** @type {HTMLImageElement|null} */
-  const mainImg = clone.tagName === "IMG" ? (/** @type {HTMLImageElement} */clone) : clone.querySelector("img");
-  if (!mainImg) {
-    throw new Error("No image element found in clone");
+/**
+ * Returns the image element inside an img or picture element.
+ *
+ * @param {HTMLElement} element
+ * @returns {HTMLImageElement}
+ */
+function getImageElement(element) {
+  const image = element.tagName === "IMG" ? (/** @type {HTMLImageElement} */element) : (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.getDOMElement)("img", element, true);
+  if (!image || !(image instanceof HTMLImageElement)) {
+    throw new Error("[getImageElement]: Expected an img or picture containing an img.");
   }
+  return image;
+}
 
-  // Get original src and calculate hi-res URL
-  const originalSrc = mainImg.getAttribute("src");
-  const hiResUrl = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.replaceFilePath)(originalSrc, thumbsFolder);
-
-  // Create a fresh Image object to load hi-res version
-  const loaderImg = new Image();
-
-  // Wait for hi-res to load
-  const naturalSize = await new Promise((resolve, reject) => {
-    loaderImg.onload = () => {
-      resolve({
-        width: loaderImg.naturalWidth,
-        height: loaderImg.naturalHeight
-      });
-    };
-    loaderImg.onerror = () => {
-      reject(new Error(`Failed to load: ${hiResUrl}`));
-    };
-    loaderImg.src = hiResUrl;
-  });
-
-  // Update the clone's src and set natural dimensions as attributes
-  mainImg.src = hiResUrl;
-  mainImg.setAttribute("width", naturalSize.width);
-  mainImg.setAttribute("height", naturalSize.height);
-
-  // Also update srcset if present in sources
-  if (clone.tagName === "PICTURE") {
-    /** @type {NodeListOf<HTMLSourceElement>} */
-    const sources = clone.querySelectorAll("source");
-    sources.forEach(src => {
-      if (src.hasAttribute("srcset")) {
-        const srcsetUrl = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.replaceFilePath)(src.getAttribute("srcset"), thumbsFolder);
-        src.setAttribute("srcset", srcsetUrl);
-      }
-    });
+/**
+ * Loads the high-resolution image, falling back to the thumbnail if needed.
+ *
+ * @param {HTMLElement} original
+ * @param {string} thumbsFolder
+ * @returns {Promise<{
+ *   element: HTMLElement,
+ *   naturalSize: {width: number, height: number}
+ * }>}
+ */
+async function loadHiResImage(original, thumbsFolder) {
+  const clone = getCleanedClone(original);
+  const sourceImg = getImageElement(original);
+  const mainImg = getImageElement(clone);
+  const thumbnailUrl = sourceImg.currentSrc || sourceImg.src;
+  const hiResUrl = (0,_helpers_funcsDOM_js__WEBPACK_IMPORTED_MODULE_1__.replaceFilePath)(thumbnailUrl, thumbsFolder);
+  const {
+    url,
+    naturalSize
+  } = await loadWithFallback(hiResUrl, thumbnailUrl);
+  if (url === hiResUrl) {
+    updatePictureSources(clone, thumbsFolder);
   }
+  mainImg.src = url;
+  mainImg.width = naturalSize.width;
+  mainImg.height = naturalSize.height;
   return {
     element: clone,
     naturalSize
   };
-}
-
-/**
- * Waits for image to load and returns its natural dimensions.
- * Handles already-cached images immediately.
- *
- * @param {HTMLImageElement} img - Image element to wait for
- * @returns {Promise<{width: number, height: number}>}
- */
-function waitForImageLoad(img) {
-  return new Promise((resolve, reject) => {
-    // Check if already loaded with valid dimensions
-    if (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
-      console.log(`[waitForImageLoad] Already loaded: ${img.naturalWidth}x${img.naturalHeight}`);
-      resolve({
-        width: img.naturalWidth,
-        height: img.naturalHeight
-      });
-      return;
-    }
-
-    // Set up handlers before setting src to avoid race condition
-    const onLoad = () => {
-      console.log(`[waitForImageLoad] Load event: ${img.naturalWidth}x${img.naturalHeight}`);
-      cleanup();
-      resolve({
-        width: img.naturalWidth,
-        height: img.naturalHeight
-      });
-    };
-    const onError = () => {
-      console.error(`[waitForImageLoad] Error: ${img.src}`);
-      cleanup();
-      reject(new Error(`Failed to load image: ${img.src}`));
-    };
-    const cleanup = () => {
-      img.removeEventListener("load", onLoad);
-      img.removeEventListener("error", onError);
-    };
-    img.addEventListener("load", onLoad, {
-      once: true
-    });
-    img.addEventListener("error", onError, {
-      once: true
-    });
-
-    // If image is not complete, wait for it
-    // If it's complete but naturalWidth is 0, force reload
-    if (img.complete && img.naturalWidth === 0) {
-      console.log(`[waitForImageLoad] Forcing reload`);
-      const currentSrc = img.src;
-      img.src = "";
-      img.src = currentSrc;
-    }
-  });
 }
 
 //////// VIEWPORT CALCULATIONS ////////
@@ -3405,6 +3537,8 @@ function waitForImageLoad(img) {
  * @returns {{width: number, height: number}} Calculated dimensions
  */
 function calculateViewportDimensions(imgWidth, imgHeight, modal) {
+  //TODO: to validate imgWidth and imgHeight...
+
   // Get modal styles for padding calculations
   const modalStyles = window.getComputedStyle(modal);
   const paddingX = parseFloat(modalStyles.paddingLeft) + parseFloat(modalStyles.paddingRight);
@@ -3413,29 +3547,10 @@ function calculateViewportDimensions(imgWidth, imgHeight, modal) {
   // Available space for image (use full modal space minus padding)
   const availableWidth = modal.clientWidth - paddingX;
   const availableHeight = modal.clientHeight - paddingY;
-
-  // Image and available space aspect ratios
-  const imgRatio = imgWidth / imgHeight;
-  const availableRatio = availableWidth / availableHeight;
-  let finalWidth, finalHeight;
-
-  // Fit by the dimension that is more constrained
-  if (imgRatio > availableRatio) {
-    // Image is relatively wider - constrain by available width
-    finalWidth = availableWidth;
-    finalHeight = availableWidth / imgRatio;
-  } else {
-    // Image is relatively taller - constrain by available height
-    finalHeight = availableHeight;
-    finalWidth = availableHeight * imgRatio;
-  }
-
-  // Cap at max dimensions from README
-  finalWidth = Math.min(finalWidth, MODAL_MAX_WIDTH);
-  finalHeight = Math.min(finalHeight, MODAL_MAX_HEIGHT);
+  const scale = Math.min(1, availableWidth / imgWidth, availableHeight / imgHeight, _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_2__.MODAL_MAX_WIDTH / imgWidth, _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_2__.MODAL_MAX_HEIGHT / imgHeight);
   return {
-    width: Math.round(finalWidth),
-    height: Math.round(finalHeight)
+    width: Math.round(imgWidth * scale),
+    height: Math.round(imgHeight * scale)
   };
 }
 
@@ -3456,22 +3571,28 @@ function applyViewportDimensions(viewport, dimensions) {
  * Initializes touch swipe handling for modal navigation.
  * Uses TouchSweep library with custom threshold.
  *
- * @param {HTMLElement} element - Element to attach swipe to
- * @param {Function} onSwipeLeft - Handler for left swipe (show previous)
- * @param {Function} onSwipeRight - Handler for right swipe (show next)
- * @returns {{bind: Function, unbind: Function}} Control methods
+ * @param {HTMLElement} element
+ * @param {() => void} onSwipeLeft
+ * @param {() => void} onSwipeRight
+ * @returns {TTouchController}
  */
 function initTouchHandling(element, onSwipeLeft, onSwipeRight) {
-  const handler = new touchsweep__WEBPACK_IMPORTED_MODULE_0__["default"](element, {}, SWIPE_THRESHOLD);
+  // Вытаскиваем реальный конструктор из Interop-объекта Webpack
+  // Кастим к any, чтобы TS не ругался на отсутствие свойства .default в типах библиотеки
+  const LibTarget = /** @type {*} */touchsweep__WEBPACK_IMPORTED_MODULE_0__;
+  const Constructor = LibTarget.default || LibTarget;
+  const handler = new Constructor(element, {}, _partials_initialSelectors_js__WEBPACK_IMPORTED_MODULE_2__.SWIPE_THRESHOLD);
 
   // TouchSweep fires custom events on the element
   const handleSwipeLeft = () => onSwipeLeft();
   const handleSwipeRight = () => onSwipeRight();
-  element.addEventListener("swipeleft", handleSwipeLeft);
-  element.addEventListener("swiperight", handleSwipeRight);
   return {
-    bind: () => handler.bind(),
-    unbind: () => {
+    bind() {
+      handler.bind();
+      element.addEventListener("swipeleft", handleSwipeLeft);
+      element.addEventListener("swiperight", handleSwipeRight);
+    },
+    unbind() {
       handler.unbind();
       element.removeEventListener("swipeleft", handleSwipeLeft);
       element.removeEventListener("swiperight", handleSwipeRight);
@@ -5309,11 +5430,25 @@ function killAnimation(key) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   FADE_DURATION: function() { return /* binding */ FADE_DURATION; },
 /* harmony export */   IMAGE_RATIO_TOLERANCE: function() { return /* binding */ IMAGE_RATIO_TOLERANCE; },
+/* harmony export */   IS_LOADED: function() { return /* binding */ IS_LOADED; },
 /* harmony export */   MASONRY_CONFIG: function() { return /* binding */ MASONRY_CONFIG; },
 /* harmony export */   MASONRY_INITIALIZE_MARGIN: function() { return /* binding */ MASONRY_INITIALIZE_MARGIN; },
 /* harmony export */   MASONRY_REVEAL_DELAY: function() { return /* binding */ MASONRY_REVEAL_DELAY; },
+/* harmony export */   MODAL_BAR_ARROW_CLASSNAME: function() { return /* binding */ MODAL_BAR_ARROW_CLASSNAME; },
+/* harmony export */   MODAL_BAR_CLASSNAME: function() { return /* binding */ MODAL_BAR_CLASSNAME; },
+/* harmony export */   MODAL_BUTTON_CLASSNAME: function() { return /* binding */ MODAL_BUTTON_CLASSNAME; },
+/* harmony export */   MODAL_CLASSNAME: function() { return /* binding */ MODAL_CLASSNAME; },
+/* harmony export */   MODAL_COUNTER_CLASSNAME: function() { return /* binding */ MODAL_COUNTER_CLASSNAME; },
+/* harmony export */   MODAL_IMAGE: function() { return /* binding */ MODAL_IMAGE; },
+/* harmony export */   MODAL_LOADER_CLASSNAME: function() { return /* binding */ MODAL_LOADER_CLASSNAME; },
+/* harmony export */   MODAL_MAX_HEIGHT: function() { return /* binding */ MODAL_MAX_HEIGHT; },
+/* harmony export */   MODAL_MAX_WIDTH: function() { return /* binding */ MODAL_MAX_WIDTH; },
+/* harmony export */   MODAL_VIEWPORT_CLASSNAME: function() { return /* binding */ MODAL_VIEWPORT_CLASSNAME; },
 /* harmony export */   SELECTORS: function() { return /* binding */ SELECTORS; },
+/* harmony export */   SWIPE_THRESHOLD: function() { return /* binding */ SWIPE_THRESHOLD; },
+/* harmony export */   THUMBS_FOLDER: function() { return /* binding */ THUMBS_FOLDER; },
 /* harmony export */   galleryThumbsFolderName: function() { return /* binding */ galleryThumbsFolderName; },
 /* harmony export */   langSwitchData: function() { return /* binding */ langSwitchData; },
 /* harmony export */   linkAnchors: function() { return /* binding */ linkAnchors; },
@@ -5440,6 +5575,27 @@ const MASONRY_INITIALIZE_MARGIN = "200px 0px"; //"0px"
 
 //is used for initThumbs() at index.js
 const galleryThumbsFolderName = "thumbs";
+
+/////////////////////////  MODAL IMAGE VIEWER  ///////////////////////
+/// Aspect ratio constants from README (1290:720) ///
+const MODAL_MAX_WIDTH = 1290;
+const MODAL_MAX_HEIGHT = 720;
+
+/// Swipe threshold for touch navigation ///
+const SWIPE_THRESHOLD = 50;
+const THUMBS_FOLDER = "thumbs";
+const FADE_DURATION = 300;
+
+/// ClassNames ///
+const MODAL_CLASSNAME = "modal";
+const MODAL_BAR_CLASSNAME = "modal__bar";
+const MODAL_BAR_ARROW_CLASSNAME = "modal__bar--arrow";
+const MODAL_BUTTON_CLASSNAME = "modal__btn";
+const MODAL_COUNTER_CLASSNAME = "modal__counter";
+const MODAL_LOADER_CLASSNAME = "modal__loader";
+const MODAL_VIEWPORT_CLASSNAME = "modal__viewport";
+const IS_LOADED = "is-loaded"; //opacity: 1
+const MODAL_IMAGE = "modal__image";
 
 /***/ })
 

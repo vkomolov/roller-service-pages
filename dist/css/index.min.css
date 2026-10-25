@@ -252,9 +252,9 @@ h2,h3,h4,h5{
 :root{
   --modal-bg:rgba(0,0,0,.92);
   --modal-text:hsla(0,0%,100%,.9);
-  --modal-accent:#ff8502;
-  --modal-accent-hover:#ff9928;
-  --modal-btn-bg:rgba(255,133,2,.6);
+  --modal-accent:rgba(43,43,42,.9);
+  --modal-accent-hover:rgba(43,43,42,.7);
+  --modal-btn-bg:rgba(43,43,42,.4);
   --modal-transition:opacity 0.3s ease, transform 0.2s ease;
   --modal-z-index:1000;
 }
@@ -340,19 +340,18 @@ h2,h3,h4,h5{
   cursor:pointer;
   display:flex;
   font-size:clamp(1.25rem, 2.5vw, 1.75rem);
-  font-weight:300;
-  height:clamp(2.5rem, 5vw, 3.5rem);
+  font-weight:700;
+  height:clamp(2.5rem, 5vw, 3rem);
   justify-content:center;
   pointer-events:auto;
   transition:var(--modal-transition);
-  width:clamp(2.5rem, 5vw, 3.5rem);
+  width:clamp(2.5rem, 5vw, 3rem);
 }
 .modal__btn:hover{
-  background-color:var(--modal-accent);
-  transform:scale(1.08);
+  background-color:var(--modal-accent-hover);
 }
 .modal__btn:active{
-  transform:scale(.95);
+  background-color:var(--modal-accent);
 }
 .modal__btn--close{
   font-size:clamp(1.5rem, 3vw, 2rem);

@@ -117,14 +117,69 @@
  */
 
 /**
- * ModalState
- *
- * @typedef {Object} ModalState
- * @property {number|null} currentIndex
+ * TModalState
+ * @typedef {Object} TModalState
+ * @property {number | null} currentIndex
  * @property {boolean} isOpen
  * @property {boolean} isLoading
- * @property {HTMLElement|null} currentImage
  */
+
+/**
+ * TModalDOM is used in gallery-thumbs/index.js
+ *
+ * @typedef {Object} TModalDOM
+ * @property {HTMLDivElement} root
+ * @property {HTMLSpanElement} counter
+ * @property {HTMLDivElement} viewport
+ * @property {HTMLElement | null} currentImage
+ */
+
+/**
+ * TModalImageParams Is used in showImage (gallery-thumbs/index.js)...
+ * @typedef {{
+ *   state: TModalState,
+ *   dom: TModalDOM,
+ *   items: HTMLElement[],
+ *   thumbsFolderName: string,
+ * }} TModalImageParams
+ */
+
+/**
+ * TModalControllerConfig
+ * @typedef {{
+ *   thumbsFolderName: string
+ * }} TModalControllerConfig
+ */
+
+/**
+ * TTouchController
+ *
+ * @typedef {Object} TTouchController
+ * @property {() => void} bind
+ * @property {() => void} unbind
+ */
+
+/**
+ * TModalHandlers
+ *
+ * @typedef {{
+ *   handleClick: (event: MouseEvent) => void,
+ *   handleKeydown: (event: KeyboardEvent) => void,
+ *   touch: TTouchController,
+ * }} TModalHandlers
+ */
+
+/**
+ * TCreateModalHandlersCallbacks for helpers/funcsDOM.js/createModalHandlers()
+ *
+ * @typedef {{
+ *   close: Function,
+ *   prev: Function,
+ *   next: Function
+ * }} TCreateModalHandlersCallbacks
+ */
+
+
 
 // Mark this file as an ES module without introducing runtime dependencies.
 export {};

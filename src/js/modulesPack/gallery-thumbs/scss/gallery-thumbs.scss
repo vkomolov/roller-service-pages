@@ -7,9 +7,9 @@
 :root {
 	--modal-bg: rgba(0, 0, 0, 0.92);
 	--modal-text: rgba(255, 255, 255, 0.9);
-	--modal-accent: rgba(255, 133, 2, 1);
-	--modal-accent-hover: rgba(255, 153, 40, 1);
-	--modal-btn-bg: rgba(255, 133, 2, 0.6);
+	--modal-accent: rgba(43, 43, 42, 0.9);
+	--modal-accent-hover: rgba(43, 43, 42, 0.7);
+	--modal-btn-bg: rgba(43, 43, 42, 0.4);
 	--modal-transition: opacity 0.3s ease, transform 0.2s ease;
 	--modal-z-index: 1000;
 }
@@ -126,26 +126,25 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: clamp(2.5rem, 5vw, 3.5rem);
-	height: clamp(2.5rem, 5vw, 3.5rem);
+	width: clamp(2.5rem, 5vw, 3rem);
+	height: clamp(2.5rem, 5vw, 3rem);
 	border-radius: 50%;
 	border: none;
 	background-color: var(--modal-btn-bg);
 	color: #fff;
 	font-size: clamp(1.25rem, 2.5vw, 1.75rem);
-	font-weight: 300;
+	font-weight: 700;
 	cursor: pointer;
 	pointer-events: auto; // Re-enable clicks on buttons
 	transition: var(--modal-transition);
 	backdrop-filter: blur(4px);
 
 	&:hover {
-		background-color: var(--modal-accent);
-		transform: scale(1.08);
+		background-color: var(--modal-accent-hover);
 	}
 
 	&:active {
-		transform: scale(0.95);
+		background-color: var(--modal-accent);
 	}
 
 	// Close button positioning

@@ -107,10 +107,10 @@ document.addEventListener("DOMContentLoaded", () => {
 					 * Do not await it here: its Promise must not block the
 					 * observer callback or other initialization work.
 					 */
-					initThumbs(
+					/** @type {Promise<void>} */ (initThumbs(
 						galleryContainer,
 						galleryThumbsFolderName,
-					).catch((error) => {
+					)).catch((error) => {
 						initLog("error", {
 							component: "initThumbs",
 							message: "Failed to initThumbs...",

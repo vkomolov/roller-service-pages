@@ -14,7 +14,11 @@ import {MASONRY_REVEAL_DELAY, IMAGE_RATIO_TOLERANCE} from "../partials/initialSe
  * @typedef {import("../types/dom.types.js").TInitLangSwitcherParams} TInitLangSwitcherParams
  * @typedef {import("../types/dom.types.js").TGetLangItemsParams} TGetLangItemsParams
  * @typedef {import("../types/dom.types.js").TLogMessageParams} TLogMessageParams
- * @typedef {import("../types/dom.types.js").ModalState} ModalState
+ * @typedef {import("../types/dom.types.js").TModalState} TModalState
+ * @typedef {import("../types/dom.types.js").TModalDOM} TModalDOM
+ * @typedef {import("../types/dom.types.js").TModalHandlers} TModalHandlers
+ * @typedef {import("../types/dom.types.js").TModalImageParams} TModalImageParams
+ * @typedef {import("../types/dom.types.js").TCreateModalHandlersCallbacks} TCreateModalHandlersCallbacks
  *
  */
 
@@ -2760,9 +2764,10 @@ export function getSelectorName(selector) {
 /**
  * Creates a new HTML element with specified tag and adds the provided CSS classes to it.
  *
- * @param {string} tag - The tag name of the element to create (e.g., 'div', 'span', 'p').
- * @param {...string} classNames - One or more class names to be added to the newly created element.
- * @returns {HTMLElement} The newly created HTML element with the specified tag and classes.
+ * @template {keyof HTMLElementTagNameMap} K
+ * @param {K} tag - HTML tag name.
+ * @param {...string} classNames - CSS class names.
+ * @returns {HTMLElementTagNameMap[K]}
  *
  * @example
  * const div = createElementWithClass('div', 'container', 'main');
@@ -2775,78 +2780,109 @@ export function createElementWithClass(tag, ...classNames) {
 }
 
 /**
- * Replaces the file path of the given URL with a new base path.
+ * Removes the thumbnail folder segment from an image URL or srcset string.
  *
- * @param {string} url - The original URL (either `src` or `srcset`) with the file.
- * @param {string} targetFolder - the part of the path (folder) to remove from the path...
- * @returns {string} The updated URL with the new base path to the given file.
+ * @param {string} url - Image URL or srcset value.
+ * @param {string} targetFolder - Thumbnail folder name, e.g. "thumbs".
+ * @returns {string} URL with the thumbnail folder segment removed.
  */
 export function replaceFilePath(url, targetFolder) {
-	//to clean from symbols as "./thumbs/", "./thumbs", "/thumbs/", "/thumbs" to "thumbs"
-	const nestedFolder = targetFolder.replace(/^\.?\/?|\/?\.?$/, '');
+	const nestedFolder = targetFolder
+		.trim()
+		.replace(/^(?:\.\/|\/)+/, "")
+		.replace(/\/+$/, "");
 
-	return url.replace(new RegExp(`/${nestedFolder}/`), '/'); // If no match is found, return the original URL
+	if (!nestedFolder) return url;
+
+	const escapedFolder = nestedFolder.replace(
+		/[.*+?^${}()|[\]\\]/g,
+		"\\$&"
+	);
+
+	return url.replace(
+		new RegExp(`/${escapedFolder}/`),
+		"/"
+	);
 }
+
 
 /**
  * Creates initial modal state
- * @returns {ModalState}
+ * @returns {TModalState}
  */
 export function createModalState() {
 	return {
 		currentIndex: null,
 		isOpen: false,
 		isLoading: false,
-		currentImage: null
 	};
 }
 
 /**
- * @typedef {{
- *   close: Function,
- *   prev: Function,
- *   next: Function
- * }} TCreateModalHandlersCallbacks
+
  */
 
 /**
- * Creates modal event handlers
- * @param {Object} dom - Modal DOM elements
- * @param {ModalState} state - Modal state reference
- * @param {TCreateModalHandlersCallbacks} callbacks - Action callbacks
- * @returns {{handleKeydown: Function, handleClick: Function}}
+ * Creates modal event handlers.
+ *
+ * @param {TCreateModalHandlersCallbacks} callbacks - Action callbacks.
+ * @returns {{
+ *   handleKeydown: (event: KeyboardEvent) => void,
+ *   handleClick: (event: MouseEvent) => void
+ * }}
  */
-export function createModalHandlers(dom, state, callbacks) {
+export function createModalHandlers(callbacks) {
+	/** @param {KeyboardEvent} event */
 	const handleKeydown = event => {
-		const actions = {
-			Escape: callbacks.close,
-			ArrowLeft: callbacks.prev,
-			ArrowRight: callbacks.next
-		};
+		switch (event.key) {
+			case "Escape":
+				console.log("Escape...");
 
-		const action = actions[event.key];
-		if (action) {
-			event.preventDefault();
-			action();
+				event.preventDefault();
+				callbacks.close();
+				break;
+
+			case "ArrowLeft":
+				console.log("ArrowLeft...");
+
+				event.preventDefault();
+				callbacks.prev();
+				break;
+
+			case "ArrowRight":
+				console.log("ArrowRight...");
+
+				event.preventDefault();
+				callbacks.next();
+				break;
 		}
 	};
 
+	/** @param {MouseEvent} event */
 	const handleClick = event => {
-		const button = event.target.closest('[data-action]');
+		if (!(event.target instanceof Element)) return;
+
+		const button = event.target.closest("[data-action]");
 		if (!button) return;
 
-		const actionMap = {
-			close: callbacks.close,
-			prev: callbacks.prev,
-			next: callbacks.next
-		};
+		switch (button.getAttribute("data-action")) {
+			case "close":
+				callbacks.close();
+				break;
 
-		const action = actionMap[button.dataset.action];
-		if (action) action();
+			case "prev":
+				callbacks.prev();
+				break;
+
+			case "next":
+				callbacks.next();
+				break;
+		}
 	};
 
 	return { handleKeydown, handleClick };
 }
+
 
 /**
  * Calculates navigation index with wrap-around
@@ -2863,53 +2899,75 @@ export function calculateNavIndex(current, total, direction) {
 }
 
 /**
- * Attaches modal event listeners
- * @param {HTMLElement} root - Modal root element
- * @param {Function} handleClick - Click handler
- * @param {Function} handleKeydown - Keydown handler
- * @param {{bind: Function}} touch - Touch handler
+ * Attaches modal event listeners.
+ *
+ * @param {HTMLElement} root - Modal root element.
+ * @param {TModalHandlers} handlers
+ *
  */
-export function attachModalListeners(root, handleClick, handleKeydown, touch) {
-	root.addEventListener('click', handleClick);
-	document.addEventListener('keydown', handleKeydown);
+export function attachModalListeners(
+	root,
+	handlers
+) {
+	const {
+		handleClick,
+		handleKeydown,
+		touch
+	} = handlers;
+
+	root.addEventListener("click", handleClick);
+	document.addEventListener("keydown", handleKeydown);
 	touch.bind();
 }
 
 /**
- * Detaches modal event listeners
- * @param {HTMLElement} root - Modal root element
- * @param {Function} handleClick - Click handler
- * @param {Function} handleKeydown - Keydown handler
- * @param {{unbind: Function}} touch - Touch handler
+ * Detaches modal event listeners.
+ *
+ * @param {HTMLElement} root - Modal root element.
+ * @param {TModalHandlers} handlers
+ *
  */
-export function detachModalListeners(root, handleClick, handleKeydown, touch) {
+export function detachModalListeners(
+	root,
+	handlers
+) {
+	const {
+		handleClick,
+		handleKeydown,
+		touch,
+	} = handlers;
+
 	touch.unbind();
-	root.removeEventListener('click', handleClick);
-	document.removeEventListener('keydown', handleKeydown);
+
+	root.removeEventListener("click", handleClick);
+	document.removeEventListener("keydown", handleKeydown);
 }
 
+
 /**
- * Cleanup modal on close with fade animation
- * @param {Object} dom - Modal DOM elements
- * @param {ModalState} state - Modal state reference
- * @param {number} fadeDuration - Fade out duration in ms
+ * Cleanup modal on close with fade animation.
+ *
+ * @param {TModalImageParams} params
+ * @param {number} [fadeDuration=300] - Fade out duration in ms.
  * @returns {Promise<void>}
  */
-export async function cleanupModal(dom, state, fadeDuration = 300) {
-	dom.root.style.opacity = '0';
+export async function cleanupModal(params, fadeDuration = 300) {
+	const {dom, state} = params;
+
+	dom.root.style.opacity = "0";
 
 	await new Promise(resolve => setTimeout(resolve, fadeDuration));
 
 	dom.root.remove();
-	dom.root.style.opacity = '';
+	dom.root.style.opacity = "";
 
-	document.body.style.overflow = '';
+	document.body.style.overflow = "";
 
 	// Reset state
 	state.currentIndex = null;
+
 	if (dom.currentImage) {
 		dom.currentImage.remove();
 		dom.currentImage = null;
 	}
 }
-
