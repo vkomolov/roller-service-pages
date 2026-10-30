@@ -11,10 +11,8 @@ import {
 	setAttributes,
 	getElements,
 	getDOMElement,
-	requireElements,
 	setDocumentScrollLocked,
 	isHTMLElement,
-	initMasonry
 } from "../helpers/funcsDOM.js";
 import {
 	getGSAP,
@@ -26,9 +24,8 @@ import {
 } from "../helpers/funcs.js";
 
 
-import { linkAnchors, SELECTORS, navMenuSelectorsData } from "./initialSelectors.js";
+import { linkAnchors, SELECTORS } from "./initialSelectors.js";
 import {
-	burgerNavTimelineParams,
 	automationParallaxTimelineParams,
 	servicesParallaxTimelineParams,
 	fadeInLeftTimelineParams,
@@ -81,18 +78,6 @@ import {
  *
  * @typedef {import("../types/masonry.types.js").TMasonryConfig} TMasonryConfig
  */
-
-/// UTILITY FUNCTIONS ///
-
-/**
- * Checks if a GSAP timeline has real (non-zero duration) animations.
- *
- * @param {TTimeline} timeline - The timeline to check
- * @returns {boolean} True if at least one child tween has duration > 0
- */
-function hasTimelineRealAnimations(timeline) {
-	return timeline.getChildren().some(child => child.duration() > 0);
-}
 
 
 /// TIMELINE BUILDERS ///
@@ -398,120 +383,6 @@ function addTimelineSteps(
 			targets,
 			step,
 		);
-	}
-}
-
-/**
- * buildTimeline
- *
- * Main public builder responsible for selecting the appropriate
- * timeline construction strategy.
- *
- * Target modes:
- *
- * `single`
- *     One primary Element → one Timeline.
- *
- * `group`
- *     Multiple Elements → one shared Timeline.
- *     The supplied `key` becomes the cache identity.
- *
- * `each`
- *     Multiple scope Elements → one independent Timeline per scope.
- *     Each scope Element becomes the cache identity.
- *
- * The `key` is optional at the API level because it is meaningful
- * only for `group` mode.
- *
- * This dispatcher intentionally performs very little work:
- *
- *     validate basic configuration
- *           ↓
- *     select target-mode builder
- *
- * Keeping target-mode-specific logic outside this function prevents
- * its cyclomatic complexity from growing as the animation system
- * evolves.
- *
- * @param {TGsap} gsap
- * Initialized GSAP instance.
- *
- * @param {TTimelineParams} params
- * Complete timeline configuration.
- *
- * @param {TAnimationKey} [key]
- * Named cache key used by `group` mode.
- *
- * The argument is intentionally optional because `single` and
- * `each` use Element-based cache identities.
- *
- * @returns {TTimeline | TTimeline[]}
- * A single Timeline for `single`/`group`, or an array of independent
- * Timelines for `each`.
- *
- * @throws {Error}
- * When `steps` is empty.
- *
- * @throws {TypeError}
- * When an unsupported target mode is provided.
- *
- * @throws {TypeError}
- * When `group` mode does not receive a key.
- *
- * @sample
- * buildTimeline(
- *   gsap,
- *   {
- *     targetMode: "single",
- *     steps: [
- *       {
- *         target: ".hero-title",
- *         type: "from",
- *         vars: {
- *           opacity: 0,
- *         },
- *       },
- *     ],
- *   }
- * );
- */
-function buildTimeline(
-	gsap,
-	params,
-	key
-) {
-	switch (params.targetMode) {
-		case "single":
-			return buildSingleTimeline(
-				gsap,
-				params,
-				key
-			);
-
-		case "group":
-			if (!key || typeof key !== "string") {
-				throw new TypeError(
-					"[buildTimeline]: key as `string` is required " +
-					`for group mode. But received: ${key}`
-				);
-			}
-
-			return buildGroupTimeline(
-				gsap,
-				params,
-				key,
-			);
-
-		case "each":
-			return buildEachTimelines(
-				gsap,
-				params
-			);
-
-		default:
-			throw new TypeError(
-				`[buildTimeline]: unsupported targetMode...".`
-			);
 	}
 }
 
@@ -977,339 +848,98 @@ function createPageNameSet(anchors) {
 }
 
 /**
- * Initializes the click listener for one Burger navigation trigger.
+ * Initializes the CSS-driven burger navigation.
  *
- * The listener toggles the ARIA state of the Burger controls,
- * controls document scrolling, and drives the supplied GSAP Timeline.
+ * The navigation state is controlled by the panel's aria-expanded
+ * attribute. No GSAP dependency is required.
+ * @param {string} navMenuSelector
+ * @param {string} burgerButtonSelector
  *
- * Opening the navigation plays the Timeline.
- * Closing the navigation reverses the Timeline.
+ * Both Burger buttons control the same navigation panel.
  *
- * @param {Element} burger
- * Burger navigation trigger element.
- *
- * @param {TBurgerElements} burgerElementsData
- * Resolved DOM elements required by the navigation.
- *
- * @param {TTimeline} navMenuAnime
- * GSAP Timeline controlling the fixed navigation menu.
- *
- * @returns {void}
+ * @returns {() => void} Cleanup function for registered listeners.
  */
-function initBurgerListener(
-	burger,
-	burgerElementsData,
-	navMenuAnime
-) {
-	const {
-		burgerHidden,
-		burgerFixed,
-		navMenuFixed,
-	} = burgerElementsData;
+export function initBurgerMenuCSS(navMenuSelector, burgerButtonSelector) {
+	const navMenu = getDOMElement(navMenuSelector, document, true);
+	/**@type HTMLElement[]*/
+	const burgerButtons = getElements(burgerButtonSelector);
 
-	burger.addEventListener("click", (e) => {
-		// Prevent the browser's default action for the Burger control.
-		e.preventDefault();
+	if (!(isHTMLElement(navMenu)) || !burgerButtons.length) {
+		//logging errors will be in getDOMElement(), getElements()
+		return () => {};
+	}
 
-		const isExpanded =
-			burger.getAttribute("aria-expanded") === "true";
-
-		// Keep all Burger-related ARIA states synchronized.
+	/**
+	 * Synchronizes the expanded state of the panel and all Burger buttons.
+	 *
+	 * @param {boolean} expanded
+	 * @returns {void}
+	 */
+	const setExpanded = (expanded) => {
 		setAttributes(
-			[
-				burgerHidden,
-				burgerFixed,
-				navMenuFixed,
-			],
-			{
-				"aria-expanded": !isExpanded,
-			}
+			[navMenu, ...burgerButtons],
+			{ "aria-expanded": expanded },
 		);
 
-		if (isExpanded) {
+		setDocumentScrollLocked(expanded);
+	};
 
-			// Restore the default scrollbar behavior.
+	/**
+	 * Handles a Burger button click.
+	 *
+	 * @param {MouseEvent} event
+	 * @returns {void}
+	 */
+	const handleBurgerClick = (event) => {
+		event.preventDefault();
 
-			//restoreDocumentScroll();
+		// Read the resulting state from the clicked button.
+		const button = event.currentTarget;
 
-			setDocumentScrollLocked(false);
+		if (!(button instanceof HTMLButtonElement)) return;
 
-			// Reverse the Timeline to hide the navigation.
-			navMenuAnime.reverse();
+		const isExpanded =
+			navMenu.getAttribute("aria-expanded") === "true";
 
+		setExpanded(!isExpanded);
+	};
+
+	/**
+	 * Closes the menu when the user clicks outside it.
+	 *
+	 * @param {MouseEvent} event
+	 * @returns {void}
+	 */
+	const handleDocumentClick = (event) => {
+		if (!(event.target instanceof Element)) {
 			return;
 		}
 
-		// Preserve the scrollbar width while the navigation is open.
-
-		//lockDocumentScroll();
-
-		setDocumentScrollLocked(true);
-
-		// Play the Timeline to reveal the navigation.
-		navMenuAnime.play();
-	});
-}
-
-/**
- * Handles a document click used to close the Burger navigation.
- *
- * The navigation is closed only when:
- *
- * 1. the event target is a DOM Element;
- * 2. the click occurs outside the Burger navigation;
- * 3. the navigation is currently expanded.
- *
- * @param {MouseEvent} e
- * Document click event.
- *
- * @param {TBurgerElements} burgerElementsData
- * Resolved Burger navigation DOM elements.
- *
- * @param {TTimeline} navMenuAnime
- * GSAP Timeline controlling the fixed navigation menu.
- *
- * @returns {void}
- */
-function closeBurgerClickHandler(
-	e,
-	burgerElementsData,
-	navMenuAnime
-) {
-	// Ignore events whose target is not a DOM Element.
-	if (!(e.target instanceof Element)) {
-		return;
-	}
-
-	// Ignore clicks originating inside the Burger navigation.
-	if (e.target.closest(SELECTORS.burgerNav)) {
-		return;
-	}
-
-	const {
-		burgerHidden,
-		burgerFixed,
-		navMenuFixed,
-	} = burgerElementsData;
-
-	const isNavActive =
-		navMenuFixed.getAttribute("aria-expanded") === "true";
-
-	// Nothing to close when the navigation is already collapsed.
-	if (!isNavActive) {
-		return;
-	}
-
-	// Synchronize the ARIA state of all Burger controls.
-	setAttributes(
-		[
-			burgerHidden,
-			burgerFixed,
-			navMenuFixed,
-		],
-		{
-			"aria-expanded": false,
+		if (
+			event.target.closest(SELECTORS.burgerNav) ||
+			navMenu.contains(event.target)
+		) {
+			return;
 		}
-	);
 
-	// Reverse the Timeline to hide the fixed navigation.
-	navMenuAnime.reverse();
-
-	// Restore document scrolling.
-	//restoreDocumentScroll();
-	setDocumentScrollLocked(false);
-}
-
-/**
- * Initializes Burger navigation event callbacks.
- *
- * This function is intentionally limited to event-handler composition.
- * It does not:
- *
- * - resolve DOM elements;
- * - create GSAP animations;
- * - register animations in the animation cache;
- * - attach event listeners.
- *
- * All required runtime dependencies are supplied by the caller.
- *
- * The function creates closures around `burgerElementsData` and
- * `navMenuAnime`, allowing the returned callbacks to be used directly
- * with DOM event APIs.
- *
- * @param {TBurgerElements} burgerElementsData
- * Resolved DOM elements required by Burger navigation.
- *
- * @param {TTimeline} navMenuAnime
- * GSAP Timeline controlling the fixed navigation menu.
- *
- * @returns {{
- *     closeBurgerHandler: (e: MouseEvent) => void,
- *     attachBurgerListener: (burger: Element) => void
- * }}
- * Event callbacks used by the Burger navigation initializer.
- */
-function initBurgerHandlers(
-	burgerElementsData,
-	navMenuAnime
-) {
-	/**
-	 * Creates the document-level click callback.
-	 *
-	 * The callback delegates the actual behavior to
-	 * `closeBurgerClickHandler()`.
-	 *
-	 * @param {MouseEvent} e
-	 * Mouse click event.
-	 *
-	 * @returns {void}
-	 */
-	const closeBurgerHandler = (e) => {
-		closeBurgerClickHandler(
-			e,
-			burgerElementsData,
-			navMenuAnime
-		);
+		if (navMenu.ariaExpanded === "true") {
+			setExpanded(false);
+		}
 	};
 
-	/**
-	 * Creates a callback that attaches the Burger click handler
-	 * to one specific Burger trigger.
-	 *
-	 * The actual interaction logic remains inside
-	 * `initBurgerListener()`.
-	 *
-	 * @param {Element} burger
-	 * Burger navigation trigger.
-	 *
-	 * @returns {void}
-	 */
-	const attachBurgerListener = (burger) => {
-		initBurgerListener(
-			burger,
-			burgerElementsData,
-			navMenuAnime
-		);
+	burgerButtons.forEach((button) => {
+		button.addEventListener("click", handleBurgerClick);
+	});
+
+	document.addEventListener("click", handleDocumentClick);
+
+	return () => {
+		burgerButtons.forEach((button) => {
+			button.removeEventListener("click", handleBurgerClick);
+		});
+
+		document.removeEventListener("click", handleDocumentClick);
 	};
-
-	return {
-		closeBurgerHandler,
-		attachBurgerListener,
-	};
-}
-
-/**
- * Initializes the complete Burger navigation subsystem.
- *
- * This function acts as the composition layer for Burger navigation.
- *
- * It coordinates:
- *
- * 1. DOM dependency resolution;
- * 2. Timeline construction;
- * 3. Event callback creation;
- * 4. Burger listener attachment;
- * 5. Outside-click listener attachment.
- *
- * The individual responsibilities remain delegated:
- *
- *     requireElements()
- *         → resolves DOM dependencies
- *
- *     buildTimeline()
- *         → builds and registers the animation
- *
- *     initBurgerHandlers()
- *         → creates event callbacks
- *
- *     initBurgerListener()
- *         → handles Burger trigger interaction
- *
- *     closeBurgerClickHandler()
- *         → handles outside-click behavior
- *
- * This function intentionally contains no animation implementation
- * and no event-handling logic of its own.
- *
- * @param {TGsap} gsap
- * Initialized GSAP instance.
- *
- * @param {TNavMenuSelector[]} selectors
- * Selector configuration for Burger navigation DOM dependencies.
- *
- * @param {TSingleTimelineParams} timelineParams
- * Declarative configuration for the Burger navigation Timeline.
- *
- * @returns {void}
- */
-function initBurgerMenu(
-	gsap,
-	selectors,
-	timelineParams
-) {
-	/**
-	 * Resolve all Burger-related DOM dependencies once.
-	 *
-	 * The type assertion is intentionally placed at the boundary
-	 * between the generic DOM utility and the Burger-specific subsystem.
-	 */
-	const burgerElementsData =
-		/** @type {TBurgerElements} */
-		(requireElements(selectors));
-
-	/**
-	 * Extract the Burger trigger collection.
-	 *
-	 * These Elements are needed only to attach the callbacks created
-	 * by initBurgerHandlers().
-	 */
-	const {
-		burgerNavAll
-	} = burgerElementsData;
-
-	/**
-	 * Build the Burger navigation Timeline.
-	 *
-	 * The Timeline is already configured with its declared initial
-	 * runtime state and registered in the animation cache by the builder.
-	 */
-	const navMenuAnime = buildSingleTimeline(
-		gsap,
-		timelineParams
-	);
-
-	/**
-	 * Initialize callbacks that control the Burger navigation.
-	 *
-	 * initBurgerHandlers() does not attach listeners itself.
-	 * It only creates callback functions with the required dependencies
-	 * closed over.
-	 */
-	const {
-		closeBurgerHandler,
-		attachBurgerListener
-	} = initBurgerHandlers(
-		burgerElementsData,
-		navMenuAnime
-	);
-
-	/**
-	 * Attach the Burger click handler to every resolved trigger.
-	 *
-	 * DOM lookup is not repeated here because all required Elements
-	 * were resolved once at the beginning of this function.
-	 */
-	burgerNavAll.forEach(
-		(burger) => attachBurgerListener(burger)
-	);
-
-	/**
-	 * Attach the document-level outside-click handler.
-	 */
-	document.addEventListener(
-		"click",
-		closeBurgerHandler
-	);
 }
 
 /**
@@ -1461,20 +1091,6 @@ export async function initAnimations() {
 			);
 		},
 		common: () => {
-			//Hero section priority...
-/*			tryUse(buildGroupTimeline)(
-				gsap,
-				heroTimelineParams,
-				"heroAnimation",
-			);*/
-
-			//initializing burger handlers, build and register animation timeline...
-			tryUse(initBurgerMenu)(
-				gsap,
-				navMenuSelectorsData,
-				burgerNavTimelineParams
-			);
-
 			// parallax on services section on all pages
 			tryUse(buildSingleTimeline)(
 				gsap,

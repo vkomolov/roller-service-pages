@@ -66,6 +66,24 @@
 	justify-content: flex-start;
 }
 
+.section__content-block--row-right {
+	flex-direction: row;
+	align-items: flex-start;
+	justify-content: flex-end;
+}
+
+.section__content-block--row-center {
+	flex-direction: row;
+	align-items: flex-start;
+	justify-content: center;
+}
+
+.section__content-block--row-between {
+	flex-direction: row;
+	align-items: flex-start;
+	justify-content: space-between;
+}
+
 .section__text-block {
 	p {
 		overflow-wrap: break-word;

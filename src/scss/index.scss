@@ -20,24 +20,6 @@
   }
 }
 
-.section__content-block--row-center {
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: center;
-}
-
-.section__content-block--row-right {
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: flex-end;
-}
-
-.section__content-block--row-between {
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
 .flex-container {
   @include root.flex-box(row, center, center, wrap);
 }
@@ -349,6 +331,7 @@
   --hex-width: var(--hex-size);
   --hex-height: calc(var(--hex-size) * var(--hex-ratio));
   --hex-row-height: calc(var(--hex-height) * 0.76);
+  --hex-column-width: calc(var(--hex-width) * 0.5);
   // Horizontal/vertical gaps as a fraction of the hex width
   --hex-gap-x: calc(var(--hex-width) * 0.01);
   --hex-gap-y: calc(var(--hex-width) * 0.01);
@@ -361,7 +344,7 @@
 
   display: grid;
   // 6 identical columns, half the width of the hexagon
-  grid-template-columns: repeat(6, calc(var(--hex-width) * 0.5));
+  grid-template-columns: repeat(6, var(--hex-column-width));
   // 3 rows of hexagons
   grid-template-rows:
           calc(var(--hex-height) * 0.25)

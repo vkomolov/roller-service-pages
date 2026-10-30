@@ -282,7 +282,7 @@ h2,h3,h4,h5{
   display:flex;
   justify-content:center;
   left:0;
-  padding:clamp(.5rem, 2vw, 1rem);
+  padding:clamp(.5rem, 1vw, 1rem);
   position:absolute;
   right:0;
   top:0;
@@ -291,7 +291,7 @@ h2,h3,h4,h5{
 .modal__bar--arrow{
   background:none;
   justify-content:space-between;
-  padding:0 clamp(.5rem, 3vw, 2rem);
+  padding:0 clamp(.5rem, 2vw, 2rem);
   pointer-events:none;
   top:50%;
   transform:translateY(-50%);
@@ -354,10 +354,10 @@ h2,h3,h4,h5{
   background-color:var(--modal-accent);
 }
 .modal__btn--close{
-  font-size:clamp(1.5rem, 3vw, 2rem);
+  font-size:clamp(1.5rem, 2vw, 2rem);
   position:absolute;
-  right:clamp(.5rem, 2vw, 1rem);
-  top:clamp(.5rem, 2vw, 1rem);
+  right:clamp(.5rem, 1vw, 1rem);
+  top:clamp(.5rem, 1vw, 1rem);
 }
 .modal__loader{
   align-items:center;
@@ -445,24 +445,6 @@ h2,h3,h4,h5{
 }
 .foxy-on-hover:hover{
   background-color:#ff8502 !important;
-}
-
-.section__content-block--row-center{
-  align-items:flex-start;
-  flex-direction:row;
-  justify-content:center;
-}
-
-.section__content-block--row-right{
-  align-items:flex-start;
-  flex-direction:row;
-  justify-content:flex-end;
-}
-
-.section__content-block--row-between{
-  align-items:flex-start;
-  flex-direction:row;
-  justify-content:space-between;
 }
 
 .flex-container{
@@ -623,6 +605,7 @@ h2,h3,h4,h5{
   --hex-width:var(--hex-size);
   --hex-height:calc(var(--hex-size)*var(--hex-ratio));
   --hex-row-height:calc(var(--hex-height)*0.76);
+  --hex-column-width:calc(var(--hex-width)*0.5);
   --hex-gap-x:calc(var(--hex-width)*0.01);
   --hex-gap-y:calc(var(--hex-width)*0.01);
   --hex-font-size:clamp(
@@ -634,7 +617,7 @@ h2,h3,h4,h5{
   -moz-column-gap:var(--hex-gap-x);
        column-gap:var(--hex-gap-x);
   display:grid;
-  grid-template-columns:repeat(6, calc(var(--hex-width)*.5));
+  grid-template-columns:repeat(6, var(--hex-column-width));
   grid-template-rows:calc(var(--hex-height)*.25) repeat(3, var(--hex-row-height)) calc(var(--hex-height)*.25);
   justify-content:center;
   row-gap:var(--hex-gap-y);
@@ -929,8 +912,8 @@ h2,h3,h4,h5{
     transform:none;
   }
   .modal__btn--next,.modal__btn--prev{
-    height:3rem;
-    width:3rem;
+    height:2.5rem;
+    width:2.5rem;
   }
   .section__content-block--footer{
     align-items:flex-start !important;

@@ -42,35 +42,6 @@ const defaultParallaxScrollTrigger = {
 }
 
 /**
- * Configuration for the Burger navigation Timeline.
- *
- * The Timeline is created in its initial paused state because it is
- * controlled interactively by Burger event handlers.
- *
- * `root` identifies the navigation Element that provides the DOM
- * search context for the Timeline steps.
- *
- * @type {TSingleTimelineParams}
- */
-export const burgerNavTimelineParams = {
-	targetMode: "single",
-
-	root: SELECTORS.navMenuFixed,
-	paused: true,
-	steps: [
-		{
-			target: SELECTORS.navMenuFixed,
-			type: "to",
-			vars: {
-				top: -20,
-				duration: 0.8,
-				ease: "back.out(0.8)",
-			},
-		},
-	],
-};
-
-/**
  * Configuration for the Automation section parallax Timeline.
  *
  * The section Element is used as the Timeline DOM search root,

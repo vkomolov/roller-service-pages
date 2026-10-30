@@ -76,36 +76,7 @@ export const SELECTORS = {
 	scaleIn: "[data-anime=scale-in]",
 };
 
-/**
- * @type {TNavMenuSelector[]}
- *
- * DOM elements required by Burger navigation handlers.
- */
-export const navMenuSelectorsData = [
-	{
-		key: "navMenuFixed",
-		selector: SELECTORS.navMenuFixed,
-		multiple: false,
-	},
-	{
-		key: "burgerHidden",
-		selector: SELECTORS.burgerHidden,
-		multiple: false,
-	},
-	{
-		key: "burgerFixed",
-		selector: SELECTORS.burgerFixed,
-		multiple: false,
-	},
-	{
-		key: "burgerNavAll",
-		selector: SELECTORS.burgerNav,
-		multiple: true,
-	},
-];
-
 ///////// MASONRY GALLERY CONSTANTS //////////
-
 /**
  * Default configuration for the work gallery Masonry layout.
  *

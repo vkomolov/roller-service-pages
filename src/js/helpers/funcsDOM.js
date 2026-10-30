@@ -9,6 +9,7 @@ import {MASONRY_REVEAL_DELAY, IMAGE_RATIO_TOLERANCE} from "../partials/initialSe
  *
  * @typedef {import("../types/dom.types.js").TDOMSelectorConfig} TDOMSelectorConfig
  * @typedef {import("../types/dom.types.js").ImageSize} ImageSize
+ * @typedef {import("../types/dom.types.js").TImageParentMapOptions} TImageParentMapOptions
  * @typedef {import("../types/dom.types.js").LoadedImageResult} LoadedImageResult
  * @typedef {import("../types/dom.types.js").TActivateNavlinkParams} TActivateNavlinkParams
  * @typedef {import("../types/dom.types.js").TInitLangSwitcherParams} TInitLangSwitcherParams
@@ -36,161 +37,6 @@ import {MASONRY_REVEAL_DELAY, IMAGE_RATIO_TOLERANCE} from "../partials/initialSe
  */
 
 //////////////// END OF TYPE DEFINITIONS /////////////////
-
-/**
- * It checks whether the given style rule is supported for the given HTML Element
- * @param {HTMLElement} element - target HTML Element
- * @param {string} param - css rule
- * @param {string} value - the value of the css rule
- * @return {boolean}
- */
-export function isStyleSupported(element, param, value) {
-	return param in element.style && CSS.supports(param, value);
-}
-
-/**
- * @typedef {{
- *   target: HTMLElement,
- *   parentFrom: HTMLElement,
- *   parentTo: HTMLElement,
- * }} TMigrageElementParams
- */
-/**
- * it migrates the given HTML Element to another HTML parent
- * @param {HTMLElement} target - the target HTML Element
- * @param {HTMLElement} parentFrom - the current HTML parent
- * @param {HTMLElement} parentTo - the target HTML parent to migrate to
- */
-export function migrateElement(target, parentFrom, parentTo) {
-
-	if (target.isConnected) {
-		(target.parentElement === parentFrom ? parentTo : parentFrom).appendChild(
-			target
-		);
-	}
-	else {
-		console.warn(`transitBox: target in not in DOM: ${target}`);
-	}
-}
-
-/**
- * It creates a debounced event listener that ensures the provided callback is called
- * only after a specified delay, regardless of how frequently the event is triggered.
- *
- * @param {string} event - The name of the event to listen for (e.g., "click", "scroll").
- * @param {HTMLElement|Window|Document} listenerOwner - The target element, window, or document
- *   that will receive the event listener.
- * @param {number} [delay=300] - The delay in milliseconds before the callback is executed
- *   after the event is triggered. Defaults to 300ms.
- * @returns {Function} A function that accepts a callback (`cb`) and optional parameters (`params`).
- *   This function attaches the event listener with debouncing behavior. The returned function
- *   also returns another function for removing the event listener.
- *
- * @example
- * const removeClickListener = lockedEventListener("click", document.body, 500)(
- *   () => console.log("Click event triggered!"),
- *   []
- * );
- *
- * // To remove the listener:
- * removeClickListener();
- */
-export function lockedEventListener(event, listenerOwner, delay = 300) {
-	if (listenerOwner instanceof HTMLElement && !listenerOwner.isConnected) {
-		throw new Error(
-			'Provided listenerOwner at lockedEventListener() is not a valid DOM element...'
-		);
-	}
-
-	let isLocked = false;
-
-	/**
-	 * @type {() => {}} cb
-	 */
-	return (cb, params = []) => {
-		const handler = () => {
-			if (!isLocked) {
-				isLocked = true;
-				setTimeout(() => {
-					cb(...params);
-					isLocked = false;
-				}, delay);
-			}
-		};
-
-		listenerOwner.addEventListener(event, handler);
-
-		return () => {
-			listenerOwner.removeEventListener(event, handler);
-		};
-	};
-}
-
-/**
- * Toggles a CSS class on a target element when a trigger element
- * crosses the top boundary of the viewport.
- *
- * Uses IntersectionObserver instead of scroll listeners,
- * which improves performance and avoids unnecessary scroll handling.
- *
- * The activation flag is updated synchronously while the DOM mutation
- * is deferred to the next animation frame. This prevents duplicate
- * scheduled frames when the observer fires again before the pending
- * frame executes.
- *
- * @param {HTMLElement} targetElement - The element whose class will be toggled.
- * @param {HTMLElement} triggerElement - The element that triggers the class change.
- * @param {string} activeClass - The CSS class to add/remove.
- * @param {Element | null} [root=null] - The scrolling container. Default is the viewport.
- * @param {string} [rootMargin="-1px 0px 0px 0px"] - Margin around the root to fine-tune trigger timing.
- *
- * @returns {() => void} Cleanup function that disconnects the observer.
- */
-export function toggleClassOnIntersection(
-	targetElement,
-	triggerElement,
-	activeClass,
-	root = null,
-	rootMargin = '-1px 0px 0px 0px'
-) {
-	if (!targetElement?.isConnected || !triggerElement?.isConnected) {
-		throw new Error(
-			'[toggleClassOnIntersection]: targetElement or triggerElement is not connected to the DOM.'
-		);
-	}
-
-	let isClassActive = false;
-
-	const observer = new IntersectionObserver(
-		([entry]) => {
-			const shouldActivate =
-				entry.boundingClientRect.top <= 0 && !entry.isIntersecting;
-
-			// No state change — nothing to schedule.
-			if (shouldActivate === isClassActive) {
-				return;
-			}
-
-			// Synchronous flag update blocks duplicate scheduling
-			// from observer notifications arriving before the frame.
-			isClassActive = shouldActivate;
-
-			requestAnimationFrame(() => {
-				targetElement.classList.toggle(activeClass, shouldActivate);
-			});
-		},
-		{
-			root,
-			threshold: 0,
-			rootMargin
-		}
-	);
-
-	observer.observe(triggerElement);
-
-	return () => observer.disconnect();
-}
-
 
 /**
  * Observes visibility changes of a DOM element using IntersectionObserver.
@@ -310,123 +156,6 @@ export function setAttributes(elements = [], targetAttr = {}) {
 			);
 		});
 	});
-}
-
-/**
- * It creates a scroll lock controller with encapsulated state
- * @description When the scroll container switches to overflow: hidden, the function replaces
- * the width of the hidden scrollbar with the same width of the right padding
- * to avoid shifting elements on the page.
- *
- * @returns {{ lockScroll: function(): void, destroy: function(): void }}
- *
- * @sample
- * const scrollLocker = initLockScroll();
- * scrollLocker.lockScroll(true); //locking scrolling
- * scrollLocker.lockScroll(false); //unlocking scrolling
- * scrollLocker.destroy() //resetting scroll controller
- */
-export function initLockScroll() {
-	// Encapsulated state - not accessible from outside
-	const state = {
-		/** @type {number|null} */
-		rafId: null,
-		/** @type {boolean} */
-		isLocked: false,
-		/** @type {string} */
-		originalPaddingRight: '',
-		/** @type {number} */
-		scrollbarWidth: 0,
-		/** @type {boolean} */
-		isInitialized: false
-	};
-
-	/**
-	 * Calculates scrollbar width once and caches it
-	 * @returns {number}
-	 */
-	const getScrollbarWidth = () => {
-		if (!state.scrollbarWidth) {
-			state.scrollbarWidth =
-				window.innerWidth - document.documentElement.clientWidth;
-		}
-		return state.scrollbarWidth;
-	};
-
-	/**
-	 * Applies scroll lock styles
-	 */
-	const applyLock = () => {
-		const scrollbarWidth = getScrollbarWidth();
-
-		// Save original padding only on first lock
-		if (!state.isInitialized) {
-			state.originalPaddingRight = document.body.style.paddingRight;
-			state.isInitialized = true;
-		}
-
-		document.body.style.overflow = 'hidden';
-
-		// Apply padding compensation only if scrollbar was visible
-		if (scrollbarWidth > 0) {
-			document.body.style.paddingRight = `${scrollbarWidth}px`;
-		}
-
-		state.rafId = null;
-	};
-
-	/**
-	 * Removes scroll lock styles
-	 */
-	const applyUnlock = () => {
-		document.body.style.overflow = '';
-		document.body.style.paddingRight = state.originalPaddingRight;
-		state.rafId = null;
-	};
-
-	/**
-	 * Locks or unlocks page scroll with scrollbar width compensation
-	 * @param {boolean} [lock=true] - true to lock, false to unlock
-	 */
-	const lockScroll = (lock = true) => {
-		// Early return if state hasn't changed
-		if (state.isLocked === lock) return;
-
-		// Cancel pending animation frame to prevent race conditions
-		if (state.rafId !== null) {
-			cancelAnimationFrame(state.rafId);
-		}
-
-		state.isLocked = lock;
-		state.rafId = requestAnimationFrame(lock ? applyLock : applyUnlock);
-	};
-
-	return {
-		lockScroll,
-
-		/**
-		 * reset capability (when unmounting a component)
-		 */
-		destroy() {
-			if (state.rafId !== null) cancelAnimationFrame(state.rafId);
-			if (state.isLocked) applyUnlock();
-			state.isInitialized = false;
-			state.scrollbarWidth = 0;
-		}
-	};
-}
-
-/**
- * Validates that container is attached to DOM
- * @param {HTMLElement} container - Element to validate
- * @throws {Error} If container is not connected to DOM
- */
-function checkInDOM(container) {
-	if (!container?.isConnected) {
-		throw new Error(
-			'[checkInDOM]: Container must be a DOM element connected to the document'
-		);
-	}
 }
 
 /**
@@ -662,122 +391,6 @@ export function getElements(
 }
 
 /**
- * Retrieves required DOM elements and groups them into an object.
- *
- * Each selector configuration defines:
- * - the property key used in the resulting object;
- * - the CSS selector used for lookup;
- * - whether one or all matching elements should be returned.
- *
- * The function throws an error when any required selector does not match
- * at least one element.
- *
- * `getElements()` is used internally for DOM lookup and diagnostic logging.
- *
- * @param {TDOMSelectorConfig[]} selectors
- * List of DOM selector configurations.
- *
- * @param {Document | Element} [context=document]
- * DOM context in which all selectors should be searched.
- *
- * @returns {Record<string, Element | Element[]>}
- * Object whose keys are taken from the `key` property of each selector
- * configuration.
- *
- * @throws {Error}
- * Throws when a required selector does not match any DOM element.
- *
- * @example
- * const DOM = requireElements([
- *     {
- *         key: "navMenuHidden",
- *         selector: SELECTORS.navMenuHidden,
- *     },
- *     {
- *         key: "burgerHidden",
- *         selector: SELECTORS.burgerHidden,
- *     },
- *     {
- *         key: "burgerFixed",
- *         selector: SELECTORS.burgerFixed,
- *     },
- *     {
- *         key: "burgerNavAll",
- *         selector: SELECTORS.burgerNavAll,
- *         multiple: true,
- *     },
- * ]);
- *
- * DOM.navMenuHidden.classList.add("opened");
- * DOM.burgerNavAll.forEach((button) => {
- *     button.classList.add("active");
- * });
- */
-export function requireElements(
-	selectors,
-	context = document
-) {
-	/**
-	 * The function is intentionally generic at runtime.
-	 *
-	 * The exact structure of the resulting object depends on the
-	 * selector configuration passed by the caller.
-	 *
-	 * @type {Record<string, Element | Element[]>}
-	 */
-	const elements = {};
-
-	for (const {
-		key,
-		selector,
-		multiple = false,
-	} of selectors) {
-		/**
-		 * `getElements()` returns an array in both single and multiple modes.
-		 *
-		 * When `multiple` is false, the array contains one element.
-		 * When `multiple` is true, it contains all matching elements.
-		 */
-		const result = getElements(
-			selector,
-			context,
-			multiple
-		);
-
-		/**
-		 * `getElements()` returns an empty array when nothing was found.
-		 *
-		 * For `requireElements()`, an absent required element is a fatal
-		 * initialization error, therefore execution stops immediately.
-		 */
-		if (!result.length) {
-			const errorMessage =
-				`Required DOM element missing. ` +
-				`Key: "${key}", Selector: "${selector}"`;
-
-			initLog("error", {
-				component: "requireElements",
-				message: errorMessage,
-			});
-
-			throw new Error(
-				`[requireElements]: ${errorMessage}`
-			);
-		}
-
-		/**
-		 * Store either the first element or the complete result array
-		 * according to the selector configuration.
-		 */
-		elements[key] = multiple
-			? result
-			: result[0];
-	}
-
-	return elements;
-}
-
-/**
  * Sets or releases the document scroll lock.
  *
  * Applies `scrollbar-gutter: stable` to keep the layout stable while
@@ -798,101 +411,6 @@ export function setDocumentScrollLocked(locked) {
 }
 
 /**
- * Locks document scrolling while the Burger navigation is open.
- *
- * The scrollbar gutter is kept stable to prevent the layout from
- * shifting when the browser removes the document scrollbar after
- * scrolling is disabled.
- *
- * Both the root element and the document body receive the stable
- * scrollbar gutter configuration to keep their scrollbar behavior
- * synchronized.
- *
- * @returns {void}
- */
-export function lockDocumentScroll() {
-	// Preserve the scrollbar width while the navigation is open.
-	document.documentElement.style.scrollbarGutter = "stable";  //html
-	document.body.style.scrollbarGutter = "stable"; //body
-
-	// Prevent the document from scrolling behind the navigation.
-	document.body.style.overflow = "hidden";
-}
-
-/**
- * Restores the document's default scrolling behavior.
- *
- * This function resets the scrollbar gutter configuration on both
- * the root element and the document body, then restores normal
- * document scrolling.
- *
- * It is intended to be called when the Burger navigation is closed
- * and the document no longer needs to be locked.
- *
- * @returns {void}
- */
-export function restoreDocumentScroll() {
-	// Restore the default automatic scrollbar gutter behavior.
-	document.documentElement.style.scrollbarGutter = "auto";
-	document.body.style.scrollbarGutter = "auto";
-
-	// Restore normal document scrolling.
-	document.body.style.overflow = "auto";
-}
-
-/**
- * @typedef {{
- *   background?: boolean | string
- * }} TImageParentMapOptions
- */
-
-/**
- * Builds a mapping between image elements and their parent containers
- * Handles both <img> tags and background images
- *
- * @param {HTMLElement} container - The container which contains the images or image wrappers
- * @param {TImageParentMapOptions} options - imagesLoaded options
- * @returns {Map<HTMLImageElement, HTMLElement>} Map of image -> parent
- */
-function buildImageParentMap(container, options) {
-	const map = new Map();
-	const { background } = options;
-
-	for (const child of Array.from(container.children)) {
-		// Priority 1: Direct img child (most common case)
-		if (child.matches('img')) {
-			map.set(child, child);
-			continue;
-		}
-		// Priority 2: Wrapper with nested img
-		const nestedImg = child.querySelector('img');
-		if (nestedImg) {
-			map.set(nestedImg, child);
-			continue;
-		}
-		// Priority 3: Background images (only if no regular img found)
-		if (!background) continue;
-
-		/**
-		 * truthy background: boolean true, or string selector ('.image', '.bg', [data-bg], etc...)
-		 * option from the imagesLoaded library:
-		 * if hasBackground is true, then any child is considered a background image container
-		 * @sample
-		 * options = {
-		 *   background: '.grid-item' // or true
-		 * }
-		 */
-		const hasBackground = background === true || child.matches(background);
-
-		if (hasBackground) {
-			map.set(child, child);
-		}
-	}
-
-	return map;
-}
-
-/**
  * Extracts dimension information from a loaded image
  * @param {HTMLImageElement} img - The image element
  * @returns {ImageSize} Dimension data object
@@ -905,44 +423,6 @@ function extractDimensions(img) {
 		offsetHeight: img.offsetHeight
 	};
 }
-
-/**
- * Waits for image dimensions to be available
- * Handles cached images that already have dimensions
- *
- * @param {HTMLImageElement} img - Image to check
- * @returns {Promise<ImageSize|null>} Resolves with dimensions or null on error
- */
-function getImageDimensions(img) {
-	return new Promise(resolve => {
-		if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-			resolve(extractDimensions(img));
-			return;
-		}
-
-		const cleanup = () => {
-			img.removeEventListener('load', handleLoad);
-			img.removeEventListener('error', handleError);
-		};
-
-		const handleLoad = () => {
-			cleanup();
-			resolve(extractDimensions(img));
-		};
-
-		const handleError = () => {
-			cleanup();
-			console.warn(
-				`[getImageDimensions]: could not load the image with src: ${img.src}`
-			);
-			resolve(null);
-		};
-
-		img.addEventListener('load', handleLoad);
-		img.addEventListener('error', handleError);
-	});
-}
-
 
 //!////// MASONRY ///////////
 /**
@@ -988,7 +468,6 @@ function handleMasonryResize(
 		});
 	}
 }
-
 
 /**
  * Schedules a Masonry resize cycle.
@@ -2510,22 +1989,13 @@ function toggleAriaExpanded(element) {
  * @param {MouseEvent} event - Mouse click event.
  * @returns {void}
  */
-function toggleAriaExpandedMenu(event) {
+export function toggleAriaExpandedMenu(event) {
 	//checking HTMLElement type of event.currentTarget
 
 	if (!checkEventCurrentTarget(event)) return;
+
 	const curTarget = event.currentTarget;
 	toggleAriaExpanded(curTarget);
-}
-
-/**
- * Opens the language menu.
- *
- * @param {HTMLElement} currentButton - Element with attributes dataSet
- * @returns {void}
- */
-function openLanguageMenu(currentButton) {
-	currentButton.ariaExpanded = "true";
 }
 
 /**
@@ -2836,22 +2306,16 @@ export function createModalHandlers(callbacks) {
 	const handleKeydown = event => {
 		switch (event.key) {
 			case "Escape":
-				console.log("Escape...");
-
 				event.preventDefault();
 				callbacks.close();
 				break;
 
 			case "ArrowLeft":
-				console.log("ArrowLeft...");
-
 				event.preventDefault();
 				callbacks.prev();
 				break;
 
 			case "ArrowRight":
-				console.log("ArrowRight...");
-
 				event.preventDefault();
 				callbacks.next();
 				break;

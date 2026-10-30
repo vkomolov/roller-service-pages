@@ -71,6 +71,14 @@
  */
 
 /**
+ * TImageParentMapOptions
+ *
+ * @typedef {{
+ *   background?: boolean | string
+ * }} TImageParentMapOptions
+ */
+
+/**
  * LoadedImageResult
  *
  * @typedef {Record<string, unknown>} LoadedImageResult

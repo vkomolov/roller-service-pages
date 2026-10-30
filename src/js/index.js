@@ -8,8 +8,6 @@
  * IntersectionObserver, and starts GSAP animations on first scroll.
  */
 
-
-
 /**
  *! DOM type aliases used by this module.
  *
@@ -37,7 +35,7 @@ import {
 } from "./partials/initialSelectors.js";
 
 import { initThumbs } from "./modulesPack/gallery-thumbs/index.js";
-import { initAnimations } from "./partials/animations.js";
+import { initAnimations, initBurgerMenuCSS } from "./partials/animations.js";
 import { initLog, isKeyOf } from "./helpers/funcs.js";
 
 // ============================================
@@ -67,8 +65,12 @@ document.addEventListener("DOMContentLoaded", () => {
 		// Navigation & Language (non-GSAP, immediate)
 		activateNavLink(navLinkParams);
 		activateNavLink(navLinkParamsHexagon);
+
 		//initializing language switcher...
 		initLangSwitcher(langSwitchData);
+
+		//initializing burger
+		initBurgerMenuCSS(SELECTORS.navMenuFixed, SELECTORS.burgerNav);
 
 // Locate the gallery without requiring it to exist on every page.
 		const galleryContainer = getDOMElement(

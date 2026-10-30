@@ -223,35 +223,31 @@
   display: block;
   position: fixed;
   width: 100%;
-  padding-top: 4.7rem;
-  top: -110%;
+  top: 0;
   left: 0;
   z-index: 40;
+  transform: translateY(-100%);
   background-color: rgba(255, 255, 255, .5);
   backdrop-filter: blur(.2rem);
+  padding: 6rem 2.2rem 1rem;
 
-  transition: transform .3s ease;
-
-  /* mobile (landscape): (max-width: 768px)*/
-  @include media.maxMobileLandscape {
-    //padding-top: 6.5rem;
-  }
+  transition: transform .5s cubic-bezier(.4,.02,.13,1.3);
 
   /* mobile (portrait wide): (max-width: 640px) */
-  @mixin maxMobilePortraitWide() {
-
+  @include media.maxMobilePortraitWide() {
+    padding-top: 9rem;
   }
 
   /* mobile (portrait narrow): (max-width: 480px)*/
-  @include media.maxMobilePortraitNarrow {
-    padding-top: 9.5rem;
+  @include media.maxMobilePortraitNarrow() {
+    padding-top: 11rem;
   }
 
   .nav-list {
     width: 100%;
-    max-width: $maxContentWidth;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: .5rem 2.2rem;
+
     gap: 0.5rem .75rem;
     list-style: none;
 
@@ -259,10 +255,6 @@
 
     /* mobile (landscape): (max-width: 768px)*/
     @include media.maxMobileLandscape {
-      //max-width: 20rem;
-      padding-bottom: 1rem;
-      padding-top: 1rem;
-
       @include mix.flex-box(column, center, flex-end);
       column-gap: 0.5rem;
     }
@@ -274,7 +266,7 @@
   }
 
   &[aria-expanded="true"] {
-    transform: translateY(0);
+    transform: translateY(-10%);
   }
 
   &[aria-expanded="false"] {
@@ -370,15 +362,15 @@
   }
 
   &[aria-expanded="true"] {
-    background-color: rgba(255, 255, 255, 1);
-    border-color: rgba(211, 3, 3, 1);
+    background-color: $color-13;
+    border-color: $color-04;
 
     span {
       background-color: transparent;
     }
 
     span:before, span:after {
-      background-color: rgba(211, 3, 3, 1);
+      background-color: $color-04;
     }
 
     // Поворот псевдоэлементов
@@ -423,7 +415,7 @@
 
 #scrolledNav {
   position: fixed;
-  top: -100px;
+  top: -100%;
   left: 0;
   width: 100%;
   padding-top: 10px;
