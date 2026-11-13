@@ -1,106 +1,108 @@
-
-@use "./global_styles/root" as root;
+@use "./global_styles/reset.scss";
+@use "./global_styles/root.scss";
+@use "./global_styles/tools" as tools;
 @use "./partials/header";
 
 .total-wrapper {
-	box-sizing: border-box;
-	position: relative;
+  box-sizing: border-box;
+  position: relative;
 
-	font-size: 1rem;
+  font-size: 1rem;
 
-	max-width: root.$maxViewWidth; //1440px;
-	//min-width: $minViewWidth; //320px;
-	margin: 0 auto;
-	background-color: root.$white;
-	color: root.$color-04;
+  max-width: tools.$maxViewWidth; //1440px;
+  //min-width: $minViewWidth; //320px;
+  margin: 0 auto;
+  background-color: tools.$white;
+  color: tools.$color-04;
 }
 
 .section {
-	position: relative;
-	overflow: hidden; /* fallback */
-	overflow: clip; //cheaper than hidden...
-	//font-size: 1rem;
-	width: 100%;
+  position: relative;
+  overflow: hidden; /* fallback */
+  overflow: clip; //cheaper than hidden...
+  //font-size: 1rem;
+  width: 100%;
 
-	@extend %sectionWrapper;  //margin-top, margin-bottom calculations
-	@include root.flex-box(row, center, flex-start, wrap);
+  @extend %sectionWrapper; //margin-top, margin-bottom calculations
+  @include tools.flex-box(row, center, flex-start, wrap);
 }
 
 .section__content-layer {
-	width: 100%;
-	display: flex;
-	flex-direction: column;
-	justify-content: flex-start;
-	z-index: 10;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  z-index: 10;
 
-	@extend %contentWrapper;  //padding calculations
+  @extend %contentWrapper; //padding calculations
 
-	/* mobile (portrait wide): (max-width: 640px) */
-	@include root.maxMobilePortraitWide {
-		align-items: center;
-	}
+  /* mobile (portrait wide): (max-width: 640px) */
+  @include tools.maxMobilePortraitWide {
+    align-items: center;
+  }
 }
 
 .section__heading-block {
-	h1, h2 {
-		text-transform: uppercase;
-	}
+  h1,
+  h2 {
+    text-transform: uppercase;
+  }
 }
 
 .section__content-block {
-	width: 100%;
-	display: flex;
-	align-items: flex-start;
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
 
-	/* mobile (portrait wide): (max-width: 640px) */
-	@include root.maxMobilePortraitWide {
-		flex-direction: column;
-		align-items: center;
-		justify-content: flex-start;
-	}
+  /* mobile (portrait wide): (max-width: 640px) */
+  @include tools.maxMobilePortraitWide {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+  }
 }
 
 .section__content-block--row-left {
-	flex-direction: row;
-	align-items: flex-start;
-	justify-content: flex-start;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
 }
 
 .section__content-block--row-right {
-	flex-direction: row;
-	align-items: flex-start;
-	justify-content: flex-end;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-end;
 }
 
 .section__content-block--row-center {
-	flex-direction: row;
-	align-items: flex-start;
-	justify-content: center;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .section__content-block--row-between {
-	flex-direction: row;
-	align-items: flex-start;
-	justify-content: space-between;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
 .section__text-block {
-	p {
-		overflow-wrap: break-word;
-	}
+  p {
+    overflow-wrap: break-word;
+  }
 
-	p + p {
-		margin-top: 0.5em;
-	}
+  p + p {
+    margin-top: 0.5em;
+  }
 
-	.button-request {
-		margin-top: 1.4em;
-	}
+  .button-request {
+    margin-top: 1.4em;
+  }
 }
 
 .section__img-wrapper {
-	width: 100%; //default will be overwritten by added class to set target width...
-	/*
+  width: 100%; //default will be overwritten by added class to set target width...
+  /*
    * `.section__img-wrapper` must be combined with a modifier class
    * that defines the actual wrapper width.
    *
@@ -119,212 +121,217 @@
    * The CSS width is controlled by the wrapper, while the height is
    * calculated automatically from the declared image aspect ratio.
    */
-	img, svg, picture {
-		width: 100%;
-		height: auto;
-		display: block; //Prevents the default inline-image baseline gap
-	}
+  img,
+  svg,
+  picture {
+    width: 100%;
+    height: auto;
+    display: block; //Prevents the default inline-image baseline gap
+  }
 }
 
 .screen-reader-only {
-	position: absolute;
-	width: 1px;
-	height: 1px;
-	margin: -1px;
-	padding: 0;
-	overflow: hidden;
-	clip: rect(0 0 0 0);
-	clip-path: inset(50%);
-	border: 0;
-	white-space: nowrap;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
 }
 
 .button-request {
-	font-family: "Open Sans", "Open Sans Fallback", Arial, sans-serif;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-	font-size: var(--range_20-16_1280-641);
-	font-weight: 600;
-	padding: 1em 1.6em;
-	background-color: root.$color-01;
-	border: none;
-	color: root.$white;
-	border-radius: 0.5em;
-	box-shadow: 0.1em 0.15em 0.2em rgba(0, 0, 0, 0.8);
+  font-family: "Open Sans", "Open Sans Fallback", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: var(--range_20-16_1280-641);
+  font-weight: 600;
+  padding: 1em 1.6em;
+  background-color: tools.$color-01;
+  border: none;
+  color: tools.$white;
+  border-radius: 0.5em;
+  box-shadow: 0.1em 0.15em 0.2em rgba(0, 0, 0, 0.8);
 
-	@include root.transition();
+  @include tools.transition();
 
-	&:hover {
-		transform: translateY(-0.18em);
-		background-color: root.$color-01-darken;
-		box-shadow: 0.12em 0.25em 0.3em rgba(0, 0, 0, 0.8);
-	}
+  &:hover {
+    transform: translateY(-0.18em);
+    background-color: tools.$color-01-darken;
+    box-shadow: 0.12em 0.25em 0.3em rgba(0, 0, 0, 0.8);
+  }
 
-	&:active {
-		background-color: root.$color-01-darkest;
-		box-shadow: 0.06em 0.125em 0.125em rgba(0, 0, 0, 0.8);
-		transform: translateY(0);
-	}
+  &:active {
+    background-color: tools.$color-01-darkest;
+    box-shadow: 0.06em 0.125em 0.125em rgba(0, 0, 0, 0.8);
+    transform: translateY(0);
+  }
 }
 
 /////////// SECTION hero //////////
 .section--hero {
-	min-height: var(--range_630-480_1280-641);
+  min-height: var(--range_630-480_1280-641);
 
-	/* mobile (portrait wide): (max-width: 640px) */
-	@include root.maxMobilePortraitWide {
-		min-height: var(--range_670-780_640-320);
-	}
+  /* mobile (portrait wide): (max-width: 640px) */
+  @include tools.maxMobilePortraitWide {
+    min-height: var(--range_670-780_640-320);
+  }
 
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to right,
+      rgba(40, 32, 23, 0.7) 40%,
+      rgba(40, 32, 23, 0.15) 85%
+    );
+    z-index: 1;
+    pointer-events: none;
 
-	&::before {
-		content: "";
-		position: absolute;
-		inset: 0;
-		background: linear-gradient(to right, rgba(40, 32, 23, .7) 40%, rgba(40, 32, 23, 0.15) 85%);
-		z-index: 1;
-		pointer-events: none;
-
-		/*** mobile (portrait wide): (max-width: 640px) ***/
-		@include root.maxMobilePortraitWide {
-			//background: linear-gradient(to right, rgba(40, 32, 23, .7) 40%, rgba(40, 32, 23, 0) 85%);
-			//background: rgba(40, 32, 23, .7);
-			background: linear-gradient(
-							rgba(40, 32, 23, 0.75),
-							rgba(40, 32, 23, 0.55)
-			);
-		}
-	}
+    /*** mobile (portrait wide): (max-width: 640px) ***/
+    @include tools.maxMobilePortraitWide {
+      //background: linear-gradient(to right, rgba(40, 32, 23, .7) 40%, rgba(40, 32, 23, 0) 85%);
+      //background: rgba(40, 32, 23, .7);
+      background: linear-gradient(
+        rgba(40, 32, 23, 0.75),
+        rgba(40, 32, 23, 0.55)
+      );
+    }
+  }
 }
 
 .hero-bg {
-	position: absolute;
-	inset: 0;
-	z-index: 0;
-	display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
 
-	img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		display: block;
-	}
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
 }
 
 .section__content-layer--hero {
-	position: relative;
-	color: root.$white;
-	z-index: 2;
+  position: relative;
+  color: tools.$white;
+  z-index: 2;
 }
 
 .section__heading-block--hero {
-	font-size: var(--range_48-32_1280-641);
-	max-width: 45rem;
-	margin-bottom: .584em;
-	text-shadow: 0.08em 0.08em 0.1em rgba(0, 0, 0, 0.8);
+  font-size: var(--range_48-32_1280-641);
+  max-width: 45rem;
+  margin-bottom: 0.584em;
+  text-shadow: 0.08em 0.08em 0.1em rgba(0, 0, 0, 0.8);
 
-	/* mobile (portrait wide): (max-width: 640px) */
-	@include root.maxMobilePortraitWide {
-		text-align: center;
-	}
+  /* mobile (portrait wide): (max-width: 640px) */
+  @include tools.maxMobilePortraitWide {
+    text-align: center;
+  }
 
-	.accent {
-		display: inline-block;
-		font-size: 1em;
+  .accent {
+    display: inline-block;
+    font-size: 1em;
 
-		// Hiding the element before the animation starts...
-		opacity: 0;
-		transform: translateX(50px); /* starting from right */
+    // Hiding the element before the animation starts...
+    opacity: 0;
+    transform: translateX(50px); /* starting from right */
 
-		// Enabling hardware acceleration on the GPU
-		will-change: transform, opacity;
+    // Enabling hardware acceleration on the GPU
+    will-change: transform, opacity;
 
-		// animation: name, duration, easing, DELAY, final state retention
-		animation: fadeInLeft 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.3s forwards;
+    // animation: name, duration, easing, DELAY, final state retention
+    animation: fadeInLeft 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.3s forwards;
 
-		/* mobile (portrait narrow): (max-width: 480px)*/
-		@include root.maxMobilePortraitNarrow {
-			margin-bottom: 0.15em;
-		}
-	}
+    /* mobile (portrait narrow): (max-width: 480px)*/
+    @include tools.maxMobilePortraitNarrow {
+      margin-bottom: 0.15em;
+    }
+  }
 
-	.rest-of-heading {
-		display: block;
-		font-size: max(0.543em, 18px);
+  .rest-of-heading {
+    display: block;
+    font-size: max(0.543em, 18px);
 
-		// Hiding the element before the animation starts...
-		opacity: 0;
-		transform: translateX(-50px); /* starting from left */
+    // Hiding the element before the animation starts...
+    opacity: 0;
+    transform: translateX(-50px); /* starting from left */
 
-		// Enabling hardware acceleration on the GPU
-		will-change: transform, opacity;
+    // Enabling hardware acceleration on the GPU
+    will-change: transform, opacity;
 
-		// fadeInRight - two stage animation, which can be used with cubic-bezier
-		animation: fadeInRight 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.3s forwards;
-	}
+    // fadeInRight - two stage animation, which can be used with cubic-bezier
+    animation: fadeInRight 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.3s forwards;
+  }
 }
 
 .section__content-block--hero {
-	font-size: var(--range_20-18_1280-641);
-	gap: 3em;
+  font-size: var(--range_20-18_1280-641);
+  gap: 3em;
 }
 
 .section__text-block--hero {
-	max-width: 20em;
+  max-width: 20em;
 
-	// Hiding the element before the animation starts...
-	opacity: 0;
-	transform: translateY(40px); /* starting from below */
+  // Hiding the element before the animation starts...
+  opacity: 0;
+  transform: translateY(40px); /* starting from below */
 
-	// Enabling hardware acceleration on the GPU
-	will-change: transform, opacity;
+  // Enabling hardware acceleration on the GPU
+  will-change: transform, opacity;
 
-	// fadeInUp - two stage animation, which can be used with cubic-bezier
-	animation: fadeInUp 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.45s forwards;
+  // fadeInUp - two stage animation, which can be used with cubic-bezier
+  animation: fadeInUp 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.45s forwards;
 }
 
 .section__img-wrapper--hero {
-	width: 7em;
+  width: 7em;
 
-	// Positioning the element before the animation starts...
-	transform: scale(0);
+  // Positioning the element before the animation starts...
+  transform: scale(0);
 
-	// Enabling hardware acceleration on the GPU
-	will-change: transform;
+  // Enabling hardware acceleration on the GPU
+  will-change: transform;
 
-	/* Using 'linear' so that the frame stages themselves control the 'elastic' effect. */
-	animation: scaleUpZero 0.6s linear 0.65s forwards;
+  /* Using 'linear' so that the frame stages themselves control the 'elastic' effect. */
+  animation: scaleUpZero 0.6s linear 0.65s forwards;
 }
 
 .section__bidding-block {
-	font-size: var(--range_20-18_1280-641);
-	margin-top: 1.4em;
+  font-size: var(--range_20-18_1280-641);
+  margin-top: 1.4em;
 
-	// Hiding the element before the animation starts...
-	opacity: 0;
-	transform: translateY(40px); /* starting from below */
+  // Hiding the element before the animation starts...
+  opacity: 0;
+  transform: translateY(40px); /* starting from below */
 
-	// Enabling hardware acceleration on the GPU
-	will-change: transform, opacity;
+  // Enabling hardware acceleration on the GPU
+  will-change: transform, opacity;
 
-	// fadeInUp - two stage animation, which can be used with cubic-bezier
-	animation: fadeInUp 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.65s forwards;
+  // fadeInUp - two stage animation, which can be used with cubic-bezier
+  animation: fadeInUp 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.65s forwards;
 
-	@include root.flex-box(column, center, flex-start);
+  @include tools.flex-box(column, center, flex-start);
 
-	/* mobile (portrait wide): (max-width: 640px) */
-	@include root.maxMobilePortraitWide {
-		//margin-top: 1.4em;
-		align-items: center;
-		text-align: center;
-		margin-top: 2em;
-	}
+  /* mobile (portrait wide): (max-width: 640px) */
+  @include tools.maxMobilePortraitWide {
+    //margin-top: 1.4em;
+    align-items: center;
+    text-align: center;
+    margin-top: 2em;
+  }
 
-	p {
-		max-width: 14em;
-	}
+  p {
+    max-width: 14em;
+  }
 
-	.button-request {
-		margin-top: 1.4em;
-	}
+  .button-request {
+    margin-top: 1.4em;
+  }
 }

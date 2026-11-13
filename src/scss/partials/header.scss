@@ -7,11 +7,19 @@
 
 .header-layer {
   width: 100%;
-  background: linear-gradient(to right, rgba(40, 32, 23, 1) 25%, $rgba_opacity-0 80%);
+  background: linear-gradient(
+    to right,
+    rgba(40, 32, 23, 1) 25%,
+    $rgba_opacity-0 80%
+  );
 
   /* mobile (portrait wide): (max-width: 640px) */
   @include media.maxMobilePortraitWide {
-    background: linear-gradient(to right, rgba(40, 32, 23, 1) 60%, rgba(101, 92, 82, .7) 100%);
+    background: linear-gradient(
+      to right,
+      rgba(40, 32, 23, 1) 60%,
+      rgba(101, 92, 82, 0.7) 100%
+    );
   }
 }
 
@@ -20,7 +28,7 @@
   //font-size: var(--range_18-16_1280-641);
   position: relative;
 
-  @extend %contentWrapper;  //it works ok...
+  @extend %contentWrapper; //it works ok...
   @include mix.flex-box(row, center, center, wrap);
 
   //gap: 0.5em 1em;
@@ -36,7 +44,7 @@
 
 .header__logo-heading {
   font-size: 1.75rem;
-  color: rgba(220, 220, 220, .5);
+  color: rgba(220, 220, 220, 0.5);
   //color: $color-01;
 
   /* tablet (portrait): (max-width: 1024px) */
@@ -89,7 +97,9 @@
   //for footer links with inner text
   &--with-span {
     transform-origin: 100% 50%;
-    transition: transform 0.15s ease-in-out, text-shadow 0.15s ease-in-out;
+    transition:
+      transform 0.15s ease-in-out,
+      text-shadow 0.15s ease-in-out;
 
     &:hover {
       transform: translateX(-0.3rem);
@@ -101,7 +111,6 @@
       padding: 0; //icons become smaller to the size of the text
       width: 1em; //the width depends on the font-size of the text
     }
-
   }
 
   //icons
@@ -155,7 +164,9 @@
   transition-delay: 0s;
 }
 
-.lang-switcher__current[aria-expanded="true"] ~ .lang-switcher__dropdown #lang-list {
+.lang-switcher__current[aria-expanded="true"]
+  ~ .lang-switcher__dropdown
+  #lang-list {
   transform: translateY(0);
 }
 
@@ -178,7 +189,7 @@
   gap: 0.6rem;
 
   transform: translateY(-130%);
-  transition: transform 0.3s cubic-bezier(.26,-0.05,.46,1.58);
+  transition: transform 0.3s cubic-bezier(0.26, -0.05, 0.46, 1.58);
 }
 
 .lang-switcher__button {
@@ -190,7 +201,9 @@
   cursor: pointer;
   font-weight: 700;
   padding: 6px;
-  transition: transform 0.2s ease-in-out, background-color 0.2s ease;
+  transition:
+    transform 0.2s ease-in-out,
+    background-color 0.2s ease;
 
   &:is(:hover, :focus-visible) {
     //background-color: $color-01-darken;
@@ -200,10 +213,6 @@
   &.active {
     background-color: $color-01;
   }
-}
-
-.lang-switcher__item {
-  //здесь также пока не понятно, какие стили применить...
 }
 
 ////////////
@@ -227,11 +236,11 @@
   left: 0;
   z-index: 40;
   transform: translateY(-100%);
-  background-color: rgba(255, 255, 255, .5);
-  backdrop-filter: blur(.2rem);
+  background-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(0.2rem);
   padding: 6rem 2.2rem 1rem;
 
-  transition: transform .5s cubic-bezier(.4,.02,.13,1.3);
+  transition: transform 0.5s cubic-bezier(0.4, 0.02, 0.13, 1.3);
 
   /* mobile (portrait wide): (max-width: 640px) */
   @include media.maxMobilePortraitWide() {
@@ -248,7 +257,7 @@
     max-width: 1200px;
     margin: 0 auto;
 
-    gap: 0.5rem .75rem;
+    gap: 0.5rem 0.75rem;
     list-style: none;
 
     @include mix.flex-box(row, flex-end, center, wrap);
@@ -283,7 +292,7 @@
   font-weight: 700;
 
   @include mix.flex-box(row, center, center, wrap);
-  gap: 0.5em .75em;
+  gap: 0.5em 0.75em;
 
   &.nav-list--footer {
     flex-direction: column;
@@ -334,12 +343,14 @@
   background-color: rgba(255, 255, 255, 1);
   border: 2px solid rgba(255, 133, 2, 1);
   border-radius: 50%;
-  transition: background-color .2s ease-in-out;
+  transition: background-color 0.2s ease-in-out;
 
   &:hover {
     background-color: rgba(255, 133, 2, 1);
 
-    span, span:before, span:after {
+    span,
+    span:before,
+    span:after {
       background-color: rgba(255, 255, 255, 1);
     }
 
@@ -369,28 +380,34 @@
       background-color: transparent;
     }
 
-    span:before, span:after {
+    span:before,
+    span:after {
       background-color: $color-04;
     }
 
     // Поворот псевдоэлементов
     span:before {
       transform: rotate(45deg);
-      top: 0;  // Разместить по центру
+      top: 0; // Разместить по центру
     }
     span:after {
       transform: rotate(-45deg);
-      top: 0;  // Разместить по центру
+      top: 0; // Разместить по центру
     }
   }
 
-  span, span:before, span:after {
+  span,
+  span:before,
+  span:after {
     position: absolute;
     display: inline-block;
     width: 1.1rem;
     height: 0.19rem;
     background-color: $color-01;
-    transition: background-color, top, transform 0.2s ease-in-out;
+    transition:
+      background-color,
+      top,
+      transform 0.2s ease-in-out;
   }
 
   span {
@@ -398,7 +415,8 @@
     left: 50%;
     transform: translate(-48%, -50%);
 
-    &:before, &:after {
+    &:before,
+    &:after {
       content: "";
       left: 0;
     }
@@ -409,7 +427,6 @@
     &:after {
       top: 5px;
     }
-
   }
 }
 
@@ -420,8 +437,8 @@
   width: 100%;
   padding-top: 10px;
   z-index: 50;
-  background-color: rgba(255, 255, 255, .2);
-  backdrop-filter: blur(.2rem);
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(0.2rem);
 }
 
 .scrolledNav__contacts-block {
@@ -441,8 +458,7 @@
   }
 
   /* mobile (medium): (max-width: 375px) */
-/*  @include media.maxMobileMedium {
+  /*  @include media.maxMobileMedium {
     @include mix.flex-box(row, center, center, wrap);
   }*/
 }
-
