@@ -1,11 +1,13 @@
 @use "sass:math";
 @use "sass:meta";
+@use "./variables" as *;
+@use "./media" as media;
 
-$element-shadow: 0.15em, 0.3em, rgba(0, 0, 0, .8);
+$element-shadow: 0.15em, 0.3em, rgba(0, 0, 0, 0.8);
 
 ///MIXIN
 
-@mixin flex-box($flow, $justify, $align, $wrap:wrap) {
+@mixin flex-box($flow, $justify, $align, $wrap: wrap) {
   display: flex;
   flex-flow: $flow $wrap;
   justify-content: $justify;
@@ -27,11 +29,11 @@ $element-shadow: 0.15em, 0.3em, rgba(0, 0, 0, .8);
   }
 }
 
-@mixin text-shadow($dim, $shadow, $color:rgba(0,0,0,0.8)) {
+@mixin text-shadow($dim, $shadow, $color: rgba(0, 0, 0, 0.8)) {
   text-shadow: $dim $dim $shadow $color;
 }
 
-@mixin box-shadow($dim, $shadow, $color:rgba(0,0,0,0.8)) {
+@mixin box-shadow($dim, $shadow, $color: rgba(0, 0, 0, 0.8)) {
   box-shadow: $dim $dim $shadow $color;
 }
 
@@ -163,34 +165,21 @@ $element-shadow: 0.15em, 0.3em, rgba(0, 0, 0, .8);
   // Absolute units (px) pass through unchanged
   $needs-conversion: $unit == rem or $unit == em or $unit == "%";
 
-  // Convert target values from px to specified unit
+  // Convert target values and viewport boundaries from px to specified unit
   // rem/em/%: divide by base-size (e.g., 16px → 1rem)
   // px: keep original value (e.g., 16px → 16px)
+  // Using @if block instead of if(sass(...)) to avoid WebStorm lexer syntax errors
+  $min-size: $min-value-num;
+  $max-size: $max-value-num;
+  $min-width: $min-media-num;
+  $max-width: $max-media-num;
 
-/*
-  //deprecated in Dart Sass (1.95+)
-  $min-size: if($needs-conversion, math.div($min-value-num, $base-size), $min-value-num);
-  $max-size: if($needs-conversion, math.div($max-value-num, $base-size), $max-value-num);
-  */
-
-  //! IDE stile not recognize new Dart Sass (1.95+) syntax
-  $min-size: if(sass($needs-conversion): math.div($min-value-num, $base-size); else: $min-value-num);
-  $max-size: if(sass($needs-conversion): math.div($max-value-num, $base-size); else: $max-value-num);
-
-
-  // Convert viewport boundaries using same logic
-  // Ensures slope calculation uses consistent units
-
-/*
-  //deprecated in Dart Sass (1.95+)
-  $min-width: if($needs-conversion, math.div($min-media-num, $base-size), $min-media-num);
-  $max-width: if($needs-conversion, math.div($max-media-num, $base-size), $max-media-num);
-  */
-
-  //! IDE stile not recognize new Dart Sass (1.95+) syntax
-  $min-width: if(sass($needs-conversion): math.div($min-media-num, $base-size); else: $min-media-num);
-  $max-width: if(sass($needs-conversion): math.div($max-media-num, $base-size); else: $max-media-num);
-
+  @if $needs-conversion {
+    $min-size: math.div($min-value-num, $base-size);
+    $max-size: math.div($max-value-num, $base-size);
+    $min-width: math.div($min-media-num, $base-size);
+    $max-width: math.div($max-media-num, $base-size);
+  }
 
   // Calculate slope (m): rate of change per viewport unit
   // Formula: rise / run = (size difference) / (viewport range)
@@ -212,12 +201,11 @@ $element-shadow: 0.15em, 0.3em, rgba(0, 0, 0, .8);
   // - Preferred value (linear interpolation based on vw)
   // - Maximum value (largest of the two boundary values)
   @return clamp(
-      #{$clamp-min}#{$unit},
-      #{$ratio * 100}vw + #{$intercept}#{$unit},
-      #{$clamp-max}#{$unit}
+          #{$clamp-min}#{$unit},
+          #{$ratio * 100}vw + #{$intercept}#{$unit},
+          #{$clamp-max}#{$unit}
   );
 }
-
 
 /*
 Examples of usage:
@@ -251,11 +239,49 @@ h1 {
   $base-size: 16
 ) {
   #{$property}: fluid-value(
-          $max-media,
-          $min-media,
-          $max-value,
-          $min-value,
-          $unit,
-          $base-size
+    $max-media,
+    $min-media,
+    $max-value,
+    $min-value,
+    $unit,
+    $base-size
   );
+}
+
+// padding-top, padding-bottom of the total layer
+@mixin section-wrapper {
+  padding-top: 80px;
+  padding-bottom: 120px;
+
+  /* tablet (landscape) max-width: 1280px */
+  @include media.maxTabletLandscape {
+    padding-top: var(--range_80-64_1280-641);
+    padding-bottom: var(--range_120-64_1280-641);
+  }
+
+  /* mobile (portrait wide): (max-width: 640px) */
+  @include media.maxMobilePortraitWide {
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+}
+
+// padding-left, padding-right of the total layer
+@mixin content-wrapper {
+  max-width: $maxContentWidth;
+  margin: 0 auto;
+  padding-right: 80px;
+  padding-left: 80px;
+
+  /* tablet (landscape) max-width: 1280px */
+  @include media.maxTabletLandscape {
+    padding-right: var(--range_80-32_1280-641);
+    padding-left: var(--range_80-32_1280-641);
+  }
+
+  /* mobile (portrait wide): (max-width: 640px) */
+  @include media.maxMobilePortraitWide {
+    padding-right: var(--range_32-23_640-320);
+    padding-left: var(--range_32-23_640-320);
+  }
 }

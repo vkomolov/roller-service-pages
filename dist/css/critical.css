@@ -304,17 +304,6 @@ h1{
 h2,h3,h4,h5{
   line-height:1.2;
 }
-.section{
-  padding-bottom:120px;
-  padding-top:80px;
-}
-
-.header,.section__content-layer{
-  margin:0 auto;
-  max-width:1280px;
-  padding-left:80px;
-  padding-right:80px;
-}
 
 .header-layer{
   background:linear-gradient(90deg, #282017 25%, rgba(65,57,48,0) 80%);
@@ -327,7 +316,11 @@ h2,h3,h4,h5{
   flex-flow:row wrap;
   gap:.625rem 1.125rem;
   justify-content:center;
+  margin:0 auto;
+  max-width:1280px;
   padding-bottom:.625rem;
+  padding-left:80px;
+  padding-right:80px;
   padding-top:.625rem;
   position:relative;
 }
@@ -662,6 +655,8 @@ h2,h3,h4,h5{
   justify-content:center;
   overflow:hidden;
   overflow:clip;
+  padding-bottom:120px;
+  padding-top:80px;
   position:relative;
   width:100%;
 }
@@ -670,6 +665,10 @@ h2,h3,h4,h5{
   display:flex;
   flex-direction:column;
   justify-content:flex-start;
+  margin:0 auto;
+  max-width:1280px;
+  padding-left:80px;
+  padding-right:80px;
   width:100%;
   z-index:10;
 }
@@ -859,11 +858,15 @@ h2,h3,h4,h5{
   margin-top:1.4em;
 }
 @media (max-width:1280px){
+  .header{
+    padding-left:var(--range_80-32_1280-641);
+    padding-right:var(--range_80-32_1280-641);
+  }
   .section{
     padding-bottom:var(--range_120-64_1280-641);
     padding-top:var(--range_80-64_1280-641);
   }
-  .header,.section__content-layer{
+  .section__content-layer{
     padding-left:var(--range_80-32_1280-641);
     padding-right:var(--range_80-32_1280-641);
   }}
@@ -895,25 +898,28 @@ h2,h3,h4,h5{
          column-gap:.5rem;
   }}
 @media (max-width:640px){
-  .section{
-    padding-bottom:64px;
-    padding-top:64px;
-  }
-  .header,.section__content-layer{
-    padding-left:var(--range_32-23_640-320);
-    padding-right:var(--range_32-23_640-320);
-  }
   .header-layer{
     background:linear-gradient(90deg, #282017 60%, rgba(101,92,82,.7));
   }
   .header{
     flex-direction:column;
+    padding-left:var(--range_32-23_640-320);
+    padding-right:var(--range_32-23_640-320);
   }
   #nav-abs{
     padding-top:9rem;
   }
-  #nav-abs .nav-list,.section__content-layer{
+  #nav-abs .nav-list{
     align-items:center;
+  }
+  .section{
+    padding-bottom:64px;
+    padding-top:64px;
+  }
+  .section__content-layer{
+    align-items:center;
+    padding-left:var(--range_32-23_640-320);
+    padding-right:var(--range_32-23_640-320);
   }
   .section__content-block{
     align-items:center;

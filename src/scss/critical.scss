@@ -23,7 +23,7 @@
   //font-size: 1rem;
   width: 100%;
 
-  @extend %sectionWrapper; //margin-top, margin-bottom calculations
+  @include tools.section-wrapper();
   @include tools.flex-box(row, center, flex-start, wrap);
 }
 
@@ -34,7 +34,7 @@
   justify-content: flex-start;
   z-index: 10;
 
-  @extend %contentWrapper; //padding calculations
+  @include tools.content-wrapper();
 
   /* mobile (portrait wide): (max-width: 640px) */
   @include tools.maxMobilePortraitWide {

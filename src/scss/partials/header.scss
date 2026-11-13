@@ -1,6 +1,5 @@
 @use "../global_styles/variables" as *;
 @use "../global_styles/mixins" as mix;
-@use "../global_styles/extends";
 @use "../global_styles/media" as media;
 
 /////// STYLES ///////
@@ -28,7 +27,7 @@
   //font-size: var(--range_18-16_1280-641);
   position: relative;
 
-  @extend %contentWrapper; //it works ok...
+  @include mix.content-wrapper();
   @include mix.flex-box(row, center, center, wrap);
 
   //gap: 0.5em 1em;
